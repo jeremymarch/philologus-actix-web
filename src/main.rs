@@ -32,8 +32,9 @@ use db::{Pool,Info,WordQuery};
 async fn philologus_words((db, info): (web::Data<Pool>, web::Query<Info>)) -> Result<HttpResponse, AWError> {
     let p: WordQuery = serde_json::from_str(&info.query)?;
     println!("Please call {} at the number {}", p.lexicon, p.wordid);
+    let seq = db::execute_get_seq(&db).await?;
     let result = vec![
-        db::execute(&db).await?,
+        db::execute(&db, seq).await?,
     ];
 
     Ok(HttpResponse::Ok().json(result))

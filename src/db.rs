@@ -58,15 +58,21 @@ pub struct Info {
 pub fn execute(
     pool: &Pool,
     seq: u32,
+    before_query:bool
 ) -> impl Future<Output = Result<Vec<PhilologusWords>, AWError>> {
     let pool = pool.clone();
     web::block(move || {
 
         //let result = get_words(&pool, "ZGREEK", "γερ");
         let table = "ZGREEK";
-        let word = "γερ";
-        let before = get_before(pool.get().unwrap(), table, seq);//.unwrap();
-        //let after = get_equal_and_after(pool.get().unwrap(), table, seq).unwrap();
+        let before;
+        if before_query {
+            before = get_before(pool.get().unwrap(), table, seq);//.unwrap();
+        }
+        else {
+            before = get_equal_and_after(pool.get().unwrap(), table, seq);//.unwrap();  
+        }
+        //
         //before.reverse();
         //let result = Ok([before.as_slice(), after.as_slice()].concat());//.map_err(Error::from)   
         before.map_err(Error::from)
@@ -92,18 +98,18 @@ pub fn execute_get_seq(
     })
     .map_err(AWError::from)
 }
-
+/*
 fn get_words(conn: &Pool, table: &str, word:&str) -> PhilologusWordsResult {
-    let seq = get_seq(conn.clone().get().unwrap(), table, word);
-    let mut before = get_before(conn.clone().get().unwrap(), table, seq).unwrap();
-    let after = get_equal_and_after(conn.clone().get().unwrap(), table, seq).unwrap();
+    let seq = get_seq(conn.get().unwrap(), table, word);
+    let mut before = get_before(conn.get().unwrap(), table, seq).unwrap();
+    let after = get_equal_and_after(conn.get().unwrap(), table, seq).unwrap();
     before.reverse();
     Ok([before.as_slice(), after.as_slice()].concat())
 }
-
+*/
 //, SEQ_COL, $table, UNACCENTED_COL, $word, STATUS_COL, UNACCENTED_COL);
 fn get_seq(conn: Connection, table:&str, word:&str) -> u32 {
-    let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE sortword>='", word, "' ORDER BY sortword LIMIT 1;");
+    let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE sortword >= '", word, "' ORDER BY sortword LIMIT 1;");
     //let stmt = conn.prepare(&query);
     //get_seq_res(stmt, word)
 
@@ -114,19 +120,19 @@ fn get_seq(conn: Connection, table:&str, word:&str) -> u32 {
 
 //, ID_COL, WORD_COL, $table, $tagJoin, SEQ_COL, $middleSeq, STATUS_COL, $tagwhere, SEQ_COL, $req->limit * $req->page * -1, $req->limit);
 fn get_before(conn: Connection, table:&str, seq: u32) -> PhilologusWordsResult {
-    let query = format!("{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq<", seq, " ORDER BY seq DESC LIMIT 0,20;");
+    let query = format!("{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq < ", seq, " ORDER BY seq DESC LIMIT 0,20;");
     let stmt = conn.prepare(&query)?;
-    get_word_res(stmt, seq)
+    get_word_res(stmt)
 }
 
 //, ID_COL, WORD_COL, $table, $tagJoin, SEQ_COL, $middleSeq, STATUS_COL, $tagwhere, SEQ_COL, $req->limit * $req->page, $req->limit);
 fn get_equal_and_after(conn: Connection, table:&str, seq: u32) -> PhilologusWordsResult {
-    let query = format!("{}{}{}{}{}", "SELECT seq,word FROM ", table, "WHERE seq>=", seq, " ORDER BY seq LIMIT 0,20;");
+    let query = format!("{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq >= ", seq, " ORDER BY seq LIMIT 0,20;");
     let stmt = conn.prepare(&query)?;
-    get_word_res(stmt, seq)
+    get_word_res(stmt)
 }
 
-fn get_word_res(mut statement: Statement, seq:u32) -> PhilologusWordsResult {
+fn get_word_res(mut statement: Statement) -> PhilologusWordsResult {
     statement
         .query_map(NO_PARAMS, |row| {
             Ok(PhilologusWords::GreekWords {

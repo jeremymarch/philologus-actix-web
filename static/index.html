@@ -1,0 +1,1204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+  <meta name="format-detection" content="telephone=no">
+  <meta name="viewport" content="width=device-width">
+  <title>philolog.us</title>
+  <meta name="description" content="Philologus is a fast, streamlined interface to the online Greek and Latin lexica hosted by the Perseus Project." />
+  <meta name="keywords" content="Liddell Scott and Jones, Lewis and Short, Slater's Lexicon to Pindar, Perseus Project, Greek, Classical Greek, Ancient Greek, Latin, lexica, lexicon, dictionary, dendrea.org" />
+  <script>
+    function setTheme() {
+      var mode = localStorage.getItem("mode"); //use mode to override system dark mode
+      if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode == "dark") && mode != "light") {
+        document.querySelector("HTML").classList.add("dark");
+      }
+      else {
+        document.querySelector("HTML").classList.remove("dark");
+      }
+    }
+    setTheme();
+  </script>
+  <style>
+    @font-face {
+      font-family: 'WebNewAthenaUnicode';
+      src: url('/newathu5_8.woff') format('woff'),
+      url('/newathu5_8.ttf') format('ttf');
+    }
+  .wordtree input {
+    font-family:helvetica, arial;/*WebNewAthenaUnicode;*/
+    font-size:11pt;
+  }
+
+  :root {
+      --author-color: red;
+      --bib-color: green;
+      --ref-color: orange;
+      --gloss-color: black;
+      --foreign-color: blue;
+      --quote-color: blue;
+      --foreign-color-dark: #03a5fc;
+      --quote-color-dark: #03a5fc;
+      --attr-color:blue;
+      --attr-color-dark:#03a5fc;
+
+      --author-weight: normal;
+      --bib-weight: normal;
+      --ref-weight: normal;
+      --gloss-weight: bold;
+      --foreign-weight: normal;
+      --quote-weight: normal;
+  }
+/* document.documentElement.style.setProperty("--author-color", "green"); */
+
+.dark .fo {color:blue; color: var(--foreign-color-dark,blue);}
+.dark .qu {color:blue; color: var(--quote-color-dark,blue);}
+.fo {color:blue; color: var(--foreign-color,blue);}
+.qu {color:blue; color: var(--quote-color,blue);}
+.tr {font-weight:bold;}
+.au {color:red; color: var(--author-color,red);}
+.bi {color:green; color: var(--bib-color,green);}
+.ti {color:orange; color: var(--ref-color,orange);}
+.biblLink {color:green; color: var(--bib-color,green);}
+.attrlink { color: blue; color: var(--attr-color, blue); }
+.dark .attrlink { color: #03a5fc; color: var(--attr-color-dark, #03a5fc); }
+.dark .defbody { color: white; }
+
+.storelink {
+  color:blue;
+}
+
+.dark .storelink {
+  color:#03a5fc;
+}
+
+.qu:before {
+  content: '\"';
+}
+
+.qu:after {
+  content: '\"';
+}
+
+.label {
+  font-weight: bold;
+  position: absolute;
+  left: -36px;
+}
+
+.label:after {
+  content: ' ';
+}
+
+.orth {
+  font-weight: bold;
+}
+
+#hamburger {
+  background-color: white;
+  border:1px solid #666;
+  border-radius:4px;
+  cursor: pointer;
+  height:30px;
+  width:30px;
+}
+#hamburger rect {
+  fill: black;
+}
+
+    .lexitem {
+      cursor:pointer;text-align:center;background-color:white;color:black;padding:3px 0px;font-size:8pt;font-family:helvetica,arial,sans-serif;
+    }
+    .lexselected {
+      background-color:gray;color:white;
+    }
+    .menulink:link {
+      color:black;
+      text-decoration: none;
+    }
+    .menulink:visited {
+      color:black;
+      text-decoration: none;
+    }
+    .menulink:hover {
+      color:black;
+      text-decoration: none;
+    }
+    .menulink:active {
+      color:black;
+      text-decoration: none;
+    }
+
+    .dark .menulink:link {
+      color:white;
+    }
+    .dark .menulink:visited {
+      color:white;
+    }
+    .dark .menulink:hover {
+      color:white;
+    }
+    .dark .menulink:active {
+      color:white;
+    }
+
+    #settingsdiv div {
+      background-color:white;
+      color:black;
+      display:block;
+      padding:6px 10px;
+      cursor:pointer;
+      border:2px solid white;
+    }
+    #settingsdiv div:hover {
+      border:2px solid black;
+    }
+    #settingsdiv div:focus {
+      border:2px solid black;
+      outline:0px solid black;
+    }
+
+    .dark #settingsdiv div {
+      background-color:black;
+      color:white;
+      display:block;
+      padding:6px 10px;
+      cursor:pointer;
+      border:2px solid black;
+    }
+    .dark #settingsdiv div:hover {
+      border:2px solid white;
+    }
+    .dark #settingsdiv div:focus {
+      border:2px solid white;
+      outline:0px solid white;
+    }
+
+    .menucell {
+      text-align: center;
+      width: 25%;
+      white-space: nowrap;
+    }
+
+    .biblLink:link {
+      text-decoration: none;
+    }
+
+    .biblLink:visited {
+      text-decoration: none;
+    }
+
+    .biblLink:hover {
+      text-decoration: underline;
+    }
+
+    .biblLink:active {
+      text-decoration: none;
+    }
+
+    .bi {
+      text-decoration: none;
+    }
+
+    HTML {
+      overflow: hidden;
+      width: 100%;
+      height: 100%;
+      font-family: NewAthenaUnicode, WebNewAthenaUnicode;
+    }
+
+    .l1 {
+      margin-left: 36px;
+      position: relative;
+    }
+
+    .l2 {
+      margin-left: 72px;
+      position: relative;
+    }
+
+    .l3 {
+      margin-left: 108px;
+      position: relative;
+    }
+
+    .l4 {
+      margin-left: 144px;
+      position: relative;
+    }
+
+    .l5 {
+      margin-left: 180px;
+      position: relative;
+    }
+
+    .body {
+      line-height: 1.2;
+      margin: 8px 0px
+    }
+
+    body,
+    html {
+      position: fixed;
+    }
+
+    #logo {
+      color: black;
+    }
+
+    .nodestyle {
+        line-height: 32px;
+        margin:0px;
+        position:relative;
+        height:30px;
+        width:calc(100% - 10px); /* wt.width - 24 + "px";//"100%";*/
+        white-space:nowrap;
+        background-color:white;
+        overflow: hidden;
+    }
+    .nodestylecol {
+        position: absolute;
+        paddingTop: 5px;
+        top: 0px;
+    }
+    .selectedRowClass {
+        background-color: #8899EE;
+        color: white;
+    }
+    .WordContainer {
+      position: relative;
+      left: 11px;
+      overflow: auto;
+      padding-top: 2px;
+      font-size: 12pt;
+      font-weight: normal;
+      -ms-overflow-style: none;  /* IE and Edge */
+      scrollbar-width: none;  /* Firefox */
+    }
+    
+  /* Hide scrollbar for Chrome, Safari and Opera */
+  .WordContainer::-webkit-scrollbar {
+    display: none;
+  }
+
+  .philbody {
+    background-color:#eee;
+    padding:0px;
+    margin:0px;
+    text-align:center;
+    overflow:hidden;
+    width:100%;
+    height:100%;
+  }
+
+  .wordtree {
+    margin: 10px;
+    background-color: white;
+    text-align: left;
+    position: relative;
+    border-radius: 14px;
+    
+  }
+
+  .defbody {
+    background-color: white;
+  }
+
+.wordtree input {
+position: absolute;
+top: 40px;
+left: 8px;
+border-radius: 13px;
+border: 2px solid black;
+padding-left: 6px;
+height: 22px;
+  }
+
+  .orangetext { color: orange; }
+  .greentext { color: green; }
+  .bluetext { color: blue; }
+  .redtext { color: red; }
+  .boldtext { font-weight: bold; }
+  .blacktext { color: black; }
+  .attrlink { color: blue; }
+
+  #openHistory {
+    color: black;
+    position: fixed;
+    top: 50%;
+    right: 0px;
+    writing-mode: vertical-lr;
+    background-color: white;
+    cursor: pointer;
+    padding: 10px 2px;
+    font-family: helvetica;
+    font-size: 10pt;
+    z-index: 900;
+    border-radius: 4px;
+    display: none;
+  }
+
+.lds-spinner {
+  color: official;
+  display: inline-block;
+  position: relative;
+  width: 20px;
+  height: 20px;
+}
+.lds-spinner div {
+  transform-origin: 40px 40px;
+  animation: lds-spinner 1.2s linear infinite;
+}
+.lds-spinner div:after {
+  content: " ";
+  display: block;
+  position: absolute;
+  top: 28px;
+  left: 39.5px;
+  width: 2px;
+  height: 6px;
+  /*border-radius: 20%;*/
+  background: red;
+}
+
+.lds-spinner div:nth-child(1) {
+  transform: rotate(0deg);
+  animation-delay: -1.1s;
+}
+.lds-spinner div:nth-child(2) {
+  transform: rotate(30deg);
+  animation-delay: -1s;
+}
+.lds-spinner div:nth-child(3) {
+  transform: rotate(60deg);
+  animation-delay: -0.9s;
+}
+.lds-spinner div:nth-child(4) {
+  transform: rotate(90deg);
+  animation-delay: -0.8s;
+}
+.lds-spinner div:nth-child(5) {
+  transform: rotate(120deg);
+  animation-delay: -0.7s;
+}
+.lds-spinner div:nth-child(6) {
+  transform: rotate(150deg);
+  animation-delay: -0.6s;
+}
+.lds-spinner div:nth-child(7) {
+  transform: rotate(180deg);
+  animation-delay: -0.5s;
+}
+.lds-spinner div:nth-child(8) {
+  transform: rotate(210deg);
+  animation-delay: -0.4s;
+}
+.lds-spinner div:nth-child(9) {
+  transform: rotate(240deg);
+  animation-delay: -0.3s;
+}
+.lds-spinner div:nth-child(10) {
+  transform: rotate(270deg);
+  animation-delay: -0.2s;
+}
+.lds-spinner div:nth-child(11) {
+  transform: rotate(300deg);
+  animation-delay: -0.1s;
+}
+.lds-spinner div:nth-child(12) {
+  transform: rotate(330deg);
+  animation-delay: 0s;
+}
+@keyframes lds-spinner {
+  0% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+  }
+}
+
+#settingsdiv ul {
+  list-style-type: none;
+  margin: 0px;
+  padding: 0px;
+  text-align: left;
+}
+
+.settings {
+      position: absolute;
+      top: 70px;
+      right: 11px;
+      height: 234px;
+      width: 230px;
+      z-index: 999;
+      padding:10px;
+    }
+
+#settingsdiv {
+  background-color: white;
+  color:black;
+  border: 2px solid black;
+  border-radius:10px;
+}
+
+
+
+.dark #settingsdiv {
+  background-color: black;
+  color:white;
+  border: 2px solid white;
+}
+
+.dark #settingsdiv li {
+  color:white;
+}
+
+.dark #hamburger {
+  background-color: black;
+}
+.dark #hamburger rect {
+  fill: white;
+}
+
+.dark .lds-spinner div:after {
+  background: #fff;
+}
+
+.dark #logo {
+      color: white;
+    }
+
+  .dark .philbody {
+    background-color:black;
+  }
+
+  .dark .wordtree {
+    background-color: #202124;
+  }
+
+  .dark .wordtree .nodestyle {
+    background-color: #202124;
+    color: white;
+  }
+  .dark .nodestyle.selectedRowClass {
+    background-color: grey;
+    color: white;
+  }
+
+  .dark .defbody {
+    background-color: #202124;
+  }
+
+.dark .wordtree input {
+  background-color: #202124;
+  border: 2px solid white;
+  color: white;
+}
+
+#topmenu {
+  visibility: hidden;
+}
+
+#backdrop {
+  position: absolute;
+  top:0px;
+  left:0px;
+  width:100%;
+  height:100%;
+  z-index:900;
+}
+  </style>
+</head>
+
+<body onload="start();" class="philbody">
+
+  <div id="taglist" style="position:absolute;top:0px;left:0px;height:50%;width:220px;display:none;"></div>
+  <div id="historylist" style="position:absolute;top:50%;left:0px;height:50%;width:220px;display:none;"></div>
+  <div id="leftlist" style="position:absolute;top:0px;left:0px;height:cals(100% - 20px);width:259px;margin:0px"></div>
+  <!--<div id="openHistory">History</div>-->
+  <div id="rightlist" style="position:absolute;top:69px;right:20px;width:260px;height:500px;">
+    <!--<div style="border:1px solid black;margin-top:40px;padding:5px;text-align:left;" id="message1">The site has been updated with new code and data.  Please report any problems you might have with the update to <a href="mailto:jmarch@gradcenter.cuny.edu">jmarch@gradcenter.cuny.edu</a>.  The previous version is available <a href="http://philolog.us/v1">here</a> if you need it.<br><br><div style="width:100%;text-align:center;"><a href="javascript:closeMessage()">close</a></div></div>
+	-->
+    <div id="taglistRight" style="position:absolute;top:0px;left:0px;height:50%;width:220px;"></div>
+    <div id="historylistRight" style="position:absolute;top:50%;left:0px;height:50%;width:220px;"></div>
+  </div>
+
+  <div id="topmenu" style="color:#888;font-size:10pt;padding-top:3px;padding-bottom:0px;position:relative;z-index:1;top:4px;margin-left:280px;margin-right:280px;overflow:hidden;border-bottom:1px solid #CCC;text-align:left;">
+    <div style="width:100%;display:flex;">
+        <div class='menucell'><a href='javascript:contact()' class="menulink">about</a></div>
+        <div class='menucell'><a href='javascript:showiPhone()' class="menulink">mobile app</a></div>
+        <div class='menucell'><a href='javascript:config()' class="menulink">configure</a></div>
+        <dov class='menucell'><a href='javascript:toggleHistoryChooser()' class="menulink">toggle history</a></div>
+        <!--<td class='menucell'><a href='javascript:toggleTagList()' class="menulink">tags</a></td>
+	<td class='menucell' style="width:20%;"><span id="userNameField"></span><a id="loginLink" href='javascript:toggleLogin()' class="menulink">login</a></td>
+-->
+    </div>
+  </div>
+
+  <div id="defbody" class="defbody" style="border-radius:14px;position:relative;z-index:1;top:50px;margin-left:280px;margin-right:0px;overflow:hidden;height:100%;text-align:left;">
+    <div id="lsjdef" style="position:relative;z-index:2;margin:0px;padding:10px;overflow:auto;height:0px;"></div>
+  </div>
+
+  <div style="position:absolute;top:0px;right:0px;height:48px;border:0px solid green;text-align:center;letter-spacing:normal;display:flex;">
+    <div id="logo" style="padding: 0px 15px;text-align:center;position:relative;top:16px;font-size:28pt;font-family:helvetica,arial,sans-serif;">philolog.us</div>
+    <div style="padding-top:18px;padding-right:10px;"><div>
+
+
+  <svg onclick="toggleSettings()" id="hamburger" viewBox="0 0 120 120">
+    <rect x="10" y="30" width="100" height="12"></rect>
+    <rect x="10" y="56" width="100" height="12"></rect>
+    <rect x="10" y="82" width="100" height="12"></rect>
+  </svg>
+
+
+</div>
+  </div>
+  </div>
+
+  <div id="mesg" style="display:none;background-color:blue;position:absolute;z-index:999;padding:10px;left:10px;bottom:10px;"></div>
+  <script type="text/javascript">
+    /*
+    var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+    document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+    */
+  </script>
+  <script type="text/javascript">
+    /*
+    try{
+    var pageTracker = _gat._getTracker("UA-9357265-1");
+    pageTracker._trackPageview();
+    } catch(err) {}
+    */
+  </script>
+    <script type="text/javascript" src="wordtree.js?v25"></script>
+    <script type="text/javascript" src="defjson.js?v25"></script>
+    <script type="text/javascript">
+
+       //https://github.com/le717/microajax
+       function microAjax(options) {
+      "use strict";
+
+      // Default to GET
+      if (!options.method) {
+        options.method = "GET";
+      }
+
+      // Default empty functions for the callbacks
+      function noop() {}
+      if (!options.success) {
+        options.success = noop;
+      }
+      if (!options.warning) {
+        options.warning = noop;
+      }
+      if (!options.error) {
+        options.error = noop;
+      }
+
+      var request = new XMLHttpRequest();
+      request.open(options.method, options.url, true);
+      request.send(options.data);
+
+      request.onload = function() {
+        // Success!
+        if (request.readyState === 4 && request.status === 200) {
+          options.success(request.responseText);
+
+          // We reached our target destination, but it returned an error
+        } else {
+          options.warning();
+        }
+      };
+
+      // There was a connection error of some sort
+      request.onerror = options.error;
+    }
+  
+      function addEvent(evnt, elem, func) {
+        if (elem.addEventListener)
+          elem.addEventListener(evnt, func, false);
+        else if (elem.attachEvent) { // for IE 8 and below
+          elem.attachEvent("on" + evnt, func);
+        } else { // No much to do
+          elem[evnt] = func;
+        }
+      }
+  
+      addEvent("popstate", window, function(e) {
+        //exclude from history, else we push it back on at same time as popping.  see defjson.js: end of setWord.
+        getDef(e.state[0], e.state[1], "", true, false);
+      });
+  
+      var useRight = true;
+      var lex = new Array("lsj", "slater", "ls");
+  
+      function closeWT(wtid) {
+        var w3 = lookupWT(wtid);
+        if (!w3) {
+          return;
+        }
+  
+        var p = w3.div.parentNode;
+  
+        w3.close();
+  
+        p.parentNode.removeChild(p);
+      }
+  
+      function closeHistoryChooser() {
+        historyOpen = false;
+        //closeWT("test4");
+        var hist = lookupWT("test4");
+        if (!hist) {
+          return;
+        }
+  
+        var p = hist.div.parentNode;
+  
+        hist.close();
+        document.getElementById("test1Entry").focus();
+      }
+  
+      function toggleHistoryChooser() {
+        if (historyOpen) {
+          //document.getElementById("openHistory").style.display = "block";
+          closeHistoryChooser();
+          document.getElementById("defbody").style.marginRight = "10px";
+  
+          setCookie("historylist", "0", 365);
+        } else {
+          //document.getElementById("openHistory").style.display = "none";
+          historyChooser();
+          document.getElementById("defbody").style.marginRight = "280px";
+  
+          if (vIsLoggedIn) {
+            w4.refresh();
+          } else if (supports_html5_storage()) {
+            var h = localStorage.getItem("history");
+            if (w4 && h && h.length > 0)
+              w4.refreshWithRows(h);
+          } else {
+            document.getElementById("defbody").style.marginRight = "10px";
+          }
+          setCookie("historylist", "1", 365);
+          onResize();
+        }
+      }
+  
+      function historyChooserOnSelect(lexicon, cols) {
+        //col2 is the lexicon # from history
+        var lexi;
+        if (cols[2] == 0)
+          lexi = "lsj";
+        else if (cols[2] == 1)
+          lexi = "slater";
+        else
+          lexi = "ls";
+  
+        getDef(cols[1], lexi, "", true, true);
+      }
+  
+      var historyOpen = false;
+      var w4;
+  
+      function historyChooser() {
+        if (historyOpen) {
+          return;
+        }
+  
+        var h = getViewportHeight(window);
+  
+        historyOpen = true;
+        var d = document.getElementById("historylist");
+  
+        document.getElementsByTagName("body")[0].appendChild(d);
+  
+        w4 = new wordtree("test4", 260, h - (browser == "ie" ? 40 : 20));
+        w4.conTopOffset = 38;
+        w4.con.style.top = w4.conTopOffset + "px";
+        w4.setHeight(w4.height);
+        w4.div.style.zIndex = 800;
+  
+        w4.div.style.borderRadius = "14px";
+        w4.div.style.margin = "10px";
+        w4.div.style.marginTop = "0px";
+        var title = '<div style="width="' + (w4.width - 10) +
+          'px;"><div class="lexitem">History</div></div>';
+        w4.title.innerHTML = title;
+        w4.url = "historyserv.php";
+        w4.entry.style.left = "-4000px";
+        w4.onSelectionChanged = historyChooserOnSelect;
+  
+        w4.onClickActivate = historyChooserOnSelect;
+        w4.onAddWord = null;
+        w4.onDeleteWord = null;//deleteTag;
+  
+        if (useRight)
+          w4.show(document.getElementById("rightlist")); //w4.show(document.getElementById("historylistRight"));
+        else
+          w4.show(d);
+  
+        w4.params.lexicon = lex[0];
+        w4.params.tag_id = 0;
+        w4.params.root_id = 0;
+        w4.params.userid = 1;
+  
+        if (vIsLoggedIn)
+          w4.refresh();
+  
+        //w4.entry.focus(); //breaks ie6 and ie8 because offscreen
+      }
+  
+      function globalKeyUp(ev) {
+        if (!ev)
+          ev = window.event;
+        var key = ev.keyCode;
+        if (!ev.metaKey && !ev.ctrlKey && !ev.shiftKey && !ev.altKey) {
+          if (key == 27) //esc
+          {
+            var w = lookupWT("test1");
+            w.entry.focus();
+            //block default hot keys, like bookmark, etc
+            ev.returnValue = false;
+            if (typeof ev.preventDefault == "function")
+              ev.preventDefault();
+          }
+        }
+      }
+  
+      function globalKeyDown(ev) {
+        if (!ev)
+          ev = window.event;
+  
+        var key = ev.keyCode;
+        if (!ev.metaKey && !ev.ctrlKey && !ev.shiftKey && !ev.altKey) {
+          if (key == 49) //1
+          {
+            switchLex(0);
+            //block default hot keys, like bookmark, etc
+            ev.returnValue = false;
+            if (typeof ev.preventDefault == "function")
+              ev.preventDefault();
+          }
+          else if (key == 50) //2
+          {
+            switchLex(1);
+            //block default hot keys, like bookmark, etc
+            ev.returnValue = false;
+            if (typeof ev.preventDefault == "function")
+              ev.preventDefault();
+          }
+          else if (key == 51) //3
+          {
+            switchLex(2);
+            //block default hot keys, like bookmark, etc
+            ev.returnValue = false;
+            if (typeof ev.preventDefault == "function")
+              ev.preventDefault();
+          }
+          else if (key == 52) //4
+          {
+            document.getElementById("test2Entry").focus();
+            //block default hot keys, like bookmark, etc
+            ev.returnValue = false;
+            if (typeof ev.preventDefault == "function")
+              ev.preventDefault();
+          }
+          else if (key == 53) //5
+          {
+            toggleTagChooser();
+            //block default hot keys, like bookmark, etc
+            ev.returnValue = false;
+            if (typeof ev.preventDefault == "function")
+              ev.preventDefault();
+          }
+        }
+        return true;
+      }
+  
+      function act(lexicon, cols) {
+        //console.log("get def: " + cols[1] + ", " + lexicon);
+        getDef(cols[1], lexicon, "", false, true);
+      }
+  
+      function act2(lexicon, cols) {
+        getDef(cols[2], lexicon, "", false, true);
+      }
+  
+      document.onkeydown = globalKeyDown;
+      document.onkeyup = globalKeyUp;
+  
+      function start() {
+        var isTouchDevice = (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
+        console.log("is touch: " + isTouchDevice + ": " + navigator.maxTouchPoints + ", " + navigator.maxTouchPoints);
+        var ee = window.location.pathname;
+        var m = ee.match(/\/(lsj|ls|slater)\/?([^\/]*)\/?$/);
+  
+        if (m) {
+            var startLex = m[1];
+            if (m[2]) {
+              var startWord = m[2];
+              getDefFromWordid(startWord, startLex, '', true, true);
+          }
+        }
+  
+        if (!getCookie('filter')) {
+          setCookie('filter', 'red:bold:blue:blue:green:orange', 365);
+        }
+  
+        var oldlex = getCookie("lex");
+        oldlex = oldlex ? oldlex : lex[0];
+        if (startLex) {
+          oldlex = startLex;
+        }
+        var winHeight = getViewportHeight(window);
+  
+        if (browser == "ie") {
+          var w = new wordtree("test1", 260, winHeight - 18);
+  
+          var ll = document.getElementById("leftlist");
+          ll.style.paddingTop = "10px";
+          ll.style.paddingLeft = "10px";
+          w.div.style.left = "2px";
+          w.div.style.top = "5px";
+          w.div.style.borderRadius = "14px";
+          w.show(document.getElementById("leftlist"));
+        } else {
+          var w = new wordtree("test1", 260, winHeight - 36);
+          w.show(document.getElementById("leftlist"));
+        }
+  
+        var showHist = getCookie('historylist');
+        if (supports_html5_storage() && showHist && showHist == 1) {
+          toggleHistoryChooser();
+          document.getElementById("defbody").style.marginRight = "280px";
+        } else {
+          document.getElementById("defbody").style.marginRight = "10px";
+        }
+  
+        var cache = new Array();
+        w.cache = cache;
+        w.params.regex = 0;
+        w.params.lexicon = lex[0];
+        w.params.tag_id = 0;
+        w.params.root_id = 0;
+        if (startWord) {
+          w.params.wordid = startWord;
+        }
+  
+        document.getElementById("test1Entry").focus();
+  
+        var title = '<div style="margin-left:4px;width:' + (w.width - 18) +
+          'px;display:flex;"><div id="lexlabel0" class="lexitem" style="width:31%;" onclick="switchLex(0)">LSJ</div><div id="lexlabel1" class="lexitem" style="width:33%;" onclick="switchLex(1)">Slater</div><div id="lexlabel2" class="lexitem" style="width:36%;" onclick="switchLex(2)">Lewis &amp; Short</div></div>';
+  
+        w.title.innerHTML = title;
+        w.mode = "context";
+  
+        w.onAddWord = null;//addWordToList;
+        w.onDeleteWord = null;//deleteTag;
+        w.onEnterActivate = null;//addWordToList;
+        w.onClickActivate = act;
+        w.onSelectionChanged = act;
+  
+        if (typeof w2 == "undefined" || !w2) {
+  
+        } else if (val = getCookie("w2_tag_id")) {
+          var match = /([0-9]+)(.*)/.exec(val);
+          if (!match) {
+            w2.params.tag_id = 0;
+          } else {
+            var oldtag_id = match[1];
+            var oldtag = match[2];
+            w2.params.tag_id = oldtag_id;
+            var labelname = oldtag;
+          }
+        } else {
+          w2.params.tag_id = 0;
+          var labelname = "Choose a List";
+        }
+  
+        for (var lexNum = 0; lexNum < lex.length; lexNum++) {
+          if (oldlex == lex[lexNum]) {
+            switchLex(lexNum);
+            break;
+          }
+        }
+  
+        //reset after querying
+        w.params.wordid = "";
+        delete w.params.wordid;
+        window.onresize = onResize; //$(window).resize(onResize); 
+  
+        if (platform == "mac" || platform == "ipad" || platform == "iphone") {
+          document.getElementsByTagName("body")[0].style.fontFamily = "NewAthenaUnicode,WebNewAthenaUnicode,helvetica,san-serif"; //because ie6 won't display unicode font if this is in the body
+        }
+        onResize(w, (typeof w2 != "undefined") ? w2 : null);
+      }
+  
+      function onResize() {
+        var h = getViewportHeight(window);
+        var width = getViewportWidth(window);
+  
+        var w = lookupWT("test1");
+        var w2 = lookupWT("test2");
+  
+        w.setHeight(h - (browser == "ie" ? 18 : 14));
+  
+        if (typeof w2 != "undefined" && w2)
+          w2.setHeight(h - 70);
+  
+        var defbody = document.getElementById("defbody");
+        defbody.style.height = h - 80 + "px";
+  
+        var lsjdef = document.getElementById("lsjdef");
+        lsjdef.style.height = (h - 110) + "px";
+  
+        var rl = document.getElementById("rightlist");
+        if (rl) {
+          rl.style.height = (h - 58) + "px";
+        }
+        var historyList = lookupWT("test4");
+        if (historyList) {
+          historyList.setHeight(((h - 54)) - (browser == "ie" ? 20 : 20));
+        }
+      }
+  
+      function switchLex(num) {
+        var wt = lookupWT("test1");
+        var wt2 = lookupWT("test2");
+        if (wt) {
+          wt.entry.value = "";
+          wt.params.lexicon = lex[num];
+          wt.refresh();
+          if (wt2) {
+            wt2.params.lexicon = lex[num];
+            wt2.refresh();
+          }
+  
+          var a = document.querySelector(".lexselected");
+          if (a) {
+            a.classList.remove("lexselected");
+          }
+  
+          var b = document.getElementById("lexlabel" + num);
+          if (b) {
+            b.classList.add("lexselected");
+          }
+  
+          if (wt.entry) {
+            wt.entry.focus();
+          }
+          setCookie("lex", lex[num] ? lex[num] : lex[0]);
+        }
+      }
+  
+      function contact() {
+        var about =
+          "Philolog.us was first launched in June 2005 shortly after the <a class='storelink' href='www.perseus.tufts.edu'>Perseus Project</a> began offering access to its collections via web services. One of the primary aims has been to offer a streamlined, user-friendly interface to the lexica in the Perseus library.<br/><br/>Upcoming features include hierarchical trees of Greek words based on their etymology and the ability for users to create custom lists of words.<br/><br/>Design goals:<ul><li>a clean, unintrusive user-interface which lets the content be the focus</li><li>completely cross-platform access, available anywhere in the world</li><li>bringing the benefits of the digital age to resources previously limited by the print age</li><li>the ability to manipulate data for both convenience and perspicacity</li></ul>I welcome your questions and comments.<br/><br/>Jeremy March<br/><a class='storelink' href='mailto:jmarch@gradcenter.cuny.edu'>jmarch@gradcenter.cuny.edu</a>";
+  
+        document.getElementById("lsjdef").innerHTML = "<div style='text-align:left;'>" + about + "</div>";
+      }
+  
+      function showiPhone() {
+        var news = "Available as an iPhone/iPad app in <a href='https://itunes.apple.com/us/app/philolog.us/id622324932?mt=8' class='storelink'>Apple's App store</a>.<br><br><br>Now available for Android in the <a href='https://play.google.com/store/apps/details?id=com.philolog.philologus&hl=en' class='storelink'>Google Play store</a>.";
+        document.getElementById("lsjdef").innerHTML = "<div style='text-align:center;font-size:16pt;padding-top:60px;'>" + news + "</div>";
+  
+      }
+  
+      function config() {
+        window.location = "configure.html";
+      }
+  /*
+      function BlockMove(event) {
+        // Tell Safari not to move the window.
+        event.stopPropagation(); 
+        event.stopImmediatePropagation();
+      }
+  */
+      function closeMessage() {
+        var a = document.getElementById('message1');
+        if (a) {
+          a.style.display = 'none';
+        }
+      }
+  
+  var la = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"];
+  var gr = ["α","β","ψ","δ","ε","φ","γ","η","ι","ξ","κ","λ","μ","ν","ο","π","","ρ","σ","τ","θ","ω","ς","χ","υ","ζ","Α","Β","Ψ","Δ","Ε","Φ","Γ","Η","Ι","Ξ","Κ","Λ","Μ","Ν","Ο","Π","","Ρ","Σ","Τ","Θ","Ω","Σ","Χ","Υ","Ζ"];
+  var forceLowercase = true;
+  function transliterate(char)
+  {
+      var theChar = (forceLowercase) ? char.toLowerCase() : char;
+      var idx = la.indexOf(theChar);
+      if (idx > -1) {
+          return gr[idx];
+      }
+      else {
+          return char;
+      }
+  }
+  
+  function transliterateKey(evt) {
+      //var val = this.value;
+      evt = evt || window.event;
+      var source = evt.target || evt.srcElement;
+      var val = source.value;
+      //console.log("val: " + val);
+      var charCode = typeof(evt.which) == "number" ? evt.which : evt.keyCode;
+  
+      if (charCode && charCode > 64 && charCode < 123) //letter
+      {
+          var start = source.selectionStart;
+          var end = source.selectionEnd;
+          var key = String.fromCharCode(charCode);
+  
+          var mappedChar = transliterate(key);
+          var charsToReplace = 0;
+          source.value = val.slice(0, start - charsToReplace) + mappedChar + val.slice(end);
+          // Move the caret
+          source.selectionStart = source.selectionEnd = start + 1 - charsToReplace;
+          return false;
+      }
+      return true;
+  }
+  
+  function getViewportHeight(w) 
+  {
+    if (typeof(w.innerHeight) != "undefined") {
+      return w.innerHeight;
+    }
+    else if (w.document.compatMode == 'CSS1Compat') {
+      return w.document.documentElement.clientHeight;
+    }
+    else if (w.document.body) {
+      return w.document.body.clientHeight; 
+    }
+    else {
+      return window.undefined;
+    }
+  }
+  
+  function getViewportWidth(w) 
+  {
+    if (typeof(w.innerWidth) != "undefined") {
+        return w.innerWidth;
+    }
+    if (w.document.compatMode == 'CSS1Compat') {
+        return w.document.documentElement.clientWidth;
+    }
+    if (w.document.body) {
+        return w.document.body.clientWidth; 
+    }
+    return window.undefined;
+  }
+  
+  function setCookie(name, value, days) 
+  {
+    if (typeof(localStorage) != "undefined") {
+      localStorage.setItem(name, value);
+    }
+    
+    /*
+    if (days) {
+      var date = new Date();
+      date.setTime(date.getTime() + (days*24*60*60*1000));
+      var expires = "; expires=" + date.toGMTString();
+    }
+    else {
+          var expires = "";
+      }
+    document.cookie = name + "=" + value + expires + "; path=/; SameSite=Strict";
+    */
+  }
+  
+  function getCookie(name)
+  {
+    if (typeof(localStorage) != "undefined") {
+      var value = localStorage.getItem(name);
+      console.log("localstorage: " + name + ": " + value);
+      return value;
+    }
+    /*
+    var nameEQ = name + "=";
+    var ca = document.cookie.split(';');
+  
+    for (var i = 0; i < ca.length; i++) 
+    {
+      var c = ca[i];
+  
+      while (c.charAt(0) == ' ') 
+        c = c.substring(1, c.length);
+  
+      if (c.indexOf(nameEQ) == 0) 
+        return c.substring(nameEQ.length, c.length);
+    } */
+    return null;
+    
+  }
+  
+  function eraseCookie(name) 
+  {
+    setCookie(name, "", -1);
+  }
+  
+  function toggleSettings() {
+    var s = document.getElementById("settingsdiv");
+    if (!s) {
+      var s = document.createElement("div");
+      s.id = "settingsdiv";
+      s.classList.add("settings");
+      s.style.display = "block";
+      s.innerHTML = "Settings<br><ul><li><div tabindex='0' onclick='contact()' class='menulink'>about</div></li><li><div tabindex='0' onclick='showiPhone()' class='menulink'>mobile app</div></li><!--<li><div tabindex='0' onclick='config()' class='menulink'>configure</div></li>--><li><div tabindex='0' onclick='toggleHistoryChooser()' class='menulink'>show history</div></li><li><div tabindex='0' style='height:70px;'>dark mode: <div style='text-align:right;float:right;padding:0px;border:none;'>system <input id='darkModeSystem' type='radio' name='darkmode' onclick='darkModeClick(this);' value='system'/><br>dark <input id='darkModeDark' type='radio' name='darkmode' onclick='darkModeClick(this);' value='dark'/><br>light<input id='darkModeLight' type='radio' name='darkmode' onclick='darkModeClick(this);' value='light'/></div></div></li></ul>";
+      var c = document.createElement("div");
+      c.id="backdrop";
+      c.onclick = function() {
+        document.querySelector("#backdrop").style.display = "none";
+        toggleSettings();
+      };
+      document.body.appendChild(c);
+      document.body.appendChild(s);
+    }
+    else if (s.style.display == "block") {
+      document.querySelector("#backdrop").style.display = "none";
+      s.style.display = "none";
+    }
+    else {
+      document.querySelector("#backdrop").style.display = "block";
+      s.style.display = "block";
+    }
+
+    var a = localStorage.getItem("mode");
+    switch (a) {
+    case "dark":
+      document.querySelector("#darkModeDark").checked = true;
+      break;
+    case "light":
+      document.querySelector("#darkModeLight").checked = true;
+      break;
+    default:
+      document.querySelector("#darkModeSystem").checked = true;
+      break;
+    }
+  }
+
+function darkModeClick(radio) {
+  switch (radio.value) {
+    case "dark":
+      localStorage.setItem("mode", "dark");
+      break;
+    case "light":
+      localStorage.setItem("mode", "light");
+      break;
+    default:
+      localStorage.removeItem("mode");
+      break;
+  }
+  setTheme();
+}
+  
+      var tagsOpen = false;
+      var vIsLoggedIn = false;
+    </script>
+</body>
+</html>

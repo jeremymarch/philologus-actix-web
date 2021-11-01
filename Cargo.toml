@@ -1,7 +1,7 @@
 [package]
 name = "philolog_us"
 version = "0.1.0"
-authors = ["Jeremy March <jmarch@gradcenter.cunyedu>"]
+authors = ["Jeremy March <jmarch@gradcenter.cuny.edu>"]
 edition = "2021"
 
 [dependencies]

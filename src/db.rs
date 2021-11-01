@@ -58,13 +58,17 @@ pub struct Info {
 pub fn execute(
     pool: &Pool,
     seq: u32,
-    before_query:bool
+    before_query:bool,
+    q: &WordQuery,
 ) -> impl Future<Output = Result<Vec<PhilologusWords>, AWError>> {
     let pool = pool.clone();
-    web::block(move || {
+    let table = match q.lexicon.as_ref() {
+        "ls" => "ZLATIN",
+        "slater" => "ZSLATER",
+        _ => "ZGREEK"
+    };
 
-        //let result = get_words(&pool, "ZGREEK", "γερ");
-        let table = "ZGREEK";
+    web::block(move || {
         let before;
         if before_query {
             before = get_before(pool.get().unwrap(), table, seq);//.unwrap();
@@ -82,14 +86,20 @@ pub fn execute(
 
 pub fn execute_get_seq(
     pool: &Pool,
+    q: &WordQuery,
 ) -> impl Future<Output = Result<u32, AWError>> {
     let pool = pool.clone();
+    let table = match q.lexicon.as_ref() {
+        "ls" => "ZLATIN",
+        "slater" => "ZSLATER",
+        _ => "ZGREEK"
+    };
+
+    let word = q.wordid.clone();
     web::block(move || {
 
         //let result = get_words(&pool, "ZGREEK", "γερ");
-        let table = "ZGREEK";
-        let word = "γερ";
-        let seq:u32 = get_seq(pool.get().unwrap(), table, word);
+        let seq:u32 = get_seq(pool.get().unwrap(), &table, &word);
         //let before = get_before(pool.clone().get().unwrap(), table, seq);//.unwrap();
         //let after = get_equal_and_after(pool.get().unwrap(), table, seq).unwrap();
         //before.reverse();
@@ -110,11 +120,7 @@ fn get_words(conn: &Pool, table: &str, word:&str) -> PhilologusWordsResult {
 //, SEQ_COL, $table, UNACCENTED_COL, $word, STATUS_COL, UNACCENTED_COL);
 fn get_seq(conn: Connection, table:&str, word:&str) -> u32 {
     let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE sortword >= '", word, "' ORDER BY sortword LIMIT 1;");
-    //let stmt = conn.prepare(&query);
-    //get_seq_res(stmt, word)
-
     let seq: u32 = conn.query_row(&query, NO_PARAMS, |r| r.get(0)).unwrap();
-    println!("seq: {}", seq);
     seq
 }
 

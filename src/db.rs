@@ -47,7 +47,7 @@ pub struct WordQuery {
     pub lexicon:String,
     pub tag_id:String,
     pub root_id:String,
-    pub wordid:String,
+    pub wordid:Option<String>,
     pub w:String,
 }
 
@@ -99,7 +99,7 @@ pub fn execute_get_seq(
         _ => "ZGREEK"
     };
 
-    let word = q.wordid.clone();
+    let word = q.w.clone();
     web::block(move || {
 
         //let result = get_words(&pool, "ZGREEK", "γερ");
@@ -153,9 +153,3 @@ fn get_word_res(mut statement: Statement) -> PhilologusWordsResult {
         })
         .and_then(Iterator::collect)
 }
-
-/*
-{"error":"","wtprefix":"test1","nocache":"1","container":"test1Container","requestTime":"1635643672625","selectId":"32","page":"0","lastPage":"0","lastPageUp":"1","scroll":"32","query":"","arrOptions":[{"i":1,"r":["Α α",1,0]},{"i":2,"r":["ἀ-",2,0]},{"i":3,"r":["ἀ-",3,0]},{"i":4,"r":["ἆ",4,0]}...
-*/
-
-

@@ -37,6 +37,7 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<Info>)) -> Re
     let mut result = db::execute(&db, seq, true, &p).await?;
     result.reverse();
     let result2 = db::execute(&db, seq, false, &p).await?;
+    println!("saved: {}", result2[0].i);
     let result = [result, result2].concat();
     Ok(HttpResponse::Ok().json(result))
 }

@@ -26,12 +26,19 @@ use serde::{Deserialize, Serialize};
 pub type Pool = r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>;
 pub type Connection = r2d2::PooledConnection<r2d2_sqlite::SqliteConnectionManager>;
 
-type PhilologusWordsResult = Result<Vec<PhilologusWords>, rusqlite::Error>;
+type PhilologusWordsResult = Result<Vec<GreekWords>, rusqlite::Error>;
 
+//[{"i":1,"r":["Α α",1,0]},
+// {"i":2,"r":["ἀ-",2,0]},
 #[derive(Debug, Serialize, Deserialize,Clone)]
 pub enum PhilologusWords {
-    GreekWords { i: i32, word: String },
     GreekDefs { seq: i32, def: String },
+}
+
+#[derive(Debug, Serialize, Deserialize,Clone)]
+pub struct GreekWords { 
+    pub i: i32, 
+    pub r: (String,u32,u32)
 }
 
 #[derive(Deserialize)]
@@ -60,7 +67,7 @@ pub fn execute(
     seq: u32,
     before_query:bool,
     q: &WordQuery,
-) -> impl Future<Output = Result<Vec<PhilologusWords>, AWError>> {
+) -> impl Future<Output = Result<Vec<GreekWords>, AWError>> {
     let pool = pool.clone();
     let table = match q.lexicon.as_ref() {
         "ls" => "ZLATIN",
@@ -71,14 +78,11 @@ pub fn execute(
     web::block(move || {
         let before;
         if before_query {
-            before = get_before(pool.get().unwrap(), table, seq);//.unwrap();
+            before = get_before(pool.get().unwrap(), table, seq);
         }
         else {
-            before = get_equal_and_after(pool.get().unwrap(), table, seq);//.unwrap();  
-        }
-        //
-        //before.reverse();
-        //let result = Ok([before.as_slice(), after.as_slice()].concat());//.map_err(Error::from)   
+            before = get_equal_and_after(pool.get().unwrap(), table, seq);
+        } 
         before.map_err(Error::from)
     })
     .map_err(AWError::from)
@@ -141,9 +145,10 @@ fn get_equal_and_after(conn: Connection, table:&str, seq: u32) -> PhilologusWord
 fn get_word_res(mut statement: Statement) -> PhilologusWordsResult {
     statement
         .query_map(NO_PARAMS, |row| {
-            Ok(PhilologusWords::GreekWords {
+            let a = (row.get(1)?, row.get(0)?, 0);
+            Ok(GreekWords {
                 i: row.get(0)?,
-                word: row.get(1)?,
+                r: a,
             })
         })
         .and_then(Iterator::collect)

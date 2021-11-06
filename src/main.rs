@@ -37,25 +37,34 @@ struct JsonResponse {
     wtprefix: String,
     nocache: String,
     container: String,
-    requestTime: String,
-    selectId: String,
+    #[serde(rename(serialize = "requestTime"))]
+    request_time: String,
+    #[serde(rename(serialize = "selectId"))]
+    select_id: String,
     page: String,
-    lastPage: String,
-    lastpageUp: String,
+    #[serde(rename(serialize = "lastPage"))]
+    last_page: String,
+    #[serde(rename(serialize = "lastpage_up"))]
+    lastpage_up: String,
     scroll: String,
     query: String,
-    arrOptions: Vec<GreekWords>
+    #[serde(rename(serialize = "arrOptions"))]
+    arr_options: Vec<GreekWords>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct DefResponse {
-    principalPart: String,
+    #[serde(rename(serialize = "principalPart"))]
+    principal_part: String,
     def: String,
-    defName: String,
+    #[serde(rename(serialize = "defName"))]
+    def_name: String,
     word: String,
-    unaccentedWord: String,
+    #[serde(rename(serialize = "unaccentedWord"))]
+    unaccented_word: String,
     lemma: String,
-    requestTime: String,
+    #[serde(rename(serialize = "requestTime"))]
+    request_time: String,
     status: String,
     lexicon: String,
     word_id: String,
@@ -102,14 +111,14 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
         wtprefix: info.idprefix.clone(),
         nocache: "1".to_owned(),
         container: format!("{}Container", info.idprefix),
-        requestTime: info.requestTime.to_string(),
-        selectId: seq.to_string(),
+        request_time: info.request_time.to_string(),
+        select_id: seq.to_string(),
         page: "0".to_owned(),
-        lastPage: last_page,
-        lastpageUp: last_page_up,
+        last_page: last_page,
+        lastpage_up: last_page_up,
         scroll: scroll,
         query: "".to_owned(),
-        arrOptions: result
+        arr_options: result
     };
 
     Ok(HttpResponse::Ok().json(res))
@@ -124,13 +133,13 @@ async fn philologus_defs((db, info): (web::Data<Pool>, web::Query<DefInfo>)) -> 
     let def = db::execute_get_def(&db, &info).await?;
 
     let res = DefResponse {
-        principalPart: "".to_string(),
+        principal_part: "".to_string(),
         def: def.2.to_string(),
-        defName: "".to_string(),
+        def_name: "".to_string(),
         word: def.0.to_string(),
-        unaccentedWord: def.1.to_string(),
+        unaccented_word: def.1.to_string(),
         lemma: "".to_string(),
-        requestTime: "0".to_string(),
+        request_time: "0".to_string(),
         status: "0".to_string(),
         lexicon: info.lexicon.to_string(),
         word_id: info.id.to_string(),

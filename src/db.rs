@@ -56,7 +56,8 @@ pub struct QueryInfo {
     pub n: u32,
     pub idprefix: String,
     pub x:String,
-    pub requestTime:u64,
+    #[serde(rename(deserialize = "requestTime"))]
+    pub request_time:u64,
     pub page:u32,
     pub mode:String,
     pub query:String,//WordQuery,

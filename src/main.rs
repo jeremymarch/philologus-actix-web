@@ -24,7 +24,7 @@ use actix_web::{middleware, web, App, Error as AWError, HttpResponse, HttpServer
 use r2d2_sqlite::{self, SqliteConnectionManager};
 
 mod db;
-use db::{Pool,Info,WordQuery,GreekWords};
+use db::{Pool,QueryInfo,WordQuery,DefInfo,GreekWords};
 use serde::{Deserialize, Serialize};
 
 /*
@@ -32,7 +32,7 @@ use serde::{Deserialize, Serialize};
 */
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct output {
+struct JsonResponse {
     error: String,
     wtprefix: String,
     nocache: String,
@@ -47,19 +47,57 @@ struct output {
     arrOptions: Vec<GreekWords>
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct DefResponse {
+    principalPart: String,
+    def: String,
+    defName: String,
+    word: String,
+    unaccentedWord: String,
+    lemma: String,
+    requestTime: String,
+    status: String,
+    lexicon: String,
+    word_id: String,
+    wordid: String,
+    method: String,
+}
+
 //http://127.0.0.1:8080/philwords?n=101&idprefix=test1&x=0.1627681205837177&requestTime=1635643672625&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22wordid%22:%22%CE%B1%CE%B1%CF%84%CE%BF%CF%832%22,%22w%22:%22%22}
 
 #[allow(clippy::eval_order_dependence)]
-async fn philologus_words((db, info): (web::Data<Pool>, web::Query<Info>)) -> Result<HttpResponse, AWError> {
+async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) -> Result<HttpResponse, AWError> {
     let p: WordQuery = serde_json::from_str(&info.query)?;
     
     let seq = db::execute_get_seq(&db,&p).await?;
-    let mut result = db::execute(&db, seq, true, &p).await?;
-    result.reverse();
-    let result2 = db::execute(&db, seq, false, &p).await?;
-    let result = [result, result2].concat();
+    let mut before_rows = db::execute(&db, seq, true, &p).await?;
+    before_rows.reverse();
+    let after_rows = db::execute(&db, seq, false, &p).await?;
+    
+    let mut select = "0".to_string();
+    let mut scroll = "".to_string();
+    let mut last_page = "0".to_string();
+    let mut last_page_up = "0".to_string();
+    if before_rows.len() == 0
+    {
+        select = "0".to_string();
+        scroll = "top".to_string();
+        last_page_up = "1".to_string();
+    }
+    else if after_rows.len() == 0
+    {
+        select = "0".to_string();
+        scroll = "bottom".to_string();
+        last_page = "1".to_string();
+    }
 
-    let res = output {
+    if scroll == "" {
+        scroll = seq.to_string();
+    }
+
+    let result = [before_rows, after_rows].concat();
+
+    let res = JsonResponse {
         error: "".to_owned(),
         wtprefix: info.idprefix.clone(),
         nocache: "1".to_owned(),
@@ -67,11 +105,37 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<Info>)) -> Re
         requestTime: info.requestTime.to_string(),
         selectId: seq.to_string(),
         page: "0".to_owned(),
-        lastPage: "1".to_owned(),
-        lastpageUp: "1".to_owned(),
-        scroll: seq.to_string(),
+        lastPage: last_page,
+        lastpageUp: last_page_up,
+        scroll: scroll,
         query: "".to_owned(),
         arrOptions: result
+    };
+
+    Ok(HttpResponse::Ok().json(res))
+}
+
+//http://127.0.0.1:8080/wordservjson.php?id=110628&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002
+//{"principalParts":"","def":"...","defName":"","word":"γεοῦχος","unaccentedWord":"γεουχοσ","lemma":"γεοῦχος","requestTime":0,"status":"0","lexicon":"lsj","word_id":"22045","wordid":"γεουχοσ","method":"setWord"}
+
+#[allow(clippy::eval_order_dependence)]
+async fn philologus_defs((db, info): (web::Data<Pool>, web::Query<DefInfo>)) -> Result<HttpResponse, AWError> {
+    
+    let def = db::execute_get_def(&db, &info).await?;
+
+    let res = DefResponse {
+        principalPart: "".to_string(),
+        def: def.2.to_string(),
+        defName: "".to_string(),
+        word: def.0.to_string(),
+        unaccentedWord: def.1.to_string(),
+        lemma: "".to_string(),
+        requestTime: "0".to_string(),
+        status: "0".to_string(),
+        lexicon: info.lexicon.to_string(),
+        word_id: info.id.to_string(),
+        wordid: def.1.to_string(),
+        method: "setWord".to_string()
     };
 
     Ok(HttpResponse::Ok().json(res))
@@ -88,10 +152,23 @@ async fn main() -> io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .data(pool.clone())
+            .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
             .service(
                 web::resource("/wtgreekserv.php")
                     .route(web::get().to(philologus_words)),
+            )
+            .service(
+                web::resource("/{lex}/wtgreekserv.php")
+                    .route(web::get().to(philologus_words)),
+            )
+            .service(
+                web::resource("/wordservjson.php")
+                    .route(web::get().to(philologus_defs)),
+            )
+            .service(
+                web::resource("/{lex}/wordservjson.php")
+                    .route(web::get().to(philologus_defs)),
             )
             .service(fs::Files::new("/", "static").prefer_utf8(true).index_file("index.html"))
     })

@@ -52,7 +52,7 @@ pub struct WordQuery {
 }
 
 #[derive(Deserialize)]
-pub struct Info {
+pub struct QueryInfo {
     pub n: u32,
     pub idprefix: String,
     pub x:String,
@@ -60,6 +60,16 @@ pub struct Info {
     pub page:u32,
     pub mode:String,
     pub query:String,//WordQuery,
+}
+
+//http://127.0.0.1:8080/wordservjson.php?id=110628&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002
+
+#[derive(Deserialize)]
+pub struct DefInfo {
+    pub id: u32,
+    pub lexicon: String,
+    pub skipcache:u32,
+    pub addwordlinks:u32,
 }
 
 pub fn execute(
@@ -112,15 +122,35 @@ pub fn execute_get_seq(
     })
     .map_err(AWError::from)
 }
-/*
-fn get_words(conn: &Pool, table: &str, word:&str) -> PhilologusWordsResult {
-    let seq = get_seq(conn.get().unwrap(), table, word);
-    let mut before = get_before(conn.get().unwrap(), table, seq).unwrap();
-    let after = get_equal_and_after(conn.get().unwrap(), table, seq).unwrap();
-    before.reverse();
-    Ok([before.as_slice(), after.as_slice()].concat())
+
+pub fn execute_get_def(
+    pool: &Pool,
+    q: &DefInfo,
+) -> impl Future<Output = Result<(String,String,String), AWError>> {
+    let pool = pool.clone();
+    let table = match q.lexicon.as_ref() {
+        "ls" => "ZLATIN",
+        "slater" => "ZSLATER",
+        _ => "ZGREEK"
+    };
+    let id = q.id;
+    //let word = q.w.clone();
+    web::block(move || {
+
+        let d = get_def(pool.get().unwrap(), &table, id);
+
+        Ok(d).map_err(|_:u32| ())
+    })
+    .map_err(AWError::from)
 }
-*/
+
+
+fn get_def(conn: Connection, table:&str, id:u32) -> (String,String,String) {
+    let query = format!("{}{}{}{}{}", "SELECT word,sortword,def FROM ", table, " WHERE seq = ", id, " LIMIT 1;");
+    let def: (String,String,String) = conn.query_row(&query, NO_PARAMS, |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?)) ).unwrap();
+    def
+}
+
 //, SEQ_COL, $table, UNACCENTED_COL, $word, STATUS_COL, UNACCENTED_COL);
 fn get_seq(conn: Connection, table:&str, word:&str) -> u32 {
     let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE sortword >= '", word, "' ORDER BY sortword LIMIT 1;");

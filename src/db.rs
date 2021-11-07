@@ -61,16 +61,19 @@ pub struct QueryInfo {
     pub page:u32,
     pub mode:String,
     pub query:String,//WordQuery,
+    pub lex:Option<String>,
 }
 
 //http://127.0.0.1:8080/wordservjson.php?id=110628&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002
 
 #[derive(Deserialize)]
 pub struct DefInfo {
-    pub id: u32,
+    pub id: Option<u32>,
+    pub word: Option<String>,
     pub lexicon: String,
     pub skipcache:u32,
     pub addwordlinks:u32,
+    pub lex:Option<String>,
 }
 
 pub fn execute(
@@ -112,51 +115,55 @@ pub fn execute_get_seq(
 
     let word = q.w.clone();
     web::block(move || {
-
-        //let result = get_words(&pool, "ZGREEK", "γερ");
-        let seq:u32 = get_seq(pool.get().unwrap(), &table, &word);
-        //let before = get_before(pool.clone().get().unwrap(), table, seq);//.unwrap();
-        //let after = get_equal_and_after(pool.get().unwrap(), table, seq).unwrap();
-        //before.reverse();
-        //let result = Ok([before.as_slice(), after.as_slice()].concat());//.map_err(Error::from) 
-        Ok(seq).map_err(|_:u32| ())
+        get_seq(pool.get().unwrap(), &table, &word).map_err(Error::from)
     })
     .map_err(AWError::from)
 }
 
 pub fn execute_get_def(
     pool: &Pool,
-    q: &DefInfo,
-) -> impl Future<Output = Result<(String,String,String), AWError>> {
+    lex: &String,
+    id: Option<u32>,
+    word:&Option<String>,
+) -> impl Future<Output = Result<(String,String,String,u32), AWError>> {
     let pool = pool.clone();
-    let table = match q.lexicon.as_ref() {
+    let table = match lex.as_ref() {
         "ls" => "ZLATIN",
         "slater" => "ZSLATER",
         _ => "ZGREEK"
     };
-    let id = q.id;
+    let wordid = id;
+    let word2 = word.clone();
     //let word = q.w.clone();
     web::block(move || {
 
-        let d = get_def(pool.get().unwrap(), &table, id);
-
-        Ok(d).map_err(|_:u32| ())
+        let d;
+        if !wordid.is_none() {
+            d = get_def(pool.get().unwrap(), &table, wordid.unwrap());
+            println!("BBBBBBBBBB");
+        }
+        else {
+            println!("AAAAAAAAAA");
+            d = get_def2(pool.get().unwrap(), &table, &word2.unwrap());
+        }
+        d.map_err(Error::from)
     })
     .map_err(AWError::from)
 }
 
-
-fn get_def(conn: Connection, table:&str, id:u32) -> (String,String,String) {
-    let query = format!("{}{}{}{}{}", "SELECT word,sortword,def FROM ", table, " WHERE seq = ", id, " LIMIT 1;");
-    let def: (String,String,String) = conn.query_row(&query, NO_PARAMS, |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?)) ).unwrap();
-    def
+fn get_def2(conn: Connection, table:&str, word:&str) -> Result<(String,String,String,u32), rusqlite::Error> {
+    let query = format!("{}{}{}{}{}", "SELECT word,sortword,def,seq FROM ", table, " WHERE sortword = '", word, "' LIMIT 1;");
+    conn.query_row(&query, NO_PARAMS, |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?)) )
+}
+fn get_def(conn: Connection, table:&str, id:u32) -> Result<(String,String,String,u32), rusqlite::Error> {
+    let query = format!("{}{}{}{}{}", "SELECT word,sortword,def,seq FROM ", table, " WHERE seq = ", id, " LIMIT 1;");
+    conn.query_row(&query, NO_PARAMS, |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?)) )
 }
 
 //, SEQ_COL, $table, UNACCENTED_COL, $word, STATUS_COL, UNACCENTED_COL);
-fn get_seq(conn: Connection, table:&str, word:&str) -> u32 {
+fn get_seq(conn: Connection, table:&str, word:&str) -> Result<u32, rusqlite::Error> {
     let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE sortword >= '", word, "' ORDER BY sortword LIMIT 1;");
-    let seq: u32 = conn.query_row(&query, NO_PARAMS, |r| r.get(0)).unwrap();
-    seq
+    conn.query_row(&query, NO_PARAMS, |r| r.get(0))
 }
 
 //, ID_COL, WORD_COL, $table, $tagJoin, SEQ_COL, $middleSeq, STATUS_COL, $tagwhere, SEQ_COL, $req->limit * $req->page * -1, $req->limit);

@@ -20,8 +20,12 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use std::io;
 
 use actix_files as fs;
-use actix_web::{middleware, web, App, Error as AWError, HttpResponse, HttpServer};
+use actix_web::{middleware, web, App, Error as AWError, HttpResponse, HttpServer, HttpRequest, Result};
 use r2d2_sqlite::{self, SqliteConnectionManager};
+
+use actix_files::NamedFile;
+use std::path::PathBuf;
+
 
 mod db;
 use db::{Pool,QueryInfo,WordQuery,DefInfo,GreekWords};
@@ -83,19 +87,19 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
     before_rows.reverse();
     let after_rows = db::execute(&db, seq, false, &p).await?;
     
-    let mut select = "0".to_string();
+    //let mut select = "0".to_string();
     let mut scroll = "".to_string();
     let mut last_page = "0".to_string();
     let mut last_page_up = "0".to_string();
     if before_rows.len() == 0
     {
-        select = "0".to_string();
+        //select = "0".to_string();
         scroll = "top".to_string();
         last_page_up = "1".to_string();
     }
     else if after_rows.len() == 0
     {
-        select = "0".to_string();
+        //select = "0".to_string();
         scroll = "bottom".to_string();
         last_page = "1".to_string();
     }
@@ -126,11 +130,42 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
 
 //http://127.0.0.1:8080/wordservjson.php?id=110628&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002
 //{"principalParts":"","def":"...","defName":"","word":"γεοῦχος","unaccentedWord":"γεουχοσ","lemma":"γεοῦχος","requestTime":0,"status":"0","lexicon":"lsj","word_id":"22045","wordid":"γεουχοσ","method":"setWord"}
+/*
+#[allow(clippy::eval_order_dependence)]
+async fn philologus_direct((db, path): (web::Data<Pool>, web::Path<(String, String)>)) -> Result<HttpResponse, AWError> {
+    
+    let path = path.into_inner();
+    println!("direct: {}, {}", path.0, path.1);
+/*
+    let def = db::execute_get_def(&db, &path.0, None, &Some(path.1)).await?;
+
+    let res = DefResponse {
+        principal_part: "".to_string(),
+        def: def.2.to_string(),
+        def_name: "".to_string(),
+        word: def.0.to_string(),
+        unaccented_word: def.1.to_string(),
+        lemma: "".to_string(),
+        request_time: "0".to_string(),
+        status: "0".to_string(),
+        lexicon: path.0.to_string(),
+        word_id: def.3.to_string(),
+        wordid: def.1.to_string(),
+        method: "setWord".to_string()
+    };
+
+    Ok(HttpResponse::Ok().json(res))
+    */
+    let loc = format!("/{}/{}/index.html", path.0,path.1);
+    Ok(HttpResponse::Found().header("Location", loc).finish().into_body())
+}*/
 
 #[allow(clippy::eval_order_dependence)]
 async fn philologus_defs((db, info): (web::Data<Pool>, web::Query<DefInfo>)) -> Result<HttpResponse, AWError> {
-    
-    let def = db::execute_get_def(&db, &info).await?;
+    //if let Some(o) = &info.lex {
+        //println!("lex: {}", path.into_inner());
+    //}
+    let def = db::execute_get_def(&db, &info.lexicon, info.id, &info.word).await?;
 
     let res = DefResponse {
         principal_part: "".to_string(),
@@ -142,14 +177,20 @@ async fn philologus_defs((db, info): (web::Data<Pool>, web::Query<DefInfo>)) -> 
         request_time: "0".to_string(),
         status: "0".to_string(),
         lexicon: info.lexicon.to_string(),
-        word_id: info.id.to_string(),
+        word_id: def.3.to_string(),
         wordid: def.1.to_string(),
         method: "setWord".to_string()
     };
 
     Ok(HttpResponse::Ok().json(res))
 }
-
+/*
+async fn index(_req: HttpRequest) -> Result<NamedFile> {
+    println!("GGGGGGGGGGGGGGGGGGG");
+    let path: PathBuf = "static/index.html".parse().unwrap();
+    Ok(NamedFile::open(path)?)
+}
+*/
 #[actix_web::main]
 async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=info");
@@ -163,6 +204,9 @@ async fn main() -> io::Result<()> {
             .data(pool.clone())
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
+            /*.service(
+                web::resource("/{lex}/{word}")
+                    .route(web::get().to(index)))*/
             .service(
                 web::resource("/wtgreekserv.php")
                     .route(web::get().to(philologus_words)),
@@ -179,7 +223,13 @@ async fn main() -> io::Result<()> {
                 web::resource("/{lex}/wordservjson.php")
                     .route(web::get().to(philologus_defs)),
             )
+            /*.service(
+                web::resource("/{lex}/{word:[^.{}/]+}")
+                    .route(web::get().to(philologus_direct)),
+            )*/
             .service(fs::Files::new("/", "static").prefer_utf8(true).index_file("index.html"))
+            //.service(fs::Files::new("/{lex}/{word:[^.{}/]+}", "static").prefer_utf8(true).index_file("index.html"))
+            
     })
     .bind("127.0.0.1:8080")?
     .run()

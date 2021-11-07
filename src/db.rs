@@ -134,18 +134,20 @@ pub fn execute_get_def(
     };
     let wordid = id;
     let word2 = word.clone();
-    //let word = q.w.clone();
+
     web::block(move || {
 
         let d;
         if !wordid.is_none() {
-            d = get_def(pool.get().unwrap(), &table, wordid.unwrap());
-            println!("BBBBBBBBBB");
+            d = get_def(pool.get().unwrap(), &table, wordid.unwrap() );
         }
         else {
-            println!("AAAAAAAAAA");
-            d = get_def2(pool.get().unwrap(), &table, &word2.unwrap());
+            d = get_def2(pool.get().unwrap(), &table, &word2.unwrap() );
         }
+        /*match d {
+            Ok(ref d) => println!("ok"),
+            Err(ref err) => println!("error: {}", err),
+        }*/
         d.map_err(Error::from)
     })
     .map_err(AWError::from)
@@ -153,17 +155,17 @@ pub fn execute_get_def(
 
 fn get_def2(conn: Connection, table:&str, word:&str) -> Result<(String,String,String,u32), rusqlite::Error> {
     let query = format!("{}{}{}{}{}", "SELECT word,sortword,def,seq FROM ", table, " WHERE sortword = '", word, "' LIMIT 1;");
-    conn.query_row(&query, NO_PARAMS, |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?)) )
+    conn.query_row(&query, NO_PARAMS, |r| Ok( (r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)? )) )
 }
 fn get_def(conn: Connection, table:&str, id:u32) -> Result<(String,String,String,u32), rusqlite::Error> {
     let query = format!("{}{}{}{}{}", "SELECT word,sortword,def,seq FROM ", table, " WHERE seq = ", id, " LIMIT 1;");
-    conn.query_row(&query, NO_PARAMS, |r| Ok((r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)?)) )
+    conn.query_row(&query, NO_PARAMS, |r| Ok( (r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)? )) )
 }
 
 //, SEQ_COL, $table, UNACCENTED_COL, $word, STATUS_COL, UNACCENTED_COL);
 fn get_seq(conn: Connection, table:&str, word:&str) -> Result<u32, rusqlite::Error> {
     let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE sortword >= '", word, "' ORDER BY sortword LIMIT 1;");
-    conn.query_row(&query, NO_PARAMS, |r| r.get(0))
+    conn.query_row(&query, NO_PARAMS, |r| r.get(0) )
 }
 
 //, ID_COL, WORD_COL, $table, $tagJoin, SEQ_COL, $middleSeq, STATUS_COL, $tagwhere, SEQ_COL, $req->limit * $req->page * -1, $req->limit);

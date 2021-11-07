@@ -165,7 +165,15 @@ fn get_def(conn: Connection, table:&str, id:u32) -> Result<(String,String,String
 //, SEQ_COL, $table, UNACCENTED_COL, $word, STATUS_COL, UNACCENTED_COL);
 fn get_seq(conn: Connection, table:&str, word:&str) -> Result<u32, rusqlite::Error> {
     let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE sortword >= '", word, "' ORDER BY sortword LIMIT 1;");
-    conn.query_row(&query, NO_PARAMS, |r| r.get(0) )
+    let res = conn.query_row(&query, NO_PARAMS, |r| Ok(r.get(0)) );
+    
+    match res {
+        Ok(res) => return res,
+        Err(QueryReturnedNoRows) => {
+            let query = format!("{}{}{}", "SELECT MAX(seq) FROM ", table, " LIMIT 1;");
+            conn.query_row(&query, NO_PARAMS, |r| r.get(0) )
+        }
+    }
 }
 
 //, ID_COL, WORD_COL, $table, $tagJoin, SEQ_COL, $middleSeq, STATUS_COL, $tagwhere, SEQ_COL, $req->limit * $req->page * -1, $req->limit);

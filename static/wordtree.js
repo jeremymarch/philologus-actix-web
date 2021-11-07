@@ -1464,17 +1464,19 @@ eventually lexicon, query, and tag_id will be put into a single field for reques
     
     function closeAllNodes(node)
     {
-    	var children = node.childNodes;
-    	var regex = new RegExp("^[0-9]+" + this.idPrefix + "$");
-    	var childLen = children.length;
-    	for (var i = 0; i < childLen; i++)
-    	{
-    		if (children[i].childNodes.length > 0)
-    			this.closeAllNodes(children[i]);
-    		
-    		if (regex.exec(children[i].id))
-    			closeNode(this, children[i].id);
-    	}
+        if (node) {
+            var children = node.childNodes;
+            var regex = new RegExp("^[0-9]+" + this.idPrefix + "$");
+            var childLen = children.length;
+            for (var i = 0; i < childLen; i++)
+            {
+                if (children[i].childNodes.length > 0)
+                    this.closeAllNodes(children[i]);
+                
+                if (regex.exec(children[i].id))
+                    closeNode(this, children[i].id);
+            }
+        }
     }
     /*
     function requestRowsx(url)

@@ -20,11 +20,11 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use std::io;
 
 use actix_files as fs;
-use actix_web::{middleware, web, App, Error as AWError, HttpResponse, HttpServer, HttpRequest, Result};
+use actix_web::{middleware, web, App, Error as AWError, HttpResponse, HttpServer, Result};
 use r2d2_sqlite::{self, SqliteConnectionManager};
 
-use actix_files::NamedFile;
-use std::path::PathBuf;
+//use actix_files::NamedFile;
+//use std::path::PathBuf;
 
 
 mod db;

@@ -171,7 +171,7 @@ fn get_seq(conn: Connection, table:&str, word:&str) -> Result<u32, rusqlite::Err
     
     match res {
         Ok(res) => return res,
-        Err(QueryReturnedNoRows) => {
+        Err(_) => {
             let query = format!("{}{}{}", "SELECT MAX(seq) FROM ", table, " LIMIT 1;");
             conn.query_row(&query, NO_PARAMS, |r| r.get(0) )
         }

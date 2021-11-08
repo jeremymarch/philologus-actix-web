@@ -83,25 +83,33 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
     let p: WordQuery = serde_json::from_str(&info.query)?;
     
     let seq = db::execute_get_seq(&db,&p).await?;
-    let mut before_rows = db::execute(&db, seq, true, &p).await?;
-    before_rows.reverse();
-    let after_rows = db::execute(&db, seq, false, &p).await?;
-    
+    let mut before_rows = vec![];
+    let mut after_rows = vec![];
+    if info.page <= 0 {
+        before_rows = db::execute(&db, seq, true, &p, info.page, info.n).await?;
+        before_rows.reverse();
+    }
+    if info.page >= 0 {
+        after_rows = db::execute(&db, seq, false, &p, info.page, info.n).await?;
+    }
+
     //let mut select = "0".to_string();
     let mut scroll = "".to_string();
-    let mut last_page = "0".to_string();
-    let mut last_page_up = "0".to_string();
-    if before_rows.len() == 0
-    {
-        //select = "0".to_string();
-        scroll = "top".to_string();
-        last_page_up = "1".to_string();
-    }
-    else if after_rows.len() == 0
-    {
-        //select = "0".to_string();
-        scroll = "bottom".to_string();
-        last_page = "1".to_string();
+    let mut vlast_page = "".to_string();
+    let mut vlast_page_up = "".to_string();
+    if info.page == 0 {
+        if before_rows.len() < info.n as usize
+        {
+            //select = "0".to_string();
+            scroll = "top".to_string();
+            vlast_page_up = "1".to_string();
+        }
+        else if after_rows.len() < info.n as usize
+        {
+            //select = "0".to_string();
+            scroll = "bottom".to_string();
+            vlast_page = "1".to_string();
+        }
     }
 
     if scroll == "" {
@@ -117,9 +125,9 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
         container: format!("{}Container", info.idprefix),
         request_time: info.request_time.to_string(),
         select_id: seq.to_string(),
-        page: "0".to_owned(),
-        last_page: last_page,
-        lastpage_up: last_page_up,
+        page: info.page.to_string(),
+        last_page: vlast_page,
+        lastpage_up: vlast_page_up,
         scroll: scroll,
         query: "".to_owned(),
         arr_options: result

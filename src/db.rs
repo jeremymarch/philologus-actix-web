@@ -58,7 +58,7 @@ pub struct QueryInfo {
     pub x:String,
     #[serde(rename(deserialize = "requestTime"))]
     pub request_time:u64,
-    pub page:u32,
+    pub page:i32,
     pub mode:String,
     pub query:String,//WordQuery,
     pub lex:Option<String>,
@@ -81,6 +81,8 @@ pub fn execute(
     seq: u32,
     before_query:bool,
     q: &WordQuery,
+    page: i32,
+    limit: u32,
 ) -> impl Future<Output = Result<Vec<GreekWords>, AWError>> {
     let pool = pool.clone();
     let table = match q.lexicon.as_ref() {
@@ -92,10 +94,10 @@ pub fn execute(
     web::block(move || {
         let before;
         if before_query {
-            before = get_before(pool.get().unwrap(), table, seq);
+            before = get_before(pool.get().unwrap(), table, seq, page, limit);
         }
         else {
-            before = get_equal_and_after(pool.get().unwrap(), table, seq);
+            before = get_equal_and_after(pool.get().unwrap(), table, seq, page, limit);
         } 
         before.map_err(Error::from)
     })
@@ -177,15 +179,15 @@ fn get_seq(conn: Connection, table:&str, word:&str) -> Result<u32, rusqlite::Err
 }
 
 //, ID_COL, WORD_COL, $table, $tagJoin, SEQ_COL, $middleSeq, STATUS_COL, $tagwhere, SEQ_COL, $req->limit * $req->page * -1, $req->limit);
-fn get_before(conn: Connection, table:&str, seq: u32) -> PhilologusWordsResult {
-    let query = format!("{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq < ", seq, " ORDER BY seq DESC LIMIT 0,20;");
+fn get_before(conn: Connection, table:&str, seq: u32, page: i32, limit: u32) -> PhilologusWordsResult {
+    let query = format!("{}{}{}{}{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq < ", seq, " ORDER BY seq DESC LIMIT ", page * limit as i32 * -1, ",", limit, ";");
     let stmt = conn.prepare(&query)?;
     get_word_res(stmt)
 }
 
 //, ID_COL, WORD_COL, $table, $tagJoin, SEQ_COL, $middleSeq, STATUS_COL, $tagwhere, SEQ_COL, $req->limit * $req->page, $req->limit);
-fn get_equal_and_after(conn: Connection, table:&str, seq: u32) -> PhilologusWordsResult {
-    let query = format!("{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq >= ", seq, " ORDER BY seq LIMIT 0,20;");
+fn get_equal_and_after(conn: Connection, table:&str, seq: u32, page: i32, limit: u32) -> PhilologusWordsResult {
+    let query = format!("{}{}{}{}{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq >= ", seq, " ORDER BY seq LIMIT ", page * limit as i32, ",", limit, ";");
     let stmt = conn.prepare(&query)?;
     get_word_res(stmt)
 }

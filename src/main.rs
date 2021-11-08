@@ -235,7 +235,7 @@ async fn main() -> io::Result<()> {
                 web::resource("/{lex}/{word:[^.{}/]+}")
                     .route(web::get().to(philologus_direct)),
             )*/
-            .service(fs::Files::new("/", "static").prefer_utf8(true).index_file("index.html"))
+            .service(fs::Files::new("/", "./static").prefer_utf8(true).index_file("index.html"))
             //.service(fs::Files::new("/{lex}/{word:[^.{}/]+}", "static").prefer_utf8(true).index_file("index.html"))
             
     })

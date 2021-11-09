@@ -104,16 +104,16 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
     if info.page == 0 {
         if before_rows.len() < info.n as usize
         {
-            //select = "0".to_string();
-            scroll = "top".to_string();
             vlast_page_up = "1".to_string();
         }
         else if after_rows.len() < info.n as usize
         {
-            //select = "0".to_string();
-            scroll = "bottom".to_string();
             vlast_page = "1".to_string();
         }
+    }
+
+    if p.w == "" {
+        scroll = "top".to_string();
     }
 
     if scroll == "" {
@@ -259,10 +259,10 @@ async fn main() -> io::Result<()> {
                     .route(web::get().to(philologus_direct)),
             )*/
             .service(fs::Files::new("/", "./static").prefer_utf8(true).index_file("index.html"))
-            //.service(fs::Files::new("/{lex}/{word:[^.{}/]+}", "static").prefer_utf8(true).index_file("index.html"))
+            //.service(fs::Files::new("/*/*", "static").prefer_utf8(true).index_file("index.html"))
             
     })
-    .bind("0.0.0.0:8088")?
+    .bind("127.0.0.1:8088")?
     .run()
     .await
 }

@@ -262,7 +262,7 @@ async fn main() -> io::Result<()> {
             //.service(fs::Files::new("/*/*", "static").prefer_utf8(true).index_file("index.html"))
             
     })
-    .bind("127.0.0.1:8088")?
+    .bind("0.0.0.0:8088")?
     .run()
     .await
 }

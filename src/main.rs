@@ -37,14 +37,18 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct JsonResponse {
+    bstart:i32,
+    bend:i32,
+    astart:i32,
+    aend:i32,
+    #[serde(rename(serialize = "selectId"))]
+    select_id: String,
     error: String,
     wtprefix: String,
     nocache: String,
     container: String,
     #[serde(rename(serialize = "requestTime"))]
     request_time: String,
-    #[serde(rename(serialize = "selectId"))]
-    select_id: String,
     page: String,
     #[serde(rename(serialize = "lastPage"))]
     last_page: String,
@@ -116,15 +120,34 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
         scroll = seq.to_string();
     }
 
+    let mut b_start = -1;
+    let mut b_end = -1;
+    let mut a_start = -1;
+    let mut a_end = -1;
+
+    if before_rows.len() > 0 {
+        b_start = before_rows[0].i;
+        b_end = before_rows[before_rows.len()-1].i;
+    }
+
+    if after_rows.len() > 0 {
+        a_start = after_rows[0].i;
+        a_end = after_rows[after_rows.len()-1].i;
+    }
+
     let result = [before_rows, after_rows].concat();
 
     let res = JsonResponse {
+        bstart: b_start,
+        bend: b_end,
+        astart: a_start,
+        aend: a_end,
+        select_id: seq.to_string(),
         error: "".to_owned(),
         wtprefix: info.idprefix.clone(),
         nocache: "1".to_owned(),
         container: format!("{}Container", info.idprefix),
         request_time: info.request_time.to_string(),
-        select_id: seq.to_string(),
         page: info.page.to_string(),
         last_page: vlast_page,
         lastpage_up: vlast_page_up,
@@ -239,7 +262,7 @@ async fn main() -> io::Result<()> {
             //.service(fs::Files::new("/{lex}/{word:[^.{}/]+}", "static").prefer_utf8(true).index_file("index.html"))
             
     })
-    .bind("127.0.0.1:8088")?
+    .bind("0.0.0.0:8088")?
     .run()
     .await
 }

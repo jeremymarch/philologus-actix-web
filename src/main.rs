@@ -52,7 +52,7 @@ struct JsonResponse {
     page: String,
     #[serde(rename(serialize = "lastPage"))]
     last_page: String,
-    #[serde(rename(serialize = "lastpage_up"))]
+    #[serde(rename(serialize = "lastPageUp"))]
     lastpage_up: String,
     scroll: String,
     query: String,
@@ -100,8 +100,8 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
     }
 
     let mut scroll = "".to_string();
-    let mut vlast_page = "".to_string();
-    let mut vlast_page_up = "".to_string();
+    let mut vlast_page = "0".to_string();
+    let mut vlast_page_up = "0".to_string();
     if info.page == 0 {
         if before_rows.len() < info.n as usize
         {
@@ -243,3 +243,27 @@ async fn main() -> io::Result<()> {
     .run()
     .await
 }
+
+/*
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use actix_web::{test, web, App};
+
+    #[actix_rt::test]
+    async fn test_index_get() {
+        let mut app = test::init_service(App::new().route("/", web::get().to(index))).await;
+        let req = test::TestRequest::with_header("content-type", "text/plain").to_request();
+        let resp = test::call_service(&mut app, req).await;
+        assert!(resp.status().is_success());
+    }
+
+    #[actix_rt::test]
+    async fn test_index_post() {
+        let mut app = test::init_service(App::new().route("/", web::get().to(index))).await;
+        let req = test::TestRequest::post().uri("/").to_request();
+        let resp = test::call_service(&mut app, req).await;
+        assert!(resp.status().is_client_error());
+    }
+}
+*/

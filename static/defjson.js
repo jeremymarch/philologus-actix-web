@@ -100,7 +100,7 @@ function setWord(json, status) {
   var def = data.def;
   var lexicon = data.lexicon;
   var id = data.word_id;
-  var word = data.word;
+  var word = data.word.replace(/[0-9]/g, ''); //strip number, if any, from end of string
   var wordid = data.wordid;
   var lemma = data.lemma;
   var pps = data.principalParts;

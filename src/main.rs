@@ -113,7 +113,7 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
         }
     }
 
-    if p.w == "" {
+    if p.w == "" && info.page == 0 {
         scroll = "top".to_string();
     }
 

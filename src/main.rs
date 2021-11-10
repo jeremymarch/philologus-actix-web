@@ -244,7 +244,7 @@ async fn main() -> io::Result<()> {
     .await
 }
 
-/*
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -266,4 +266,4 @@ mod tests {
         assert!(resp.status().is_client_error());
     }
 }
-*/
+

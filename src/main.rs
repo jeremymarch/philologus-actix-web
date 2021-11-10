@@ -18,7 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 use std::io;
-
+use regex::Regex;
 use actix_files as fs;
 use actix_web::{middleware, web, App, Error as AWError, HttpResponse, HttpRequest, HttpServer, Result};
 use r2d2_sqlite::{self, SqliteConnectionManager};
@@ -138,6 +138,9 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
 
     let result = [before_rows, after_rows].concat();
 
+    let re = Regex::new(r"[0-9]").unwrap();
+    let result_stripped = result.into_iter().map( |mut row| { row.r.0 = re.replace_all(&row.r.0, "").to_string(); row }).collect();
+
     let res = JsonResponse {
         bstart: b_start,
         bend: b_end,
@@ -154,7 +157,7 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
         lastpage_up: vlast_page_up,
         scroll: scroll,
         query: "".to_owned(),
-        arr_options: result
+        arr_options: result_stripped
     };
 
     Ok(HttpResponse::Ok().json(res))
@@ -168,7 +171,7 @@ async fn philologus_defs((db, info): (web::Data<Pool>, web::Query<DefInfo>)) -> 
     //if let Some(o) = &info.lex {
         //println!("lex: {}", path.into_inner());
     //}
-    let def = db::execute_get_def(&db, &info.lexicon, info.id, &info.word).await?;
+    let def = db::execute_get_def(&db, &info.lexicon, info.id, &info.wordid).await?;
 
     let res = DefResponse {
         principal_part: "".to_string(),
@@ -200,12 +203,21 @@ async fn main() -> io::Result<()> {
 
     let manager = SqliteConnectionManager::file( std::env::var("PHILOLOGUS_DB_PATH").unwrap() );
     let pool = Pool::new(manager).unwrap();
-
+/*
+    let error_handlers = ErrorHandlers::new()
+            .handler(
+                http::StatusCode::INTERNAL_SERVER_ERROR,
+                api::internal_server_error,
+            )
+            .handler(http::StatusCode::BAD_REQUEST, api::bad_request)
+            .handler(http::StatusCode::NOT_FOUND, api::not_found);
+*/
     HttpServer::new(move || {
         App::new()
             .data(pool.clone())
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
+            //.wrap(error_handlers)
             .service(
                 web::resource("/{lex}/wtgreekserv.php")
                     .route(web::get().to(philologus_words)),

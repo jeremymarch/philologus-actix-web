@@ -22,6 +22,7 @@ use failure::Error;
 use futures::{Future, TryFutureExt};
 use rusqlite::{Statement, NO_PARAMS};
 use serde::{Deserialize, Serialize};
+use percent_encoding::percent_decode_str;
 
 pub type Pool = r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>;
 pub type Connection = r2d2::PooledConnection<r2d2_sqlite::SqliteConnectionManager>;
@@ -69,7 +70,7 @@ pub struct QueryInfo {
 #[derive(Deserialize)]
 pub struct DefInfo {
     pub id: Option<u32>,
-    pub word: Option<String>,
+    pub wordid: Option<String>,
     pub lexicon: String,
     pub skipcache:u32,
     pub addwordlinks:u32,
@@ -126,7 +127,7 @@ pub fn execute_get_def(
     pool: &Pool,
     lex: &String,
     id: Option<u32>,
-    word:&Option<String>,
+    word: &Option<String>,
 ) -> impl Future<Output = Result<(String,String,String,u32), AWError>> {
     let pool = pool.clone();
     let table = match lex.as_ref() {
@@ -140,12 +141,14 @@ pub fn execute_get_def(
     web::block(move || {
 
         let d;
-        if !wordid.is_none() {
+
+        if !word2.is_none() {
+            d = get_def2(pool.get().unwrap(), &table, word2.unwrap().as_str() );
+        }
+        else { //if !wordid.is_none() {
             d = get_def(pool.get().unwrap(), &table, wordid.unwrap() );
         }
-        else {
-            d = get_def2(pool.get().unwrap(), &table, &word2.unwrap() );
-        }
+
         /*match d {
             Ok(ref d) => println!("ok"),
             Err(ref err) => println!("error: {}", err),
@@ -156,7 +159,8 @@ pub fn execute_get_def(
 }
 
 fn get_def2(conn: Connection, table:&str, word:&str) -> Result<(String,String,String,u32), rusqlite::Error> {
-    let query = format!("{}{}{}{}{}", "SELECT word,sortword,def,seq FROM ", table, " WHERE sortword = '", word, "' LIMIT 1;");
+    let decoded_word = percent_decode_str(word).decode_utf8()?;
+    let query = format!("{}{}{}{}{}", "SELECT word,sortword,def,seq FROM ", table, " WHERE word = '", decoded_word, "' LIMIT 1;");
     conn.query_row(&query, NO_PARAMS, |r| Ok( (r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)? )) )
 }
 fn get_def(conn: Connection, table:&str, id:u32) -> Result<(String,String,String,u32), rusqlite::Error> {

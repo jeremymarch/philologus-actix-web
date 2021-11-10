@@ -17,14 +17,19 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
+/*
+index word col and add/strip unique numbers?
+fix issues when navigating to word by url
+*/
+
 use std::io;
 
 use actix_files as fs;
-use actix_web::{middleware, web, App, Error as AWError, HttpResponse, HttpServer, Result};
+use actix_web::{middleware, web, App, Error as AWError, HttpResponse, HttpRequest, HttpServer, Result};
 use r2d2_sqlite::{self, SqliteConnectionManager};
 
-//use actix_files::NamedFile;
-//use std::path::PathBuf;
+use actix_files::NamedFile;
+use std::path::PathBuf;
 
 
 mod db;
@@ -211,19 +216,19 @@ async fn philologus_defs((db, info): (web::Data<Pool>, web::Query<DefInfo>)) -> 
         status: "0".to_string(),
         lexicon: info.lexicon.to_string(),
         word_id: def.3.to_string(),
-        wordid: def.1.to_string(),
+        wordid: def.0.to_string(),
         method: "setWord".to_string()
     };
 
     Ok(HttpResponse::Ok().json(res))
 }
-/*
+
 async fn index(_req: HttpRequest) -> Result<NamedFile> {
     println!("GGGGGGGGGGGGGGGGGGG");
     let path: PathBuf = "static/index.html".parse().unwrap();
     Ok(NamedFile::open(path)?)
 }
-*/
+
 #[actix_web::main]
 async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=info");
@@ -237,24 +242,24 @@ async fn main() -> io::Result<()> {
             .data(pool.clone())
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
-            /*.service(
-                web::resource("/{lex}/{word}")
-                    .route(web::get().to(index)))*/
-            .service(
-                web::resource("/wtgreekserv.php")
-                    .route(web::get().to(philologus_words)),
-            )
             .service(
                 web::resource("/{lex}/wtgreekserv.php")
                     .route(web::get().to(philologus_words)),
             )
             .service(
+                web::resource("/{lex}/wordservjson.php")
+                    .route(web::get().to(philologus_defs)),
+            )
+            .service(
+                web::resource("/{lex}/{word}")
+                    .route(web::get().to(index)))
+            .service(
                 web::resource("/wordservjson.php")
                     .route(web::get().to(philologus_defs)),
             )
             .service(
-                web::resource("/{lex}/wordservjson.php")
-                    .route(web::get().to(philologus_defs)),
+                web::resource("/wtgreekserv.php")
+                    .route(web::get().to(philologus_words)),
             )
             /*.service(
                 web::resource("/{lex}/{word:[^.{}/]+}")

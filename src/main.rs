@@ -17,11 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-/*
-index word col and add/strip unique numbers?
-fix issues when navigating to word by url
-*/
-
 use std::io;
 
 use actix_files as fs;
@@ -85,7 +80,7 @@ struct DefResponse {
     method: String,
 }
 
-//http://127.0.0.1:8080/philwords?n=101&idprefix=test1&x=0.1627681205837177&requestTime=1635643672625&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22wordid%22:%22%CE%B1%CE%B1%CF%84%CE%BF%CF%832%22,%22w%22:%22%22}
+//http://127.0.0.1:8088/philwords?n=101&idprefix=test1&x=0.1627681205837177&requestTime=1635643672625&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22wordid%22:%22%CE%B1%CE%B1%CF%84%CE%BF%CF%832%22,%22w%22:%22%22}
 
 #[allow(clippy::eval_order_dependence)]
 async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) -> Result<HttpResponse, AWError> {
@@ -104,7 +99,6 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
         after_rows = db::execute(&db, seq, false, &p, info.page, info.n).await?;
     }
 
-    //let mut select = "0".to_string();
     let mut scroll = "".to_string();
     let mut vlast_page = "".to_string();
     let mut vlast_page_up = "".to_string();
@@ -166,37 +160,8 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
     Ok(HttpResponse::Ok().json(res))
 }
 
-//http://127.0.0.1:8080/wordservjson.php?id=110628&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002
+//http://127.0.0.1:8088/wordservjson.php?id=110628&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002
 //{"principalParts":"","def":"...","defName":"","word":"γεοῦχος","unaccentedWord":"γεουχοσ","lemma":"γεοῦχος","requestTime":0,"status":"0","lexicon":"lsj","word_id":"22045","wordid":"γεουχοσ","method":"setWord"}
-/*
-#[allow(clippy::eval_order_dependence)]
-async fn philologus_direct((db, path): (web::Data<Pool>, web::Path<(String, String)>)) -> Result<HttpResponse, AWError> {
-    
-    let path = path.into_inner();
-    println!("direct: {}, {}", path.0, path.1);
-/*
-    let def = db::execute_get_def(&db, &path.0, None, &Some(path.1)).await?;
-
-    let res = DefResponse {
-        principal_part: "".to_string(),
-        def: def.2.to_string(),
-        def_name: "".to_string(),
-        word: def.0.to_string(),
-        unaccented_word: def.1.to_string(),
-        lemma: "".to_string(),
-        request_time: "0".to_string(),
-        status: "0".to_string(),
-        lexicon: path.0.to_string(),
-        word_id: def.3.to_string(),
-        wordid: def.1.to_string(),
-        method: "setWord".to_string()
-    };
-
-    Ok(HttpResponse::Ok().json(res))
-    */
-    let loc = format!("/{}/{}/index.html", path.0,path.1);
-    Ok(HttpResponse::Found().header("Location", loc).finish().into_body())
-}*/
 
 #[allow(clippy::eval_order_dependence)]
 async fn philologus_defs((db, info): (web::Data<Pool>, web::Query<DefInfo>)) -> Result<HttpResponse, AWError> {
@@ -224,7 +189,6 @@ async fn philologus_defs((db, info): (web::Data<Pool>, web::Query<DefInfo>)) -> 
 }
 
 async fn index(_req: HttpRequest) -> Result<NamedFile> {
-    println!("GGGGGGGGGGGGGGGGGGG");
     let path: PathBuf = "static/index.html".parse().unwrap();
     Ok(NamedFile::open(path)?)
 }
@@ -252,7 +216,7 @@ async fn main() -> io::Result<()> {
             )
             .service(
                 web::resource("/{lex}/{word}")
-                    .route(web::get().to(index)))
+                    .route(web::get().to(index))) //requesting page from a word link, order of services matters
             .service(
                 web::resource("/wordservjson.php")
                     .route(web::get().to(philologus_defs)),
@@ -261,13 +225,7 @@ async fn main() -> io::Result<()> {
                 web::resource("/wtgreekserv.php")
                     .route(web::get().to(philologus_words)),
             )
-            /*.service(
-                web::resource("/{lex}/{word:[^.{}/]+}")
-                    .route(web::get().to(philologus_direct)),
-            )*/
             .service(fs::Files::new("/", "./static").prefer_utf8(true).index_file("index.html"))
-            //.service(fs::Files::new("/*/*", "static").prefer_utf8(true).index_file("index.html"))
-            
     })
     .bind("0.0.0.0:8088")?
     .run()

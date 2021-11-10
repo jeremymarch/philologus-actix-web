@@ -1012,9 +1012,9 @@ eventually lexicon, query, and tag_id will be put into a single field for reques
         //block result sets which come out of sequence
         if (wt.lastRequestTime > parseInt(returnObj.requestTime))
         {
-            if (debug)
-                alert("out of seq!");
-                
+            if (debug) {
+                console.log("out of seq!");
+            }
             wt.blockScroll = false;
             return;
         }

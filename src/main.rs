@@ -91,7 +91,9 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
     let mut after_rows = vec![];
     if info.page <= 0 {
         before_rows = db::execute(&db, seq, true, &p, info.page, info.n).await?;
-        before_rows.reverse();
+        if info.page == 0 { //only reverse if page 0. if < 0, each row is inserted under top of container one-by-one in order
+            before_rows.reverse();
+        }
     }
     if info.page >= 0 {
         after_rows = db::execute(&db, seq, false, &p, info.page, info.n).await?;

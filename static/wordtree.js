@@ -247,6 +247,9 @@ function wordtree (idPrefix, width, height)
     */
     
     con.onscroll = conOnScroll;
+    if (platform == "ipad" || platform == "iphone" || (navigator.maxTouchPoints && navigator.maxTouchPoints > 1)) {
+        con.ontouchstart = onTouch;
+    }
     var wt = this;
     d.onclick = function () { if (wt.entry && wt.autofocus) wt.entry.focus() };
     //d.oncontextmenu = function () { if (typeof wt.onContextMenu == "function") wt.onContextMenu(); return false; };
@@ -401,6 +404,17 @@ function wordtree (idPrefix, width, height)
     {
         parent.appendChild(this.div);
     }
+
+    function onTouch(e) {
+        var wt = lookupWT("test1");
+        if (!wt) {
+            return;
+        }
+    
+        if (!wt.autofocus) {
+            wt.entry.blur();
+        }
+    }
     
     function conOnScroll(e)
     {
@@ -418,6 +432,7 @@ function wordtree (idPrefix, width, height)
         if (!wt) {
             return;
         }
+
         //don't request another page if we're on the last page OR if another nextPageRequest is pending.
         //don't increase page until it is received and appropriate
         if (wt.con.scrollTop > wt.con.scrollHeight - wt.con.offsetHeight - whenToGetNextPage && !wt.nextPageRequestPending && !wt.lastPage && !wt.blockScroll)
@@ -581,7 +596,6 @@ function wordtree (idPrefix, width, height)
             return;
         }
             
-       
 		if (key == 39) //right arrow: open row
 		{
 			if (wt.selectedRow && wt.selectedRow.id)

@@ -105,6 +105,8 @@ function setWord(json, status) {
   var lemma = data.lemma;
   var pps = data.principalParts;
 
+  document.title = word;
+
   pps = (pps && pps.length > 0) ? pps : "";
 
   if (lexicon) {

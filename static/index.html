@@ -545,7 +545,7 @@ height: 22px;
   </div>
 
   <div id="defbody" class="defbody" style="border-radius:14px;position:relative;z-index:1;top:50px;margin-left:280px;margin-right:10px;overflow:hidden;height:calc(100% - 80px);text-align:left;">
-    <div id="lsjdef" style="position:relative;z-index:2;margin:0px;padding:10px;overflow:auto;height:0px;"></div>
+    <div id="lsjdef" ontouchstart="onTouch(event)" style="position:relative;z-index:2;margin:0px;padding:10px;overflow:auto;height:0px;"></div>
   </div>
 
   <div style="position:absolute;top:0px;right:0px;height:48px;border:0px solid green;text-align:center;letter-spacing:normal;display:flex;">
@@ -728,7 +728,7 @@ height: 22px;
         w4.div.style.borderRadius = "14px";
         w4.div.style.margin = "10px";
         w4.div.style.marginTop = "0px";
-        var title = '<div style="width="' + (w4.width - 10) +
+        var title = '<div style="width:' + (w4.width - 14) +
           'px;"><div class="lexitem">History</div></div>';
         w4.title.innerHTML = title;
         w4.url = "historyserv.php";
@@ -1000,9 +1000,9 @@ height: 22px;
   
       function contact() {
         var about =
-          "Philolog.us was first launched in June 2005 shortly after the <a class='storelink' href='www.perseus.tufts.edu'>Perseus Project</a> began offering access to its collections via web services. One of the primary aims has been to offer a streamlined, user-friendly interface to the lexica in the Perseus library.<br/><br/>Upcoming features include hierarchical trees of Greek words based on their etymology and the ability for users to create custom lists of words.<br/><br/>Design goals:<ul><li>a clean, unintrusive user-interface which lets the content be the focus</li><li>completely cross-platform access, available anywhere in the world</li><li>bringing the benefits of the digital age to resources previously limited by the print age</li><li>the ability to manipulate data for both convenience and perspicacity</li></ul>I welcome your questions and comments.<br/><br/>Jeremy March<br/><a class='storelink' href='mailto:jmarch@gradcenter.cuny.edu'>jmarch@gradcenter.cuny.edu</a>";
+          "Philolog.us first launched in June 2005 shortly after the Perseus Digital Library began offering access to its collections via web services. One of the primary aims has been to offer a streamlined, user-friendly interface to the lexica in the Perseus library.<br/><br/><br/>Thanks to the <a class='storelink' href='http://www.perseus.tufts.edu'>Perseus Digital Library</a> for digitizing and make available these texts.  Thanks also to <a class='storelink' href='https://logeion.uchicago.edu'>Logeion</a> for making many corrections and improvements to them.<br/><br/>Jeremy March<br/><a class='storelink' href='mailto:jmarch@gradcenter.cuny.edu'>jmarch@gradcenter.cuny.edu</a>";
   
-        document.getElementById("lsjdef").innerHTML = "<div style='text-align:left;'>" + about + "</div>";
+        document.getElementById("lsjdef").innerHTML = "<div style='text-align:left;margin:10px;'>" + about + "</div>";
       }
   
       function showiPhone() {

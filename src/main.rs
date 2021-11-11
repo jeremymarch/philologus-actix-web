@@ -156,7 +156,7 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
         last_page: vlast_page,
         lastpage_up: vlast_page_up,
         scroll: scroll,
-        query: "".to_owned(),
+        query: p.w.to_owned(),
         arr_options: result_stripped
     };
 

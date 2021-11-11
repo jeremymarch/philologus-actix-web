@@ -149,7 +149,7 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
         select_id: seq.to_string(),
         error: "".to_owned(),
         wtprefix: info.idprefix.clone(),
-        nocache: "1".to_owned(),
+        nocache: "0".to_owned(),
         container: format!("{}Container", info.idprefix),
         request_time: info.request_time.to_string(),
         page: info.page.to_string(),

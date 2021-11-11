@@ -293,7 +293,7 @@
   }
 
   .wordtree {
-    margin: 10px;
+    margin: 0px;
     background-color: white;
     text-align: left;
     position: relative;
@@ -509,14 +509,21 @@ height: 22px;
   height:100%;
   z-index:900;
 }
+
+#leftlist {
+  background-color:white;
+}
+
+.dark #leftlist {
+  background-color: #202124;
+}
   </style>
 </head>
-
 <body onload="start();" class="philbody">
 
   <div id="taglist" style="position:absolute;top:0px;left:0px;height:50%;width:220px;display:none;"></div>
   <div id="historylist" style="position:absolute;top:50%;left:0px;height:50%;width:220px;display:none;"></div>
-  <div id="leftlist" style="position:absolute;top:0px;left:0px;height:cals(100% - 20px);width:259px;margin:0px"></div>
+  <div id="leftlist" style="position:absolute;top:0px;left:0px;height:calc(100% - 20px);width:259px;margin:10px;border-radius: 14px;"></div>
   <!--<div id="openHistory">History</div>-->
   <div id="rightlist" style="position:absolute;top:69px;right:20px;width:260px;height:500px;">
     <!--<div style="border:1px solid black;margin-top:40px;padding:5px;text-align:left;" id="message1">The site has been updated with new code and data.  Please report any problems you might have with the update to <a href="mailto:jmarch@gradcenter.cuny.edu">jmarch@gradcenter.cuny.edu</a>.  The previous version is available <a href="http://philolog.us/v1">here</a> if you need it.<br><br><div style="width:100%;text-align:center;"><a href="javascript:closeMessage()">close</a></div></div>
@@ -537,7 +544,7 @@ height: 22px;
     </div>
   </div>
 
-  <div id="defbody" class="defbody" style="border-radius:14px;position:relative;z-index:1;top:50px;margin-left:280px;margin-right:0px;overflow:hidden;height:100%;text-align:left;">
+  <div id="defbody" class="defbody" style="border-radius:14px;position:relative;z-index:1;top:50px;margin-left:280px;margin-right:0px;overflow:hidden;height:calc(100% - 80px);text-align:left;">
     <div id="lsjdef" style="position:relative;z-index:2;margin:0px;padding:10px;overflow:auto;height:0px;"></div>
   </div>
 
@@ -545,14 +552,11 @@ height: 22px;
     <div id="logo" style="padding: 0px 15px;text-align:center;position:relative;top:16px;font-size:28pt;font-family:helvetica,arial,sans-serif;">philolog.us</div>
     <div style="padding-top:18px;padding-right:10px;"><div>
 
-
   <svg onclick="toggleSettings()" id="hamburger" viewBox="0 0 120 120">
     <rect x="10" y="30" width="100" height="12"></rect>
     <rect x="10" y="56" width="100" height="12"></rect>
     <rect x="10" y="82" width="100" height="12"></rect>
   </svg>
-
-
 </div>
   </div>
   </div>
@@ -1149,7 +1153,7 @@ height: 22px;
       s.id = "settingsdiv";
       s.classList.add("settings");
       s.style.display = "block";
-      s.innerHTML = "Settings<br><ul><li><div tabindex='0' onclick='contact()' class='menulink'>about</div></li><li><div tabindex='0' onclick='showiPhone()' class='menulink'>mobile app</div></li><!--<li><div tabindex='0' onclick='config()' class='menulink'>configure</div></li>--><li><div tabindex='0' onclick='toggleHistoryChooser()' class='menulink'>show history</div></li><li><div tabindex='0' style='height:70px;'>dark mode: <div style='text-align:right;float:right;padding:0px;border:none;'>system <input id='darkModeSystem' type='radio' name='darkmode' onclick='darkModeClick(this);' value='system'/><br>dark <input id='darkModeDark' type='radio' name='darkmode' onclick='darkModeClick(this);' value='dark'/><br>light<input id='darkModeLight' type='radio' name='darkmode' onclick='darkModeClick(this);' value='light'/></div></div></li></ul>";
+      s.innerHTML = "Settings<br><ul><li><div tabindex='0' onclick='contact()' class='menulink'>about</div></li><li><div tabindex='0' onclick='showiPhone()' class='menulink'>iOS/Android app</div></li><!--<li><div tabindex='0' onclick='config()' class='menulink'>configure</div></li>--><li><div tabindex='0' onclick='toggleHistoryChooser()' class='menulink'>show history</div></li><li><div tabindex='0' style='height:70px;'>dark mode: <div style='text-align:right;float:right;padding:0px;border:none;'>system <input id='darkModeSystem' type='radio' name='darkmode' onclick='darkModeClick(this);' value='system'/><br>dark <input id='darkModeDark' type='radio' name='darkmode' onclick='darkModeClick(this);' value='dark'/><br>light<input id='darkModeLight' type='radio' name='darkmode' onclick='darkModeClick(this);' value='light'/></div></div></li></ul>";
       var c = document.createElement("div");
       c.id="backdrop";
       c.onclick = function() {

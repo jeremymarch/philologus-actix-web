@@ -28,7 +28,7 @@ use std::path::PathBuf;
 
 
 mod db;
-use db::{Pool,QueryInfo,WordQuery,DefInfo,GreekWords};
+use db::{Pool,QueryResults};
 use serde::{Deserialize, Serialize};
 
 /*
@@ -36,11 +36,7 @@ use serde::{Deserialize, Serialize};
 */
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct JsonResponse {
-    bstart:i32,
-    bend:i32,
-    astart:i32,
-    aend:i32,
+struct QueryResponse {
     #[serde(rename(serialize = "selectId"))]
     select_id: String,
     error: String,
@@ -57,13 +53,13 @@ struct JsonResponse {
     scroll: String,
     query: String,
     #[serde(rename(serialize = "arrOptions"))]
-    arr_options: Vec<GreekWords>
+    arr_options: Vec<QueryResults>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct DefResponse {
-    #[serde(rename(serialize = "principalPart"))]
-    principal_part: String,
+    #[serde(rename(serialize = "principalParts"))]
+    principal_parts: String,
     def: String,
     #[serde(rename(serialize = "defName"))]
     def_name: String,
@@ -80,23 +76,60 @@ struct DefResponse {
     method: String,
 }
 
+#[derive(Deserialize)]
+pub struct QueryRequest {
+    pub n: u32,
+    pub idprefix: String,
+    pub x:String,
+    #[serde(rename(deserialize = "requestTime"))]
+    pub request_time:u64,
+    pub page:i32,
+    pub mode:String,
+    pub query:String,//WordQuery,
+    pub lex:Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct WordQuery {
+    pub regex:String,
+    pub lexicon:String,
+    pub tag_id:String,
+    pub root_id:String,
+    pub wordid:Option<String>,
+    pub w:String,
+}
+
+//http://127.0.0.1:8080/wordservjson.php?id=110628&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002
+
+#[derive(Deserialize)]
+pub struct DefRequest {
+    pub id: Option<u32>,
+    pub wordid: Option<String>,
+    pub lexicon: String,
+    pub skipcache:u32,
+    pub addwordlinks:u32,
+    pub lex:Option<String>,
+}
+
 //http://127.0.0.1:8088/philwords?n=101&idprefix=test1&x=0.1627681205837177&requestTime=1635643672625&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22wordid%22:%22%CE%B1%CE%B1%CF%84%CE%BF%CF%832%22,%22w%22:%22%22}
 
 #[allow(clippy::eval_order_dependence)]
-async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) -> Result<HttpResponse, AWError> {
+async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryRequest>)) -> Result<HttpResponse, AWError> {
     let p: WordQuery = serde_json::from_str(&info.query)?;
+
+    let wordid = p.wordid.unwrap_or_else(|| "".to_string());
     
-    let seq = db::execute_get_seq(&db,&p).await?;
+    let seq = db::execute_get_seq(&db, p.lexicon.as_str(), wordid.as_str(), p.w.as_str() ).await?;
     let mut before_rows = vec![];
     let mut after_rows = vec![];
     if info.page <= 0 {
-        before_rows = db::execute(&db, seq, true, &p, info.page, info.n).await?;
+        before_rows = db::execute(&db, seq, true, p.lexicon.as_str(), info.page, info.n).await?;
         if info.page == 0 { //only reverse if page 0. if < 0, each row is inserted under top of container one-by-one in order
             before_rows.reverse();
         }
     }
     if info.page >= 0 {
-        after_rows = db::execute(&db, seq, false, &p, info.page, info.n).await?;
+        after_rows = db::execute(&db, seq, false, p.lexicon.as_str(), info.page, info.n).await?;
     }
 
     let mut scroll = "".to_string();
@@ -113,7 +146,7 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
         }
     }
 
-    if p.w == "" && info.page == 0 {
+    if p.w == "" && info.page == 0 && seq == 1 {
         scroll = "top".to_string();
     }
 
@@ -121,31 +154,13 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
         scroll = seq.to_string();
     }
 
-    let mut b_start = -1;
-    let mut b_end = -1;
-    let mut a_start = -1;
-    let mut a_end = -1;
-
-    if before_rows.len() > 0 {
-        b_start = before_rows[0].i;
-        b_end = before_rows[before_rows.len()-1].i;
-    }
-
-    if after_rows.len() > 0 {
-        a_start = after_rows[0].i;
-        a_end = after_rows[after_rows.len()-1].i;
-    }
-
     let result = [before_rows, after_rows].concat();
 
+    //strip any numbers from end of string
     let re = Regex::new(r"[0-9]").unwrap();
     let result_stripped = result.into_iter().map( |mut row| { row.r.0 = re.replace_all(&row.r.0, "").to_string(); row }).collect();
 
-    let res = JsonResponse {
-        bstart: b_start,
-        bend: b_end,
-        astart: a_start,
-        aend: a_end,
+    let res = QueryResponse {
         select_id: seq.to_string(),
         error: "".to_owned(),
         wtprefix: info.idprefix.clone(),
@@ -167,14 +182,12 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryInfo>)) 
 //{"principalParts":"","def":"...","defName":"","word":"γεοῦχος","unaccentedWord":"γεουχοσ","lemma":"γεοῦχος","requestTime":0,"status":"0","lexicon":"lsj","word_id":"22045","wordid":"γεουχοσ","method":"setWord"}
 
 #[allow(clippy::eval_order_dependence)]
-async fn philologus_defs((db, info): (web::Data<Pool>, web::Query<DefInfo>)) -> Result<HttpResponse, AWError> {
-    //if let Some(o) = &info.lex {
-        //println!("lex: {}", path.into_inner());
-    //}
-    let def = db::execute_get_def(&db, &info.lexicon, info.id, &info.wordid).await?;
+async fn philologus_defs((db, info): (web::Data<Pool>, web::Query<DefRequest>)) -> Result<HttpResponse, AWError> {
+
+    let def = db::execute_get_def(&db, info.lexicon.as_str(), info.id, &info.wordid).await?;
 
     let res = DefResponse {
-        principal_part: "".to_string(),
+        principal_parts: "".to_string(),
         def: def.2.to_string(),
         def_name: "".to_string(),
         word: def.0.to_string(),

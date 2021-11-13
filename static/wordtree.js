@@ -1109,13 +1109,14 @@ eventually lexicon, query, and tag_id will be put into a single field for reques
         else
         {
         	//only set these if not a tree branch
-			if (returnObj.lastPage == 1)
+			if (returnObj.lastPage === 1)
 				wt.lastPage = true;
-			if (returnObj.lastPage == 0)
+			if (returnObj.lastPage === 0)
 				wt.lastPage = false;
-			if (returnObj.lastPageUp == 1)
+
+			if (returnObj.lastPageUp === 1)
 				wt.lastPageUp = true;
-			if (returnObj.lastPageUp == 0)
+			if (returnObj.lastPageUp === 0)
 				wt.lastPageUp = false;      
         
 			//delete old rows if this is page 0 and this isn't a tree

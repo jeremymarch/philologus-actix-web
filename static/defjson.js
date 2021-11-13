@@ -79,10 +79,10 @@ function setWord(json, status) {
     if (typeof JSON != "undefined") {
       data = JSON.parse(json);
     } else {
-      data = eval("(" + json + ")");
+      return; //data = eval("(" + json + ")");
     }
   } catch (e) {
-    if (debug) alert(e.message + "\n" + json);
+    if (debug) console.log(e.message + "\n" + json);
     return;
   };
 

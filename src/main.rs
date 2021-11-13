@@ -38,18 +38,18 @@ use serde::{Deserialize, Serialize};
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct QueryResponse {
     #[serde(rename(serialize = "selectId"))]
-    select_id: String,
+    select_id: u32,
     error: String,
     wtprefix: String,
-    nocache: String,
+    nocache: u8,
     container: String,
     #[serde(rename(serialize = "requestTime"))]
-    request_time: String,
-    page: String,
+    request_time: u64,
+    page: i32,
     #[serde(rename(serialize = "lastPage"))]
-    last_page: String,
+    last_page: u8,
     #[serde(rename(serialize = "lastPageUp"))]
-    lastpage_up: String,
+    lastpage_up: u8,
     scroll: String,
     query: String,
     #[serde(rename(serialize = "arrOptions"))]
@@ -68,10 +68,10 @@ struct DefResponse {
     unaccented_word: String,
     lemma: String,
     #[serde(rename(serialize = "requestTime"))]
-    request_time: String,
+    request_time: u64,
     status: String,
     lexicon: String,
-    word_id: String,
+    word_id: u32,
     wordid: String,
     method: String,
 }
@@ -80,23 +80,23 @@ struct DefResponse {
 pub struct QueryRequest {
     pub n: u32,
     pub idprefix: String,
-    pub x:String,
+    pub x: String,
     #[serde(rename(deserialize = "requestTime"))]
-    pub request_time:u64,
-    pub page:i32,
-    pub mode:String,
-    pub query:String,//WordQuery,
-    pub lex:Option<String>,
+    pub request_time: u64,
+    pub page: i32,
+    pub mode: String,
+    pub query: String,//WordQuery,
+    pub lex: Option<String>,
 }
 
 #[derive(Deserialize)]
 pub struct WordQuery {
-    pub regex:String,
-    pub lexicon:String,
-    pub tag_id:String,
-    pub root_id:String,
-    pub wordid:Option<String>,
-    pub w:String,
+    pub regex: String,
+    pub lexicon: String,
+    pub tag_id: String,
+    pub root_id: String,
+    pub wordid: Option<String>,
+    pub w: String,
 }
 
 //http://127.0.0.1:8080/wordservjson.php?id=110628&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002
@@ -106,9 +106,9 @@ pub struct DefRequest {
     pub id: Option<u32>,
     pub wordid: Option<String>,
     pub lexicon: String,
-    pub skipcache:u32,
-    pub addwordlinks:u32,
-    pub lex:Option<String>,
+    pub skipcache: u32,
+    pub addwordlinks: u32,
+    pub lex: Option<String>,
 }
 
 //http://127.0.0.1:8088/philwords?n=101&idprefix=test1&x=0.1627681205837177&requestTime=1635643672625&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22wordid%22:%22%CE%B1%CE%B1%CF%84%CE%BF%CF%832%22,%22w%22:%22%22}
@@ -132,26 +132,15 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryRequest>
         after_rows = db::execute(&db, seq, false, p.lexicon.as_str(), info.page, info.n).await?;
     }
 
-    let mut scroll = "".to_string();
-    let mut vlast_page = "0".to_string();
-    let mut vlast_page_up = "0".to_string();
+    let mut vlast_page = 0;
+    let mut vlast_page_up = 0;
     if info.page == 0 {
-        if before_rows.len() < info.n as usize
-        {
-            vlast_page_up = "1".to_string();
+        if before_rows.len() < info.n as usize {
+            vlast_page_up = 1;
         }
-        else if after_rows.len() < info.n as usize
-        {
-            vlast_page = "1".to_string();
+        else if after_rows.len() < info.n as usize {
+            vlast_page = 1;
         }
-    }
-
-    if p.w == "" && info.page == 0 && seq == 1 {
-        scroll = "top".to_string();
-    }
-
-    if scroll == "" {
-        scroll = seq.to_string();
     }
 
     let result = [before_rows, after_rows].concat();
@@ -161,16 +150,16 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryRequest>
     let result_stripped = result.into_iter().map( |mut row| { row.r.0 = re.replace_all(&row.r.0, "").to_string(); row }).collect();
 
     let res = QueryResponse {
-        select_id: seq.to_string(),
+        select_id: seq,
         error: "".to_owned(),
         wtprefix: info.idprefix.clone(),
-        nocache: "0".to_owned(),
+        nocache: if wordid == "" { 0 } else { 1 }, //prevents caching when queried by wordid in url
         container: format!("{}Container", info.idprefix),
-        request_time: info.request_time.to_string(),
-        page: info.page.to_string(),
+        request_time: info.request_time,
+        page: info.page,
         last_page: vlast_page,
         lastpage_up: vlast_page_up,
-        scroll: scroll,
+        scroll: if p.w == "" && info.page == 0 && seq == 1 { "top".to_string() } else { "".to_string() }, //scroll really only needs to return top
         query: p.w.to_owned(),
         arr_options: result_stripped
     };
@@ -193,10 +182,10 @@ async fn philologus_defs((db, info): (web::Data<Pool>, web::Query<DefRequest>)) 
         word: def.0.to_string(),
         unaccented_word: def.1.to_string(),
         lemma: "".to_string(),
-        request_time: "0".to_string(),
+        request_time: 0,
         status: "0".to_string(),
         lexicon: info.lexicon.to_string(),
-        word_id: def.3.to_string(),
+        word_id: def.3,
         wordid: def.0.to_string(),
         method: "setWord".to_string()
     };

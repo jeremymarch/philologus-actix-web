@@ -21,15 +21,20 @@ use std::io;
 use regex::Regex;
 use actix_files as fs;
 use actix_web::{middleware, web, App, Error as AWError, HttpResponse, HttpRequest, HttpServer, Result};
-use r2d2_sqlite::{self, SqliteConnectionManager};
+use sqlx::SqlitePool;
 
 use actix_files::NamedFile;
 use std::path::PathBuf;
 
-
 mod db;
-use db::{Pool,QueryResults};
+use db::{QueryResults};
+use crate::db::get_seq_by_word;
+use crate::db::get_def_by_word;
+use crate::db::get_def_by_seq;
+use crate::db::get_before;
+use crate::db::get_equal_and_after;
 use serde::{Deserialize, Serialize};
+use crate::db::get_seq_by_prefix;
 
 /*
 {"error":"","wtprefix":"test1","nocache":"1","container":"test1Container","requestTime":"1635643672625","selectId":"32","page":"0","lastPage":"0","lastPageUp":"1","scroll":"32","query":"","arrOptions":[{"i":1,"r":["Α α",1,0]},{"i":2,"r":["ἀ-",2,0]},{"i":3,"r":["ἀ-",3,0]},{"i":4,"r":["ἆ",4,0]}...
@@ -114,22 +119,38 @@ pub struct DefRequest {
 //http://127.0.0.1:8088/philwords?n=101&idprefix=test1&x=0.1627681205837177&requestTime=1635643672625&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22wordid%22:%22%CE%B1%CE%B1%CF%84%CE%BF%CF%832%22,%22w%22:%22%22}
 
 #[allow(clippy::eval_order_dependence)]
-async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryRequest>)) -> Result<HttpResponse, AWError> {
+async fn philologus_words((db, info): (web::Data<SqlitePool>, web::Query<QueryRequest>)) -> Result<HttpResponse, AWError> {
     let p: WordQuery = serde_json::from_str(&info.query)?;
 
     let wordid = p.wordid.unwrap_or_else(|| "".to_string());
     
-    let seq = db::execute_get_seq(&db, p.lexicon.as_str(), wordid.as_str(), p.w.as_str() ).await?;
+    //let seq = db::execute_get_seq(&db, p.lexicon.as_str(), wordid.as_str(), p.w.as_str() ).await?;
+    let table = match p.lexicon.as_str() {
+        "ls" => "ZLATIN",
+        "slater" => "ZSLATER",
+        _ => "ZGREEK"
+    };
+    let seq;
+    if wordid == "" {
+        seq = get_seq_by_prefix(&db, &table, &p.w).await?;
+    }
+    else {
+        seq = get_seq_by_word(&db, &table, &wordid).await?;
+    }
+
+
     let mut before_rows = vec![];
     let mut after_rows = vec![];
     if info.page <= 0 {
-        before_rows = db::execute(&db, seq, true, p.lexicon.as_str(), info.page, info.n).await?;
+        //before_rows = db::execute(&db, seq, true, p.lexicon.as_str(), info.page, info.n).await?;
+        before_rows = get_before(&db, table, seq, info.page, info.n).await?;
         if info.page == 0 { //only reverse if page 0. if < 0, each row is inserted under top of container one-by-one in order
             before_rows.reverse();
         }
     }
     if info.page >= 0 {
-        after_rows = db::execute(&db, seq, false, p.lexicon.as_str(), info.page, info.n).await?;
+        //after_rows = db::execute(&db, seq, false, p.lexicon.as_str(), info.page, info.n).await?;
+        after_rows = get_equal_and_after(&db, table, seq, info.page, info.n).await?;
     }
 
     let mut vlast_page = 0;
@@ -171,22 +192,36 @@ async fn philologus_words((db, info): (web::Data<Pool>, web::Query<QueryRequest>
 //{"principalParts":"","def":"...","defName":"","word":"γεοῦχος","unaccentedWord":"γεουχοσ","lemma":"γεοῦχος","requestTime":0,"status":"0","lexicon":"lsj","word_id":"22045","wordid":"γεουχοσ","method":"setWord"}
 
 #[allow(clippy::eval_order_dependence)]
-async fn philologus_defs((db, info): (web::Data<Pool>, web::Query<DefRequest>)) -> Result<HttpResponse, AWError> {
+async fn philologus_defs((db, info): (web::Data<SqlitePool>, web::Query<DefRequest>)) -> Result<HttpResponse, AWError> {
 
-    let def = db::execute_get_def(&db, info.lexicon.as_str(), info.id, &info.wordid).await?;
+    //let def = db::execute_get_def(&db, info.lexicon.as_str(), info.id, &info.wordid).await?;
+    let table = match info.lexicon.as_str() {
+        "ls" => "ZLATIN",
+        "slater" => "ZSLATER",
+        _ => "ZGREEK"
+    };
+
+    let def;
+
+    if !info.wordid.is_none() {
+        def = get_def_by_word(&db, &table, &info.wordid.as_ref().unwrap() ).await?;
+    }
+    else { //if !wordid.is_none() {
+        def = get_def_by_seq(&db, &table, info.id.unwrap() ).await?;
+    }
 
     let res = DefResponse {
         principal_parts: "".to_string(),
-        def: def.2.to_string(),
+        def: def.as_ref().unwrap().def.to_string(),
         def_name: "".to_string(),
-        word: def.0.to_string(),
-        unaccented_word: def.1.to_string(),
+        word: def.as_ref().unwrap().word.to_string(),
+        unaccented_word: def.as_ref().unwrap().sortword.to_string(),
         lemma: "".to_string(),
         request_time: 0,
         status: "0".to_string(),
         lexicon: info.lexicon.to_string(),
-        word_id: def.3,
-        wordid: def.0.to_string(),
+        word_id: def.as_ref().unwrap().seq,
+        wordid: def.as_ref().unwrap().word.to_string(),
         method: "setWord".to_string()
     };
 
@@ -206,8 +241,9 @@ async fn main() -> io::Result<()> {
     let db_path = std::env::var("PHILOLOGUS_DB_PATH")
                    .unwrap_or_else(|_| panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH."));
 
-    let manager = SqliteConnectionManager::file( db_path );
-    let pool = Pool::new(manager).unwrap();
+    //let manager = SqliteConnectionManager::file( db_path );
+    //let db_pool = Pool::new(manager).unwrap();
+    let db_pool = SqlitePool::connect(&db_path).await.expect("Could not connect to db.");
 /*
     let error_handlers = ErrorHandlers::new()
             .handler(
@@ -219,7 +255,7 @@ async fn main() -> io::Result<()> {
 */
     HttpServer::new(move || {
         App::new()
-            .data(pool.clone())
+            .data(db_pool.clone())
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
             //.wrap(error_handlers)

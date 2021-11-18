@@ -20,178 +20,147 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use actix_web::{web, Error as AWError};
 use failure::Error;
 use futures::{Future, TryFutureExt};
-use rusqlite::{Statement};
+
+use sqlx::sqlite::SqliteRow;
+use sqlx::{FromRow, Row, SqlitePool};
+
 use serde::{Deserialize, Serialize};
 use percent_encoding::percent_decode_str;
 
-pub type Pool = r2d2::Pool<r2d2_sqlite::SqliteConnectionManager>;
-pub type Connection = r2d2::PooledConnection<r2d2_sqlite::SqliteConnectionManager>;
-
-type PhilologusWordsResult = Result<Vec<QueryResults>, rusqlite::Error>;
-
-#[derive(Debug, Serialize, Deserialize,Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PhilologusWords {
     GreekDefs { seq: i32, def: String },
 }
 
 //[{"i":1,"r":["Α α",1,0]},
 // {"i":2,"r":["ἀ-",2,0]},
-#[derive(Debug, Serialize, Deserialize,Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct QueryResults { 
     pub i: i32, 
     pub r: (String,u32,u32)
 }
 
-pub fn execute(
-    pool: &Pool,
-    seq: u32,
-    before_query:bool,
-    lex: &str,
-    page: i32,
-    limit: u32,
-) -> impl Future<Output = Result<Vec<QueryResults>, AWError>> {
-    let pool = pool.clone();
-    let table = match lex {
-        "ls" => "ZLATIN",
-        "slater" => "ZSLATER",
-        _ => "ZGREEK"
-    };
-
-    web::block(move || {
-        let before;
-        if before_query {
-            before = get_before(pool.get().unwrap(), table, seq, page, limit);
-        }
-        else {
-            before = get_equal_and_after(pool.get().unwrap(), table, seq, page, limit);
-        } 
-        before.map_err(Error::from)
-    })
-    .map_err(AWError::from)
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
+pub struct DefRow {
+    pub word: String,
+    pub sortword: String,
+    pub def: String,
+    pub seq: u32
 }
 
-pub fn execute_get_seq(
-    pool: &Pool,
-    lex: &str,
-    word: &str,
-    prefix: &str,
-) -> impl Future<Output = Result<u32, AWError>> {
-    let pool = pool.clone();
-    let table = match lex {
-        "ls" => "ZLATIN",
-        "slater" => "ZSLATER",
-        _ => "ZGREEK"
-    };
+pub async fn get_def_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<Option<DefRow>, AWError> {
+    let decoded_word = percent_decode_str(word).decode_utf8().map_err(|_|AWError::from);
+    let query = format!("{}{}{}{}{}", "SELECT word,sortword,def,seq FROM ", table, " WHERE word = '", decoded_word.into(), "' LIMIT 1;");
 
-    let prefix_local = prefix.to_owned();
-    let word_local = word.to_owned();
-
-    web::block(move || {
-        if word_local == "" {
-            get_seq_by_prefix(pool.get().unwrap(), &table, &prefix_local).map_err(Error::from)
-        }
-        else {
-            get_seq_by_word(pool.get().unwrap(), &table, &word_local).map_err(Error::from)
-        }
-    })
-    .map_err(AWError::from)
+    let rec = sqlx::query_as::<_, DefRow>(&query)
+    .fetch_optional(&*pool)
+    .await.map_err(|_| AWError::from);
+    /*
+    match rec {
+        Ok(rec) => {
+        let res = match rec {
+            None => return Ok(None),
+            Some(rec) => {
+                return Ok(Some(DefRow {
+                    word: rec.unwrap().get(0),
+                    sortword: rec.unwrap().get(1),
+                    def: rec.unwrap().get(2),
+                    seq: rec.unwrap().get(3)
+                }))
+            }
+        }}
+        Err() => return Err()
+    }*/
+    Ok(rec)
 }
 
-pub fn execute_get_def(
-    pool: &Pool,
-    lex: &str,
-    id: Option<u32>,
-    word: &Option<String>,
-) -> impl Future<Output = Result<(String,String,String,u32), AWError>> {
-    let pool = pool.clone();
-    let table = match lex {
-        "ls" => "ZLATIN",
-        "slater" => "ZSLATER",
-        _ => "ZGREEK"
-    };
-    let wordid = id;
-    let word2 = word.clone();
-
-    web::block(move || {
-
-        let d;
-
-        if !word2.is_none() {
-            d = get_def_by_word(pool.get().unwrap(), &table, word2.unwrap().as_str() );
-        }
-        else { //if !wordid.is_none() {
-            d = get_def_by_seq(pool.get().unwrap(), &table, wordid.unwrap() );
-        }
-
-        /*match d {
-            Ok(ref d) => println!("ok"),
-            Err(ref err) => println!("error: {}", err),
-        }*/
-        d.map_err(Error::from)
-    })
-    .map_err(AWError::from)
-}
-
-fn get_def_by_word(conn: Connection, table:&str, word:&str) -> Result<(String,String,String,u32), rusqlite::Error> {
-    let decoded_word = percent_decode_str(word).decode_utf8()?;
-    let query = format!("{}{}{}{}{}", "SELECT word,sortword,def,seq FROM ", table, " WHERE word = '", decoded_word, "' LIMIT 1;");
-    conn.query_row(&query, [], |r| Ok( (r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)? )) )
-}
-fn get_def_by_seq(conn: Connection, table:&str, id:u32) -> Result<(String,String,String,u32), rusqlite::Error> {
+pub async fn get_def_by_seq(pool: &SqlitePool, table:&str, id:u32) -> Result<Option<DefRow>, AWError> {
     let query = format!("{}{}{}{}{}", "SELECT word,sortword,def,seq FROM ", table, " WHERE seq = ", id, " LIMIT 1;");
-    conn.query_row(&query, [], |r| Ok( (r.get(0)?,r.get(1)?,r.get(2)?,r.get(3)? )) )
+
+    let rec = sqlx::query_as::<_, DefRow>(&query)
+    .fetch_one(&*pool)
+    .await.map_err(|_| AWError::from);
+
+    /*match rec {
+        Ok(rec) => {
+        let res = match rec {
+            None => return Ok(None),
+            Some(rec) => {
+                return Ok(Some(DefRow {
+                    word: rec.unwrap().get(0),
+                    sortword: rec.unwrap().get(1),
+                    def: rec.unwrap().get(2),
+                    seq: rec.unwrap().get(3)
+                }))
+            }
+        },
+        Err() => return Err()
+    }*/
+    Ok(rec)
 }
 
 //, SEQ_COL, $table, UNACCENTED_COL, $word, STATUS_COL, UNACCENTED_COL);
-fn get_seq_by_prefix(conn: Connection, table:&str, word:&str) -> Result<u32, rusqlite::Error> {
+pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, word:&str) -> Result<u32, AWError> {
     let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE sortword >= '", word, "' ORDER BY sortword LIMIT 1;");
-    let res = conn.query_row(&query, [], |r| Ok(r.get(0)) );
+
+    let rec = sqlx::query_as(&query)
+    .fetch_one(&*pool)
+    .await.map_err(|_|AWError::from);
+    rec.map_err(|_|AWError::from)
+    /*
+    match rec {
+        Ok(rec) => return rec,
+        Err() 
+    }
     
     match res {
-        Ok(res) => return res,
+        Ok(res) => return res.map_err(|_| AWError::from),
         Err(_) => {
             let query = format!("{}{}{}", "SELECT MAX(seq) FROM ", table, " LIMIT 1;");
-            return conn.query_row(&query, [], |r| r.get(0) );
+            let rec = sqlx::query_as::<_, u32>(&query)
+            .fetch_optional(&*pool)
+            .await.map_err(|_|AWError::from);
+        
+            rec.map(|rec| rec.get(0) ).map_err(|_|AWError::from)
         }
-    }
+    }*/
 }
 
 //, SEQ_COL, $table, UNACCENTED_COL, $word, STATUS_COL, UNACCENTED_COL);
-fn get_seq_by_word(conn: Connection, table:&str, word:&str) -> Result<u32, rusqlite::Error> {
-    let decoded_word = percent_decode_str(word).decode_utf8()?;
-    let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE word = '", decoded_word, "' LIMIT 1;");
-    let res = conn.query_row(&query, [], |r| Ok(r.get(0)) );
-    
-    match res {
-        Ok(res) => return res,
-        Err(_) => {
-            return Ok(1);
-        }
-    }
+pub async fn get_seq_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<u32, AWError> {
+    let decoded_word = percent_decode_str(word).decode_utf8().map_err(|_|AWError::from);
+    let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE word = '", decoded_word.into(), "' LIMIT 1;");
+    let rec = sqlx::query_as(&query)
+    .fetch_optional(&*pool)
+    .await.map_err(|_|AWError::from);
+
+    rec.map_err(|_|AWError::from)
 }
 
 //, ID_COL, WORD_COL, $table, $tagJoin, SEQ_COL, $middleSeq, STATUS_COL, $tagwhere, SEQ_COL, $req->limit * $req->page * -1, $req->limit);
-fn get_before(conn: Connection, table:&str, seq: u32, page: i32, limit: u32) -> PhilologusWordsResult {
+pub async fn get_before(pool: &SqlitePool, table:&str, seq: u32, page: i32, limit: u32) -> Result<Vec<QueryResults>, AWError> {
     let query = format!("{}{}{}{}{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq < ", seq, " ORDER BY seq DESC LIMIT ", page * limit as i32 * -1, ",", limit, ";");
-    let stmt = conn.prepare(&query)?;
-    get_word_res(stmt)
+        let res: Vec<QueryResults> = sqlx::query(&query)
+        .map(|rec: SqliteRow| QueryResults {
+            i: rec.get("seq"),
+            r: (rec.get("word"), rec.get("seq"), 0)
+        })
+        .fetch_all(pool)
+        .await?;
+
+        Ok(res)
 }
 
 //, ID_COL, WORD_COL, $table, $tagJoin, SEQ_COL, $middleSeq, STATUS_COL, $tagwhere, SEQ_COL, $req->limit * $req->page, $req->limit);
-fn get_equal_and_after(conn: Connection, table:&str, seq: u32, page: i32, limit: u32) -> PhilologusWordsResult {
+pub async fn get_equal_and_after(pool: &SqlitePool, table:&str, seq: u32, page: i32, limit: u32) -> Result<Vec<QueryResults>, AWError> {
     let query = format!("{}{}{}{}{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq >= ", seq, " ORDER BY seq LIMIT ", page * limit as i32, ",", limit, ";");
-    let stmt = conn.prepare(&query)?;
-    get_word_res(stmt)
-}
+    let res: Vec<QueryResults> = sqlx::query(&query)
+    .map(|rec: SqliteRow| QueryResults {
+        i: rec.get("seq"),
+        r: (rec.get("word"), rec.get("seq"), 0)
+    })
+    .fetch_all(pool)
+    .await?;
 
-fn get_word_res(mut statement: Statement) -> PhilologusWordsResult {
-    statement
-        .query_map([], |row| {
-            let a = (row.get(1)?, row.get(0)?, 0);
-            Ok(QueryResults {
-                i: row.get(0)?,
-                r: a,
-            })
-        })
-        .and_then(Iterator::collect)
+    Ok(res)
 }

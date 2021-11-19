@@ -104,8 +104,8 @@ pub async fn get_def_by_seq(pool: &SqlitePool, table:&str, id:u32) -> Result<Opt
 
 //, SEQ_COL, $table, UNACCENTED_COL, $word, STATUS_COL, UNACCENTED_COL);
 pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, word:&str) -> Result<u32, AWError> {
-    let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE sortword >= '", word, "' ORDER BY sortword LIMIT 1;");
-
+    let query = format!("{}{}{}{}{}", "SELECT seq,word,def,sortword FROM ", table, " WHERE sortword >= '", word, "' ORDER BY sortword LIMIT 1;");
+    
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .fetch_one(&*pool)
     .await;
@@ -133,7 +133,7 @@ pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, word:&str) -> Resu
 //, SEQ_COL, $table, UNACCENTED_COL, $word, STATUS_COL, UNACCENTED_COL);
 pub async fn get_seq_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<u32, AWError> {
     let decoded_word = percent_decode_str(word).decode_utf8().unwrap();
-    let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE word = '", decoded_word, "' LIMIT 1;");
+    let query = format!("{}{}{}{}{}", "SELECT seq,word,def,sortword FROM ", table, " WHERE word = '", decoded_word, "' LIMIT 1;");
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .fetch_one(&*pool)

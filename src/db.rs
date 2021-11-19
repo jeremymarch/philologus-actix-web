@@ -17,18 +17,13 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-use actix_web::{web, Error as AWError};
-use failure::Error;
-use futures::{Future, TryFutureExt};
+use actix_web::{Error as AWError};
 
 use sqlx::sqlite::SqliteRow;
-use sqlx::{FromRow, Row, SqlitePool, Error as SQLxError };
+use sqlx::{FromRow, Row, SqlitePool };
 
 use serde::{Deserialize, Serialize};
 use percent_encoding::percent_decode_str;
-
-use actix_web::ResponseError;
-use actix_web::HttpResponse;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PhilologusWords {

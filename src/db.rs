@@ -22,10 +22,13 @@ use failure::Error;
 use futures::{Future, TryFutureExt};
 
 use sqlx::sqlite::SqliteRow;
-use sqlx::{FromRow, Row, SqlitePool};
+use sqlx::{FromRow, Row, SqlitePool, Error as SQLxError };
 
 use serde::{Deserialize, Serialize};
 use percent_encoding::percent_decode_str;
+
+use actix_web::ResponseError;
+use actix_web::HttpResponse;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PhilologusWords {
@@ -49,12 +52,12 @@ pub struct DefRow {
 }
 
 pub async fn get_def_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<Option<DefRow>, AWError> {
-    let decoded_word = percent_decode_str(word).decode_utf8().map_err(|_|AWError::from);
-    let query = format!("{}{}{}{}{}", "SELECT word,sortword,def,seq FROM ", table, " WHERE word = '", decoded_word.into(), "' LIMIT 1;");
+    let decoded_word = percent_decode_str(word).decode_utf8().unwrap();
+    let query = format!("{}{}{}{}{}", "SELECT word,sortword,def,seq FROM ", table, " WHERE word = '", decoded_word, "' LIMIT 1;");
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
-    .fetch_optional(&*pool)
-    .await.map_err(|_| AWError::from);
+    .fetch_one(&*pool)
+    .await;
     /*
     match rec {
         Ok(rec) => {
@@ -71,7 +74,7 @@ pub async fn get_def_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result
         }}
         Err() => return Err()
     }*/
-    Ok(rec)
+    Ok(Some(rec.unwrap()))
 }
 
 pub async fn get_def_by_seq(pool: &SqlitePool, table:&str, id:u32) -> Result<Option<DefRow>, AWError> {
@@ -79,7 +82,7 @@ pub async fn get_def_by_seq(pool: &SqlitePool, table:&str, id:u32) -> Result<Opt
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .fetch_one(&*pool)
-    .await.map_err(|_| AWError::from);
+    .await;
 
     /*match rec {
         Ok(rec) => {
@@ -96,17 +99,18 @@ pub async fn get_def_by_seq(pool: &SqlitePool, table:&str, id:u32) -> Result<Opt
         },
         Err() => return Err()
     }*/
-    Ok(rec)
+    Ok(Some(rec.unwrap()))
 }
 
 //, SEQ_COL, $table, UNACCENTED_COL, $word, STATUS_COL, UNACCENTED_COL);
 pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, word:&str) -> Result<u32, AWError> {
     let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE sortword >= '", word, "' ORDER BY sortword LIMIT 1;");
 
-    let rec = sqlx::query_as(&query)
+    let rec = sqlx::query_as::<_, DefRow>(&query)
     .fetch_one(&*pool)
-    .await.map_err(|_|AWError::from);
-    rec.map_err(|_|AWError::from)
+    .await;
+
+    Ok(rec.unwrap().seq)
     /*
     match rec {
         Ok(rec) => return rec,
@@ -128,39 +132,58 @@ pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, word:&str) -> Resu
 
 //, SEQ_COL, $table, UNACCENTED_COL, $word, STATUS_COL, UNACCENTED_COL);
 pub async fn get_seq_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<u32, AWError> {
-    let decoded_word = percent_decode_str(word).decode_utf8().map_err(|_|AWError::from);
-    let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE word = '", decoded_word.into(), "' LIMIT 1;");
-    let rec = sqlx::query_as(&query)
-    .fetch_optional(&*pool)
-    .await.map_err(|_|AWError::from);
+    let decoded_word = percent_decode_str(word).decode_utf8().unwrap();
+    let query = format!("{}{}{}{}{}", "SELECT seq FROM ", table, " WHERE word = '", decoded_word, "' LIMIT 1;");
 
-    rec.map_err(|_|AWError::from)
+    let rec = sqlx::query_as::<_, DefRow>(&query)
+    .fetch_one(&*pool)
+    .await;
+
+    Ok(rec.unwrap().seq)
 }
 
 //, ID_COL, WORD_COL, $table, $tagJoin, SEQ_COL, $middleSeq, STATUS_COL, $tagwhere, SEQ_COL, $req->limit * $req->page * -1, $req->limit);
 pub async fn get_before(pool: &SqlitePool, table:&str, seq: u32, page: i32, limit: u32) -> Result<Vec<QueryResults>, AWError> {
     let query = format!("{}{}{}{}{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq < ", seq, " ORDER BY seq DESC LIMIT ", page * limit as i32 * -1, ",", limit, ";");
-        let res: Vec<QueryResults> = sqlx::query(&query)
+        let res: Result<Vec<QueryResults>, sqlx::Error> = sqlx::query(&query)
         .map(|rec: SqliteRow| QueryResults {
             i: rec.get("seq"),
             r: (rec.get("word"), rec.get("seq"), 0)
         })
         .fetch_all(pool)
-        .await?;
+        .await;
 
-        Ok(res)
+        Ok(res.unwrap()) //fake for now
+        /*
+        match res {
+            Ok(res) => return Ok(res),
+            _ => return Err(res).map_err(AWError::from)
+        };*/
 }
 
 //, ID_COL, WORD_COL, $table, $tagJoin, SEQ_COL, $middleSeq, STATUS_COL, $tagwhere, SEQ_COL, $req->limit * $req->page, $req->limit);
 pub async fn get_equal_and_after(pool: &SqlitePool, table:&str, seq: u32, page: i32, limit: u32) -> Result<Vec<QueryResults>, AWError> {
     let query = format!("{}{}{}{}{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq >= ", seq, " ORDER BY seq LIMIT ", page * limit as i32, ",", limit, ";");
-    let res: Vec<QueryResults> = sqlx::query(&query)
+    let res: Result<Vec<QueryResults>, sqlx::Error> = sqlx::query(&query)
     .map(|rec: SqliteRow| QueryResults {
         i: rec.get("seq"),
         r: (rec.get("word"), rec.get("seq"), 0)
     })
     .fetch_all(pool)
-    .await?;
+    .await;
 
-    Ok(res)
+    Ok(res.unwrap()) //fake for now
+    /*
+    match res {
+        Ok(res) => return Ok(res),
+        _ => return Err(res).map_err(AWError::from)
+    };*/
 }
+
+/*
+impl ResponseError for Error {
+    fn error_response(&self) -> HttpResponse {
+        HttpResponse::build(StatusCode::INTERNAL_SERVER_ERROR).finish()
+    }
+}
+*/

@@ -135,6 +135,16 @@ pub enum PhilologusError {
     #[error("Unknown Internal Error")]
     Unknown
 }
+/*
+impl From<sqlx::Error> for PhilologusError {
+    fn from(err: sqlx::Error) -> PhilologusError {
+        PhilologusError {
+            message: Some(err.to_string()),
+            err_type: CustomErrorType::DieselError,
+        }
+    }
+}
+*/
 impl PhilologusError {
     pub fn name(&self) -> String {
         match self {

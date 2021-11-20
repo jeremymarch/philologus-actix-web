@@ -258,22 +258,22 @@ async fn main() -> io::Result<()> {
             .wrap(middleware::Logger::default())
             //.wrap(error_handlers)
             .service(
-                web::resource("/{lex}/wtgreekserv.php")
+                web::resource("/{lex}/query")
                     .route(web::get().to(philologus_words)),
             )
             .service(
-                web::resource("/{lex}/wordservjson.php")
+                web::resource("/{lex}/item")
                     .route(web::get().to(philologus_defs)),
             )
             .service(
                 web::resource("/{lex}/{word}")
                     .route(web::get().to(index))) //requesting page from a word link, order of services matters
             .service(
-                web::resource("/wordservjson.php")
+                web::resource("/item")
                     .route(web::get().to(philologus_defs)),
             )
             .service(
-                web::resource("/wtgreekserv.php")
+                web::resource("/query")
                     .route(web::get().to(philologus_words)),
             )
             .service(fs::Files::new("/", "./static").prefer_utf8(true).index_file("index.html"))

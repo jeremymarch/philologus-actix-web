@@ -632,7 +632,9 @@ height: 22px;
   
       addEvent("popstate", window, function(e) {
         //exclude from history, else we push it back on at same time as popping.  see defjson.js: end of setWord.
-        getDef(e.state[0], e.state[1], "", true, false);
+        if (e.state && e.state.length > 1) {
+          getDef(e.state[0], e.state[1], "", true, false);
+        }
       });
   
       var useRight = true;
@@ -1006,7 +1008,7 @@ height: 22px;
       }
   
       function showiPhone() {
-        var news = "Available as an iPhone/iPad app in <a href='https://itunes.apple.com/us/app/philolog.us/id622324932?mt=8' class='storelink'>Apple's App store</a>.<br><br><br>Now available for Android in the <a href='https://play.google.com/store/apps/details?id=com.philolog.philologus&hl=en' class='storelink'>Google Play store</a>.";
+        var news = "Available for iPhone/iPad app in the <a href='https://itunes.apple.com/us/app/philolog.us/id622324932?mt=8' class='storelink'>App store</a>.<br><br><br>Available for Android in the <a href='https://play.google.com/store/apps/details?id=com.philolog.philologus&hl=en' class='storelink'>Google Play store</a>.";
         document.getElementById("lsjdef").innerHTML = "<div style='text-align:center;font-size:16pt;padding-top:60px;'>" + news + "</div>";
   
       }
@@ -1153,7 +1155,7 @@ height: 22px;
       s.id = "settingsdiv";
       s.classList.add("settings");
       s.style.display = "block";
-      s.innerHTML = "Settings<br><ul><li><div tabindex='0' onclick='contact()' class='menulink'>about</div></li><li><div tabindex='0' onclick='showiPhone()' class='menulink'>iOS/Android app</div></li><!--<li><div tabindex='0' onclick='config()' class='menulink'>configure</div></li>--><li><div tabindex='0' onclick='toggleHistoryChooser()' class='menulink'>show history</div></li><li><div tabindex='0' style='height:70px;'>dark mode: <div style='text-align:right;float:right;padding:0px;border:none;'>system <input id='darkModeSystem' type='radio' name='darkmode' onclick='darkModeClick(this);' value='system'/><br>dark <input id='darkModeDark' type='radio' name='darkmode' onclick='darkModeClick(this);' value='dark'/><br>light<input id='darkModeLight' type='radio' name='darkmode' onclick='darkModeClick(this);' value='light'/></div></div></li></ul>";
+      s.innerHTML = "Settings<br><ul><li><div tabindex='0' onclick='contact()' class='menulink'>about</div></li><li><div tabindex='0' onclick='showiPhone()' class='menulink'>iOS/Android app</div></li><!--<li><div tabindex='0' onclick='config()' class='menulink'>configure</div></li>--><li><div tabindex='0' onclick='toggleHistoryChooser()' class='menulink'>show/hide history</div></li><li><div tabindex='0' style='height:70px;'>dark mode: <div style='text-align:right;float:right;padding:0px;border:none;'>system <input id='darkModeSystem' type='radio' name='darkmode' onclick='darkModeClick(this);' value='system'/><br>dark <input id='darkModeDark' type='radio' name='darkmode' onclick='darkModeClick(this);' value='dark'/><br>light<input id='darkModeLight' type='radio' name='darkmode' onclick='darkModeClick(this);' value='light'/></div></div></li></ul>";
       var c = document.createElement("div");
       c.id="backdrop";
       c.onclick = function() {

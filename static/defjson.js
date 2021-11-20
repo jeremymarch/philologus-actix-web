@@ -24,7 +24,7 @@ function getDef(id, lexicon, word, excludeFromHistory, pushToBackHistory) {
     vAddToBackHistory = false;
 
   //the random number id needed for ie--it would ask for the same page twice
-  var url = 'wordservjson.php?id=' + id + '&lexicon=' + lexicon + '&skipcache=' + skipCache + '&addwordlinks=' + addWordLinks + '&x=' + Math.random();
+  var url = 'item?id=' + id + '&lexicon=' + lexicon + '&skipcache=' + skipCache + '&addwordlinks=' + addWordLinks + '&x=' + Math.random();
   //console.log("get def: " + url);
 
   if (!useDefCache || !defCheckCache(lexicon, id)) {
@@ -54,7 +54,7 @@ function getDefFromWordid(wordid, lexicon, word, excludeFromHistory, pushToBackH
     vAddToBackHistory = false;
 
   //the random number id needed for ie--it would ask for the same page twice
-  var url = 'wordservjson.php?wordid=' + wordid + '&lexicon=' + lexicon + '&skipcache=' + skipCache + '&addwordlinks=' + addWordLinks + '&x=' + Math.random();
+  var url = 'item?wordid=' + wordid + '&lexicon=' + lexicon + '&skipcache=' + skipCache + '&addwordlinks=' + addWordLinks + '&x=' + Math.random();
   //alert(url);
 
   //if (!useDefCache || !defCheckCache(lexicon, id))

@@ -74,26 +74,20 @@ pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, word:&str) -> Resu
     
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .fetch_one(&*pool)
-    .await.map_err(map_sqlx_error)?;
+    .await;
 
-    Ok(rec.seq)
-    /*
     match rec {
-        Ok(rec) => return rec,
-        Err() 
-    }
-    
-    match res {
-        Ok(res) => return res.map_err(|_| AWError::from),
-        Err(_) => {
-            let query = format!("{}{}{}", "SELECT MAX(seq) FROM ", table, " LIMIT 1;");
-            let rec = sqlx::query_as::<_, u32>(&query)
-            .fetch_optional(&*pool)
-            .await.map_err(|_|AWError::from);
+        Ok(r) => Ok(r.seq),
+        Err(sqlx::Error::RowNotFound) => {
+            let query = format!("{}{}{}", "SELECT MAX(seq) as seq,word,def,sortword FROM ", table, " LIMIT 1;");
+            let rec = sqlx::query_as::<_, DefRow>(&query)  //fake it by loading it into DefRow for now
+            .fetch_one(&*pool)
+            .await.map_err(map_sqlx_error)?;
         
-            rec.map(|rec| rec.get(0) ).map_err(|_|AWError::from)
+            Ok(rec.seq)
         }
-    }*/
+        _ => Err(PhilologusError::Unknown)
+    }
 }
 
 pub async fn get_seq_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<u32, PhilologusError> {

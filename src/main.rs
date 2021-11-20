@@ -126,7 +126,6 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
 
     let wordid = p.wordid.unwrap_or_else(|| "".to_string());
     
-    //let seq = db::execute_get_seq(&db, p.lexicon.as_str(), wordid.as_str(), p.w.as_str() ).await?;
     let table = match p.lexicon.as_str() {
         "ls" => "ZLATIN",
         "slater" => "ZSLATER",
@@ -144,14 +143,13 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
     let mut before_rows = vec![];
     let mut after_rows = vec![];
     if info.page <= 0 {
-        //before_rows = db::execute(&db, seq, true, p.lexicon.as_str(), info.page, info.n).await?;
+        
         before_rows = get_before(&db, table, seq, info.page, info.n).await?;
         if info.page == 0 { //only reverse if page 0. if < 0, each row is inserted under top of container one-by-one in order
             before_rows.reverse();
         }
     }
     if info.page >= 0 {
-        //after_rows = db::execute(&db, seq, false, p.lexicon.as_str(), info.page, info.n).await?;
         after_rows = get_equal_and_after(&db, table, seq, info.page, info.n).await?;
     }
 
@@ -196,7 +194,7 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
 #[allow(clippy::eval_order_dependence)]
 async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
-    //let def = db::execute_get_def(&db, info.lexicon.as_str(), info.id, &info.wordid).await?;
+    
     let table = match info.lexicon.as_str() {
         "ls" => "ZLATIN",
         "slater" => "ZSLATER",
@@ -243,8 +241,6 @@ async fn main() -> io::Result<()> {
     let db_path = std::env::var("PHILOLOGUS_DB_PATH")
                    .unwrap_or_else(|_| panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH."));
 
-    //let manager = SqliteConnectionManager::file( db_path );
-    //let db_pool = Pool::new(manager).unwrap();
     let db_pool = SqlitePool::connect(&db_path).await.expect("Could not connect to db.");
 /*
     let error_handlers = ErrorHandlers::new()

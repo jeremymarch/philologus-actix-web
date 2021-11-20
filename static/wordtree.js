@@ -1515,9 +1515,20 @@ eventually lexicon, query, and tag_id will be put into a single field for reques
           url: url,
           method: "GET",
           success: procResponse,
-          warning: null,
+          warning: procResponseError,
           error: null
         });
+    }
+
+    function procResponseError(str){
+        if (typeof JSON != "undefined")
+        {
+            var returnObj = JSON.parse(str);
+            if (typeof(returnObj.error) != "undefined") {
+                console.log("response error: " + returnObj.error);
+                //wt.loading.style.display = "none";
+            }
+        }
     }
 
     function checkCache(wt)

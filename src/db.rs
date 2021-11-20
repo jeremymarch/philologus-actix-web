@@ -49,7 +49,7 @@ pub struct DefRow {
 }
 
 pub async fn get_def_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<Option<DefRow>, PhilologusError> {
-    let decoded_word = percent_decode_str(word).decode_utf8().unwrap();
+    let decoded_word = percent_decode_str(word).decode_utf8().map_err(map_utf8_error)?;
     let query = format!("{}{}{}{}{}", "SELECT word,sortword,def,seq FROM ", table, " WHERE word = '", decoded_word, "' LIMIT 1;");
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
@@ -69,7 +69,6 @@ pub async fn get_def_by_seq(pool: &SqlitePool, table:&str, id:u32) -> Result<Opt
     Ok(Some(rec))
 }
 
-//, SEQ_COL, $table, UNACCENTED_COL, $word, STATUS_COL, UNACCENTED_COL);
 pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, word:&str) -> Result<u32, PhilologusError> {
     let query = format!("{}{}{}{}{}", "SELECT seq,word,def,sortword FROM ", table, " WHERE sortword >= '", word, "' ORDER BY sortword LIMIT 1;");
     
@@ -97,9 +96,8 @@ pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, word:&str) -> Resu
     }*/
 }
 
-//, SEQ_COL, $table, UNACCENTED_COL, $word, STATUS_COL, UNACCENTED_COL);
 pub async fn get_seq_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<u32, PhilologusError> {
-    let decoded_word = percent_decode_str(word).decode_utf8().unwrap();
+    let decoded_word = percent_decode_str(word).decode_utf8().map_err(map_utf8_error)?;
     let query = format!("{}{}{}{}{}", "SELECT seq,word,def,sortword FROM ", table, " WHERE word = '", decoded_word, "' LIMIT 1;");
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
@@ -109,7 +107,6 @@ pub async fn get_seq_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result
     Ok(rec.seq)
 }
 
-//, ID_COL, WORD_COL, $table, $tagJoin, SEQ_COL, $middleSeq, STATUS_COL, $tagwhere, SEQ_COL, $req->limit * $req->page * -1, $req->limit);
 pub async fn get_before(pool: &SqlitePool, table:&str, seq: u32, page: i32, limit: u32) -> Result<Vec<QueryResults>, PhilologusError> {
     let query = format!("{}{}{}{}{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq < ", seq, " ORDER BY seq DESC LIMIT ", page * limit as i32 * -1, ",", limit, ";");
     let res: Result<Vec<QueryResults>, sqlx::Error> = sqlx::query(&query)
@@ -123,7 +120,6 @@ pub async fn get_before(pool: &SqlitePool, table:&str, seq: u32, page: i32, limi
     res.map_err(map_sqlx_error)
 }
 
-//, ID_COL, WORD_COL, $table, $tagJoin, SEQ_COL, $middleSeq, STATUS_COL, $tagwhere, SEQ_COL, $req->limit * $req->page, $req->limit);
 pub async fn get_equal_and_after(pool: &SqlitePool, table:&str, seq: u32, page: i32, limit: u32) -> Result<Vec<QueryResults>, PhilologusError> {
     let query = format!("{}{}{}{}{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq >= ", seq, " ORDER BY seq LIMIT ", page * limit as i32, ",", limit, ";");
     let res: Result<Vec<QueryResults>, sqlx::Error> = sqlx::query(&query)
@@ -176,6 +172,25 @@ impl ResponseError for PhilologusError {
 }
 
 fn map_sqlx_error(_e: sqlx::Error) -> PhilologusError {   
+    /*
+    match e { //.kind() {
+        sqlx::Error::Io(Error) => PhilologusError::Unknown,
+        sqlx::Error::UrlParse(_) => PhilologusError::Unknown,
+        sqlx::Error::Database(err) => PhilologusError::Unknown,
+        sqlx::Error::NotFound => PhilologusError::Unknown,
+        sqlx::Error::FoundMoreThanOne => PhilologusError::Unknown,
+        sqlx::Error::ColumnNotFound(err) => PhilologusError::Unknown,
+        sqlx::Error::Protocol(err) => PhilologusError::Unknown,
+        sqlx::Error::PoolTimedOut => PhilologusError::Unknown,
+        sqlx::Error::PoolClosed => PhilologusError::Unknown,
+        sqlx::Error::Decode(err) => PhilologusError::Unknown,
+        // some variants omitted
+        _ => PhilologusError::Unknown,
+    }
+    */
+    PhilologusError::Unknown
+}
+fn map_utf8_error(_e: std::str::Utf8Error) -> PhilologusError {   
     /*
     match e { //.kind() {
         sqlx::Error::Io(Error) => PhilologusError::Unknown,

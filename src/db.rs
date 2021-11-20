@@ -136,6 +136,7 @@ pub enum PhilologusError {
     #[error("Unknown Internal Error")]
     Unknown
 }
+
 impl PhilologusError {
     pub fn name(&self) -> String {
         match self {
@@ -145,6 +146,7 @@ impl PhilologusError {
         }
     }
 }
+
 impl ResponseError for PhilologusError {
     fn status_code(&self) -> StatusCode {
         match *self {
@@ -165,42 +167,28 @@ impl ResponseError for PhilologusError {
     }
 }
 
-fn map_sqlx_error(_e: sqlx::Error) -> PhilologusError {   
-    /*
-    match e { //.kind() {
-        sqlx::Error::Io(Error) => PhilologusError::Unknown,
-        sqlx::Error::UrlParse(_) => PhilologusError::Unknown,
-        sqlx::Error::Database(err) => PhilologusError::Unknown,
-        sqlx::Error::NotFound => PhilologusError::Unknown,
-        sqlx::Error::FoundMoreThanOne => PhilologusError::Unknown,
-        sqlx::Error::ColumnNotFound(err) => PhilologusError::Unknown,
-        sqlx::Error::Protocol(err) => PhilologusError::Unknown,
+fn map_sqlx_error(e: sqlx::Error) -> PhilologusError {   
+    match e {
+        sqlx::Error::Configuration { .. } => PhilologusError::Unknown,
+        sqlx::Error::Database { .. } => PhilologusError::Unknown,
+        sqlx::Error::Io { .. } => PhilologusError::Unknown,
+        sqlx::Error::Tls { .. } => PhilologusError::Unknown,
+        sqlx::Error::Protocol { .. } => PhilologusError::Unknown,
+        sqlx::Error::RowNotFound => PhilologusError::Unknown,
+        sqlx::Error::TypeNotFound { .. } => PhilologusError::Unknown,
+        sqlx::Error::ColumnIndexOutOfBounds { .. } => PhilologusError::Unknown,
+        sqlx::Error::ColumnNotFound { .. } => PhilologusError::Unknown,
+        sqlx::Error::ColumnDecode { .. } => PhilologusError::Unknown,
+        sqlx::Error::Decode { .. } => PhilologusError::Unknown,
         sqlx::Error::PoolTimedOut => PhilologusError::Unknown,
         sqlx::Error::PoolClosed => PhilologusError::Unknown,
-        sqlx::Error::Decode(err) => PhilologusError::Unknown,
-        // some variants omitted
+        sqlx::Error::WorkerCrashed => PhilologusError::Unknown,
+        sqlx::Error::Migrate { .. } => PhilologusError::Unknown,
         _ => PhilologusError::Unknown,
     }
-    */
-    PhilologusError::Unknown
 }
+
 fn map_utf8_error(_e: std::str::Utf8Error) -> PhilologusError {   
-    /*
-    match e { //.kind() {
-        sqlx::Error::Io(Error) => PhilologusError::Unknown,
-        sqlx::Error::UrlParse(_) => PhilologusError::Unknown,
-        sqlx::Error::Database(err) => PhilologusError::Unknown,
-        sqlx::Error::NotFound => PhilologusError::Unknown,
-        sqlx::Error::FoundMoreThanOne => PhilologusError::Unknown,
-        sqlx::Error::ColumnNotFound(err) => PhilologusError::Unknown,
-        sqlx::Error::Protocol(err) => PhilologusError::Unknown,
-        sqlx::Error::PoolTimedOut => PhilologusError::Unknown,
-        sqlx::Error::PoolClosed => PhilologusError::Unknown,
-        sqlx::Error::Decode(err) => PhilologusError::Unknown,
-        // some variants omitted
-        _ => PhilologusError::Unknown,
-    }
-    */
     PhilologusError::Unknown
 }
 

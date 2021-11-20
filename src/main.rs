@@ -242,6 +242,11 @@ async fn main() -> io::Result<()> {
                    .unwrap_or_else(|_| panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH."));
 
     let db_pool = SqlitePool::connect(&db_path).await.expect("Could not connect to db.");
+    /*
+    https://github.com/SergioBenitez/Rocket/discussions/1989
+    .journal_mode(SqliteJournalMode::Off)
+    .read_only(true)
+    */
 /*
     let error_handlers = ErrorHandlers::new()
             .handler(

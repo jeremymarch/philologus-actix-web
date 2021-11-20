@@ -17,7 +17,6 @@ You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
 
-//use actix_web::{Error as AWError};
 use actix_web::{HttpResponse, ResponseError, http::StatusCode};
 use thiserror::Error;
 
@@ -50,7 +49,7 @@ pub struct DefRow {
 
 pub async fn get_def_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<Option<DefRow>, PhilologusError> {
     let decoded_word = percent_decode_str(word).decode_utf8().map_err(map_utf8_error)?;
-    let query = format!("{}{}{}{}{}", "SELECT word,sortword,def,seq FROM ", table, " WHERE word = '", decoded_word, "' LIMIT 1;");
+    let query = format!("SELECT word,sortword,def,seq FROM {} WHERE word = '{}' LIMIT 1;", table, decoded_word);
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .fetch_one(&*pool)
@@ -60,7 +59,7 @@ pub async fn get_def_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result
 }
 
 pub async fn get_def_by_seq(pool: &SqlitePool, table:&str, id:u32) -> Result<Option<DefRow>, PhilologusError> {
-    let query = format!("{}{}{}{}{}", "SELECT word,sortword,def,seq FROM ", table, " WHERE seq = ", id, " LIMIT 1;");
+    let query = format!("SELECT word,sortword,def,seq FROM {} WHERE seq = {} LIMIT 1;", table, id);
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .fetch_one(&*pool)
@@ -70,7 +69,7 @@ pub async fn get_def_by_seq(pool: &SqlitePool, table:&str, id:u32) -> Result<Opt
 }
 
 pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, word:&str) -> Result<u32, PhilologusError> {
-    let query = format!("{}{}{}{}{}", "SELECT seq,word,def,sortword FROM ", table, " WHERE sortword >= '", word, "' ORDER BY sortword LIMIT 1;");
+    let query = format!("SELECT seq,word,def,sortword FROM {} WHERE sortword >= '{}' ORDER BY sortword LIMIT 1;", table, word);
     
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .fetch_one(&*pool)
@@ -79,7 +78,7 @@ pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, word:&str) -> Resu
     match rec {
         Ok(r) => Ok(r.seq),
         Err(sqlx::Error::RowNotFound) => {
-            let query = format!("{}{}{}", "SELECT MAX(seq) as seq,word,def,sortword FROM ", table, " LIMIT 1;");
+            let query = format!("SELECT MAX(seq) as seq,word,def,sortword FROM {} LIMIT 1;", table);
             let rec = sqlx::query_as::<_, DefRow>(&query)  //fake it by loading it into DefRow for now
             .fetch_one(&*pool)
             .await.map_err(map_sqlx_error)?;
@@ -92,7 +91,7 @@ pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, word:&str) -> Resu
 
 pub async fn get_seq_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<u32, PhilologusError> {
     let decoded_word = percent_decode_str(word).decode_utf8().map_err(map_utf8_error)?;
-    let query = format!("{}{}{}{}{}", "SELECT seq,word,def,sortword FROM ", table, " WHERE word = '", decoded_word, "' LIMIT 1;");
+    let query = format!("SELECT seq,word,def,sortword FROM {} WHERE word = '{}' LIMIT 1;", table, decoded_word);
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .fetch_one(&*pool)
@@ -102,7 +101,7 @@ pub async fn get_seq_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result
 }
 
 pub async fn get_before(pool: &SqlitePool, table:&str, seq: u32, page: i32, limit: u32) -> Result<Vec<QueryResults>, PhilologusError> {
-    let query = format!("{}{}{}{}{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq < ", seq, " ORDER BY seq DESC LIMIT ", page * limit as i32 * -1, ",", limit, ";");
+    let query = format!("SELECT seq,word FROM {} WHERE seq < {} ORDER BY seq DESC LIMIT {},{};", table, seq, page * limit as i32 * -1, limit);
     let res: Result<Vec<QueryResults>, sqlx::Error> = sqlx::query(&query)
     .map(|rec: SqliteRow| QueryResults {
         i: rec.get("seq"),
@@ -115,7 +114,7 @@ pub async fn get_before(pool: &SqlitePool, table:&str, seq: u32, page: i32, limi
 }
 
 pub async fn get_equal_and_after(pool: &SqlitePool, table:&str, seq: u32, page: i32, limit: u32) -> Result<Vec<QueryResults>, PhilologusError> {
-    let query = format!("{}{}{}{}{}{}{}{}{}", "SELECT seq,word FROM ", table, " WHERE seq >= ", seq, " ORDER BY seq LIMIT ", page * limit as i32, ",", limit, ";");
+    let query = format!("SELECT seq,word FROM {} WHERE seq >= {} ORDER BY seq LIMIT {},{};", table, seq, page * limit as i32, limit);
     let res: Result<Vec<QueryResults>, sqlx::Error> = sqlx::query(&query)
     .map(|rec: SqliteRow| QueryResults {
         i: rec.get("seq"),
@@ -129,29 +128,27 @@ pub async fn get_equal_and_after(pool: &SqlitePool, table:&str, seq: u32, page: 
 
 #[derive(Error, Debug)]
 pub enum PhilologusError {
-    #[error("Requested file was not found")]
+    /*#[error("Requested file was not found")]
     NotFound,
     #[error("You are forbidden to access requested file.")]
-    Forbidden,
+    Forbidden,*/
     #[error("Unknown Internal Error")]
     Unknown
 }
-
 impl PhilologusError {
     pub fn name(&self) -> String {
         match self {
-            Self::NotFound => "NotFound".to_string(),
-            Self::Forbidden => "Forbidden".to_string(),
+            /*Self::NotFound => "NotFound".to_string(),
+            Self::Forbidden => "Forbidden".to_string(),*/
             Self::Unknown => "Unknown".to_string(),
         }
     }
 }
-
 impl ResponseError for PhilologusError {
     fn status_code(&self) -> StatusCode {
         match *self {
-            Self::NotFound  => StatusCode::NOT_FOUND,
-            Self::Forbidden => StatusCode::FORBIDDEN,
+            /*Self::NotFound  => StatusCode::NOT_FOUND,
+            Self::Forbidden => StatusCode::FORBIDDEN,*/
             Self::Unknown => StatusCode::INTERNAL_SERVER_ERROR,
         }
     }

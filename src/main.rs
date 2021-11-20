@@ -119,7 +119,9 @@ pub struct DefRequest {
 //http://127.0.0.1:8088/philwords?n=101&idprefix=test1&x=0.1627681205837177&requestTime=1635643672625&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22wordid%22:%22%CE%B1%CE%B1%CF%84%CE%BF%CF%832%22,%22w%22:%22%22}
 
 #[allow(clippy::eval_order_dependence)]
-async fn philologus_words((db, info): (web::Data<SqlitePool>, web::Query<QueryRequest>)) -> Result<HttpResponse, AWError> {
+async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
+    let db = req.app_data::<SqlitePool>().unwrap();
+
     let p: WordQuery = serde_json::from_str(&info.query)?;
 
     let wordid = p.wordid.unwrap_or_else(|| "".to_string());
@@ -192,8 +194,8 @@ async fn philologus_words((db, info): (web::Data<SqlitePool>, web::Query<QueryRe
 //{"principalParts":"","def":"...","defName":"","word":"γεοῦχος","unaccentedWord":"γεουχοσ","lemma":"γεοῦχος","requestTime":0,"status":"0","lexicon":"lsj","word_id":"22045","wordid":"γεουχοσ","method":"setWord"}
 
 #[allow(clippy::eval_order_dependence)]
-async fn philologus_defs((db, info): (web::Data<SqlitePool>, web::Query<DefRequest>)) -> Result<HttpResponse, AWError> {
-
+async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
+    let db = req.app_data::<SqlitePool>().unwrap();
     //let def = db::execute_get_def(&db, info.lexicon.as_str(), info.id, &info.wordid).await?;
     let table = match info.lexicon.as_str() {
         "ls" => "ZLATIN",
@@ -255,7 +257,7 @@ async fn main() -> io::Result<()> {
 */
     HttpServer::new(move || {
         App::new()
-            .data(db_pool.clone())
+            .app_data(db_pool.clone())
             .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
             //.wrap(error_handlers)

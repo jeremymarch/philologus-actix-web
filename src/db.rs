@@ -28,14 +28,14 @@ use percent_encoding::percent_decode_str;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PhilologusWords {
-    GreekDefs { seq: i32, def: String },
+    GreekDefs { seq: u32, def: String },
 }
 
 //[{"i":1,"r":["Α α",1,0]},
 // {"i":2,"r":["ἀ-",2,0]},
 #[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct QueryResults { 
-    pub i: i32, 
+    pub i: u32, 
     pub r: (String,u32,u32)
 }
 
@@ -84,7 +84,7 @@ pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, word:&str) -> Resu
             .await.map_err(map_sqlx_error)?;
         
             Ok(rec.seq)
-        }
+        },
         _ => Err(PhilologusError::Unknown)
     }
 }

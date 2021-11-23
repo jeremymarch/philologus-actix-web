@@ -16,6 +16,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
+use thiserror::Error;
+use actix_web::{ ResponseError, http::StatusCode};
+use percent_encoding::percent_decode_str;
 
 use std::io;
 use regex::Regex;
@@ -133,24 +136,24 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
     };
     let seq;
     if wordid == "" {
-        seq = get_seq_by_prefix(&db, &table, &p.w).await?;
+        seq = get_seq_by_prefix(&db, &table, &p.w).await.map_err(map_sqlx_error)?;
     }
     else {
-        seq = get_seq_by_word(&db, &table, &wordid).await?;
+        let decoded_word = percent_decode_str(&wordid).decode_utf8().map_err(map_utf8_error)?;
+        seq = get_seq_by_word(&db, &table, &decoded_word).await.map_err(map_sqlx_error)?;
     }
-
 
     let mut before_rows = vec![];
     let mut after_rows = vec![];
     if info.page <= 0 {
         
-        before_rows = get_before(&db, table, seq, info.page, info.n).await?;
+        before_rows = get_before(&db, table, seq, info.page, info.n).await.map_err(map_sqlx_error)?;
         if info.page == 0 { //only reverse if page 0. if < 0, each row is inserted under top of container one-by-one in order
             before_rows.reverse();
         }
     }
     if info.page >= 0 {
-        after_rows = get_equal_and_after(&db, table, seq, info.page, info.n).await?;
+        after_rows = get_equal_and_after(&db, table, seq, info.page, info.n).await.map_err(map_sqlx_error)?;
     }
 
     let mut vlast_page = 0;
@@ -204,10 +207,11 @@ async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> 
     let def;
 
     if !info.wordid.is_none() {
-        def = get_def_by_word(&db, &table, &info.wordid.as_ref().unwrap() ).await?;
+        let decoded_word = percent_decode_str( &info.wordid.as_ref().unwrap() ).decode_utf8().map_err(map_utf8_error)?;
+        def = get_def_by_word(&db, &table, &decoded_word ).await.map_err(map_sqlx_error)?;
     }
     else { //if !wordid.is_none() {
-        def = get_def_by_seq(&db, &table, info.id.unwrap() ).await?;
+        def = get_def_by_seq(&db, &table, info.id.unwrap() ).await.map_err(map_sqlx_error)?;
     }
 
     let res = DefResponse {
@@ -286,6 +290,86 @@ async fn main() -> io::Result<()> {
     .bind("0.0.0.0:8088")?
     .run()
     .await
+}
+
+#[derive(Error, Debug)]
+pub enum PhilologusError {
+    /*#[error("Requested file was not found")]
+    NotFound,
+    #[error("You are forbidden to access requested file.")]
+    Forbidden,*/
+    #[error("Unknown Internal Error")]
+    Unknown
+}
+/*
+impl From<sqlx::Error> for PhilologusError {
+    fn from(err: sqlx::Error) -> PhilologusError {
+        PhilologusError {
+            message: Some(err.to_string()),
+            err_type: CustomErrorType::DieselError,
+        }
+    }
+}
+*/
+impl PhilologusError {
+    pub fn name(&self) -> String {
+        match self {
+            /*Self::NotFound => "NotFound".to_string(),
+            Self::Forbidden => "Forbidden".to_string(),*/
+            Self::Unknown => "Unknown".to_string(),
+        }
+    }
+}
+impl ResponseError for PhilologusError {
+    fn status_code(&self) -> StatusCode {
+        match *self {
+            /*Self::NotFound  => StatusCode::NOT_FOUND,
+            Self::Forbidden => StatusCode::FORBIDDEN,*/
+            Self::Unknown => StatusCode::INTERNAL_SERVER_ERROR,
+        }
+    }
+
+    fn error_response(&self) -> HttpResponse {
+        let status_code = self.status_code();
+        let error_response = ErrorResponse {
+            code: status_code.as_u16(),
+            message: self.to_string(),
+            error: self.name(),
+        };
+        HttpResponse::build(status_code).json(error_response)
+    }
+}
+
+fn map_sqlx_error(e: sqlx::Error) -> PhilologusError {   
+    match e {
+        sqlx::Error::Configuration { .. } => PhilologusError::Unknown,
+        sqlx::Error::Database { .. } => PhilologusError::Unknown,
+        sqlx::Error::Io { .. } => PhilologusError::Unknown,
+        sqlx::Error::Tls { .. } => PhilologusError::Unknown,
+        sqlx::Error::Protocol { .. } => PhilologusError::Unknown,
+        sqlx::Error::RowNotFound => PhilologusError::Unknown,
+        sqlx::Error::TypeNotFound { .. } => PhilologusError::Unknown,
+        sqlx::Error::ColumnIndexOutOfBounds { .. } => PhilologusError::Unknown,
+        sqlx::Error::ColumnNotFound { .. } => PhilologusError::Unknown,
+        sqlx::Error::ColumnDecode { .. } => PhilologusError::Unknown,
+        sqlx::Error::Decode { .. } => PhilologusError::Unknown,
+        sqlx::Error::PoolTimedOut => PhilologusError::Unknown,
+        sqlx::Error::PoolClosed => PhilologusError::Unknown,
+        sqlx::Error::WorkerCrashed => PhilologusError::Unknown,
+        sqlx::Error::Migrate { .. } => PhilologusError::Unknown,
+        _ => PhilologusError::Unknown,
+    }
+}
+
+#[derive(Serialize)]
+struct ErrorResponse {
+    code: u16,
+    error: String,
+    message: String,
+}
+
+fn map_utf8_error(_e: std::str::Utf8Error) -> PhilologusError {   
+    PhilologusError::Unknown
 }
 
 

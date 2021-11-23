@@ -80,7 +80,6 @@ struct DefResponse {
     status: String,
     lexicon: String,
     word_id: u32,
-    wordid: String,
     method: String,
 }
 
@@ -202,28 +201,27 @@ async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> 
         _ => "ZGREEK"
     };
 
-    let def;
+    let def_row;
 
     if !info.wordid.is_none() {
         let decoded_word = percent_decode_str( &info.wordid.as_ref().unwrap() ).decode_utf8().map_err(map_utf8_error)?;
-        def = get_def_by_word(&db, &table, &decoded_word ).await.map_err(map_sqlx_error)?;
+        def_row = get_def_by_word(&db, &table, &decoded_word ).await.map_err(map_sqlx_error)?;
     }
-    else { //if !wordid.is_none() {
-        def = get_def_by_seq(&db, &table, info.id.unwrap() ).await.map_err(map_sqlx_error)?;
+    else {
+        def_row = get_def_by_seq(&db, &table, info.id.unwrap() ).await.map_err(map_sqlx_error)?;
     }
 
     let res = DefResponse {
         principal_parts: "".to_string(),
-        def: def.as_ref().unwrap().def.to_string(),
+        def: def_row.def,
         def_name: "".to_string(),
-        word: def.as_ref().unwrap().word.to_string(),
-        unaccented_word: def.as_ref().unwrap().sortword.to_string(),
+        word: def_row.word,
+        unaccented_word: def_row.sortword,
         lemma: "".to_string(),
         request_time: 0,
         status: "0".to_string(),
         lexicon: info.lexicon.to_string(),
-        word_id: def.as_ref().unwrap().seq,
-        wordid: def.as_ref().unwrap().word.to_string(),
+        word_id: def_row.seq,
         method: "setWord".to_string()
     };
 

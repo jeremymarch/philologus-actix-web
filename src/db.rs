@@ -28,7 +28,7 @@ pub enum PhilologusWords {
 
 //[{"i":1,"r":["Α α",1,0]},
 // {"i":2,"r":["ἀ-",2,0]},
-#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct QueryResults { 
     pub i: u32, 
     pub r: (String,u32,u32)
@@ -42,24 +42,24 @@ pub struct DefRow {
     pub seq: u32
 }
 
-pub async fn get_def_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<Option<DefRow>, sqlx::Error> {
+pub async fn get_def_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<DefRow, sqlx::Error> {
     let query = format!("SELECT word,sortword,def,seq FROM {} WHERE word = '{}' LIMIT 1;", table, word);
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .fetch_one(&*pool)
     .await?;
 
-    Ok(Some(rec))
+    Ok(rec)
 }
 
-pub async fn get_def_by_seq(pool: &SqlitePool, table:&str, id:u32) -> Result<Option<DefRow>, sqlx::Error> {
+pub async fn get_def_by_seq(pool: &SqlitePool, table:&str, id:u32) -> Result<DefRow, sqlx::Error> {
     let query = format!("SELECT word,sortword,def,seq FROM {} WHERE seq = {} LIMIT 1;", table, id);
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .fetch_one(&*pool)
     .await?;
 
-    Ok(Some(rec))
+    Ok(rec)
 }
 
 pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, prefix:&str) -> Result<u32, sqlx::Error> {

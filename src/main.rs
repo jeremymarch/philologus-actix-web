@@ -53,7 +53,7 @@ struct QueryResponse {
     container: String,
     #[serde(rename(serialize = "requestTime"))]
     request_time: u64,
-    page: i32,
+    page: i32, //can be negative for pages before
     #[serde(rename(serialize = "lastPage"))]
     last_page: u8,
     #[serde(rename(serialize = "lastPageUp"))]
@@ -91,7 +91,7 @@ pub struct QueryRequest {
     pub x: String,
     #[serde(rename(deserialize = "requestTime"))]
     pub request_time: u64,
-    pub page: i32,
+    pub page: i32, //can be negative for pages before
     pub mode: String,
     pub query: String,//WordQuery,
     pub lex: Option<String>,
@@ -125,21 +125,19 @@ pub struct DefRequest {
 async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
 
-    let p: WordQuery = serde_json::from_str(&info.query)?;
-
-    let wordid = p.wordid.unwrap_or_else(|| "".to_string());
+    let query_params: WordQuery = serde_json::from_str(&info.query)?;
     
-    let table = match p.lexicon.as_str() {
+    let table = match query_params.lexicon.as_str() {
         "ls" => "ZLATIN",
         "slater" => "ZSLATER",
         _ => "ZGREEK"
     };
     let seq;
-    if wordid == "" {
-        seq = get_seq_by_prefix(&db, &table, &p.w).await.map_err(map_sqlx_error)?;
+    if query_params.wordid.is_none() {
+        seq = get_seq_by_prefix(&db, &table, &query_params.w).await.map_err(map_sqlx_error)?;
     }
     else {
-        let decoded_word = percent_decode_str(&wordid).decode_utf8().map_err(map_utf8_error)?;
+        let decoded_word = percent_decode_str(&query_params.wordid.as_ref().unwrap()).decode_utf8().map_err(map_utf8_error)?;
         seq = get_seq_by_word(&db, &table, &decoded_word).await.map_err(map_sqlx_error)?;
     }
 
@@ -167,25 +165,25 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
         }
     }
 
-    let result = [before_rows, after_rows].concat();
+    let result_rows = [before_rows, after_rows].concat();
 
     //strip any numbers from end of string
     let re = Regex::new(r"[0-9]").unwrap();
-    let result_stripped = result.into_iter().map( |mut row| { row.r.0 = re.replace_all(&row.r.0, "").to_string(); row }).collect();
+    let result_rows_stripped = result_rows.into_iter().map( |mut row| { row.r.0 = re.replace_all(&row.r.0, "").to_string(); row }).collect();
 
     let res = QueryResponse {
         select_id: seq,
         error: "".to_owned(),
         wtprefix: info.idprefix.clone(),
-        nocache: if wordid == "" { 0 } else { 1 }, //prevents caching when queried by wordid in url
+        nocache: if query_params.wordid.is_none() { 0 } else { 1 }, //prevents caching when queried by wordid in url
         container: format!("{}Container", info.idprefix),
         request_time: info.request_time,
         page: info.page,
         last_page: vlast_page,
         lastpage_up: vlast_page_up,
-        scroll: if p.w == "" && info.page == 0 && seq == 1 { "top".to_string() } else { "".to_string() }, //scroll really only needs to return top
-        query: p.w.to_owned(),
-        arr_options: result_stripped
+        scroll: if query_params.w == "" && info.page == 0 && seq == 1 { "top".to_string() } else { "".to_string() }, //scroll really only needs to return top
+        query: query_params.w.to_owned(),
+        arr_options: result_rows_stripped
     };
 
     Ok(HttpResponse::Ok().json(res))

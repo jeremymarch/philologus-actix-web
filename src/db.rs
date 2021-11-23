@@ -62,8 +62,8 @@ pub async fn get_def_by_seq(pool: &SqlitePool, table:&str, id:u32) -> Result<Opt
     Ok(Some(rec))
 }
 
-pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, word:&str) -> Result<u32, sqlx::Error> {
-    let query = format!("SELECT seq,word,def,sortword FROM {} WHERE sortword >= '{}' ORDER BY sortword LIMIT 1;", table, word);
+pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, prefix:&str) -> Result<u32, sqlx::Error> {
+    let query = format!("SELECT seq,word,def,sortword FROM {} WHERE sortword >= '{}' ORDER BY sortword LIMIT 1;", table, prefix);
     
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .fetch_one(&*pool)
@@ -71,13 +71,13 @@ pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, word:&str) -> Resu
 
     match rec {
         Ok(r) => Ok(r.seq),
-        Err(sqlx::Error::RowNotFound) => {
-            let query = format!("SELECT MAX(seq) as seq,word,def,sortword FROM {} LIMIT 1;", table);
-            let rec = sqlx::query_as::<_, DefRow>(&query)  //fake it by loading it into DefRow for now
+        Err(sqlx::Error::RowNotFound) => { //not found, return seq of last word
+            let max_query = format!("SELECT MAX(seq) as seq,word,def,sortword FROM {} LIMIT 1;", table);
+            let max_rec = sqlx::query_as::<_, DefRow>(&max_query)  //fake it by loading it into DefRow for now
             .fetch_one(&*pool)
             .await?;
         
-            Ok(rec.seq)
+            Ok(max_rec.seq)
         },
         Err(r) => Err(r)
     }

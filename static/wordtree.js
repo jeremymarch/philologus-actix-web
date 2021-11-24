@@ -1236,7 +1236,7 @@ eventually lexicon, query, and tag_id will be put into a single field for reques
             }
             
             //for each column
-            var rowLen = rowItem.r.length;
+            var rowLen = rowItem.length;
             for (var c = 0; c < rowLen; c++)
             {
                 var d2 = document.createElement("div");
@@ -1267,12 +1267,12 @@ eventually lexicon, query, and tag_id will be put into a single field for reques
                     d2.appendChild(img);
                 }
 
-                var text = document.createTextNode(rowItem.r[c]);
+                var text = document.createTextNode(rowItem[c]);
                 d2.appendChild(text);
                 node.appendChild(d2);
             }    
             
-            if (rowItem.i == selectedId)
+            if (rowItem[1] == selectedId)
             {
             	wt.selectedRowId = node.id;
             }

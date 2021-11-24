@@ -61,7 +61,7 @@ struct QueryResponse {
     scroll: String,
     query: String,
     #[serde(rename(serialize = "arrOptions"))]
-    arr_options: Vec<QueryResults>
+    arr_options: Vec<(String,u32)>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -168,7 +168,7 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
 
     //strip any numbers from end of string
     let re = Regex::new(r"[0-9]").unwrap();
-    let result_rows_stripped = result_rows.into_iter().map( |mut row| { row.r.0 = re.replace_all(&row.r.0, "").to_string(); row }).collect();
+    let result_rows_stripped = result_rows.into_iter().map( |mut row| { row.0 = re.replace_all(&row.0, "").to_string(); row }).collect();
 
     let res = QueryResponse {
         select_id: seq,

@@ -30,14 +30,8 @@ use actix_files::NamedFile;
 use std::path::PathBuf;
 
 mod db;
-use db::{QueryResults};
-use crate::db::get_seq_by_word;
-use crate::db::get_def_by_word;
-use crate::db::get_def_by_seq;
-use crate::db::get_before;
-use crate::db::get_equal_and_after;
+use crate::db::*;
 use serde::{Deserialize, Serialize};
-use crate::db::get_seq_by_prefix;
 
 /*
 {"error":"","wtprefix":"test1","nocache":"1","container":"test1Container","requestTime":"1635643672625","selectId":"32","page":"0","lastPage":"0","lastPageUp":"1","scroll":"32","query":"","arrOptions":[{"i":1,"r":["Α α",1,0]},{"i":2,"r":["ἀ-",2,0]},{"i":3,"r":["ἀ-",3,0]},{"i":4,"r":["ἆ",4,0]}...
@@ -45,22 +39,22 @@ use crate::db::get_seq_by_prefix;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct QueryResponse {
-    #[serde(rename(serialize = "selectId"))]
+    #[serde(rename(serialize = "selectId"), rename(deserialize = "selectId"))]
     select_id: u32,
     error: String,
     wtprefix: String,
     nocache: u8,
     container: String,
-    #[serde(rename(serialize = "requestTime"))]
+    #[serde(rename(serialize = "requestTime"), rename(deserialize = "requestTime"))]
     request_time: u64,
     page: i32, //can be negative for pages before
-    #[serde(rename(serialize = "lastPage"))]
+    #[serde(rename(serialize = "lastPage"), rename(deserialize = "lastPage"))]
     last_page: u8,
-    #[serde(rename(serialize = "lastPageUp"))]
+    #[serde(rename(serialize = "lastPageUp"), rename(deserialize = "lastPageUp"))]
     lastpage_up: u8,
     scroll: String,
     query: String,
-    #[serde(rename(serialize = "arrOptions"))]
+    #[serde(rename(serialize = "arrOptions"), rename(deserialize = "arrOptions"))]
     arr_options: Vec<(String,u32)>
 }
 
@@ -136,7 +130,7 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
         seq = get_seq_by_prefix(&db, &table, &query_params.w).await.map_err(map_sqlx_error)?;
     }
     else {
-        let decoded_word = percent_decode_str(&query_params.wordid.as_ref().unwrap()).decode_utf8().map_err(map_utf8_error)?;
+        let decoded_word = percent_decode_str(query_params.wordid.as_ref().unwrap()).decode_utf8().map_err(map_utf8_error)?;
         seq = get_seq_by_word(&db, &table, &decoded_word).await.map_err(map_sqlx_error)?;
     }
 
@@ -242,6 +236,7 @@ async fn main() -> io::Result<()> {
                    .unwrap_or_else(|_| panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH."));
 
     let db_pool = SqlitePool::connect(&db_path).await.expect("Could not connect to db.");
+
     /*
     https://github.com/SergioBenitez/Rocket/discussions/1989
     .journal_mode(SqliteJournalMode::Off)
@@ -374,6 +369,10 @@ mod tests {
     use super::*;
     use actix_web::{test, web, App};
 
+    //use serde::{Serialize, Deserialize};
+    //use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
+    //use actix_web::http::header::ContentType;
+/*
     #[actix_rt::test]
     async fn test_index_get() {
         let mut app = test::init_service(App::new().route("/", web::get().to(index))).await;
@@ -389,5 +388,61 @@ mod tests {
         let resp = test::call_service(&mut app, req).await;
         assert!(resp.status().is_client_error());
     }
-}
+*/
 
+/*
+    trait BodyTest {
+        fn as_str(&self) -> &str;
+    }
+    
+    impl BodyTest for ResponseBody<Body> {
+        fn as_str(&self) -> &str {
+            match self {
+                ResponseBody::Body(ref b) => match b {
+                    Body::Bytes(ref by) => std::str::from_utf8(&by).unwrap(),
+                    _ => panic!(),
+                },
+                ResponseBody::Other(ref b) => match b {
+                    Body::Bytes(ref by) => std::str::from_utf8(&by).unwrap(),
+                    _ => panic!(),
+                },
+            }
+        }
+    }
+*/
+    #[actix_web::test]
+    async fn test_add_person() {
+        let db_path = std::env::var("PHILOLOGUS_DB_PATH")
+                   .unwrap_or_else(|_| panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH."));
+
+        let db_pool = SqlitePool::connect(&db_path).await.expect("Could not connect to db.");
+        let mut app = test::init_service(
+            App::new().app_data(db_pool.clone())
+            .service(
+                web::resource("/{lex}/query")
+                    .route(web::get().to(philologus_words))
+        )).await;
+
+        let resp = test::TestRequest::get()
+            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CF%86%CE%B1%22}"#)
+            //.insert_header(header::ContentType(mime::APPLICATION_JSON))
+            .insert_header(("content-type", "application/json; charset=utf-8"))
+            //.header(header::CONTENT_TYPE, "application/json")
+            .set_payload("")
+            .send_request(&mut app)
+        .await;
+
+        assert!(resp.status().is_success());
+        //println!("resp: {:?}", resp);
+
+        let response_body = match resp.into_body() {
+            actix_web::body::AnyBody::Bytes(bytes) => bytes,
+            _ => panic!("Response error"),
+        };
+        let b = std::str::from_utf8(&response_body).unwrap();
+        let result: QueryResponse = serde_json::from_str( b ).unwrap();//test::read_body_json(req).await;
+
+        //println!("res: {:?}", result);
+        assert_eq!(result.arr_options.len(), 202);
+    }
+}

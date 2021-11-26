@@ -368,6 +368,7 @@ fn map_utf8_error(_e: std::str::Utf8Error) -> PhilologusError {
 mod tests {
     use super::*;
     use actix_web::{test, web, App};
+    use actix_web::body::{AnyBody};
 
     //use serde::{Serialize, Deserialize};
     //use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
@@ -389,21 +390,19 @@ mod tests {
         assert!(resp.status().is_client_error());
     }
 */
-
-use actix_web::body::{AnyBody};
-
-trait BodyTest {
-    fn as_str(&self) -> &str;
-}
-
-impl BodyTest for AnyBody {
-    fn as_str(&self) -> &str {
-        match self {
-            AnyBody::Bytes(ref b) => std::str::from_utf8(b).unwrap(),
-            _ => panic!()
+    //convert response body to a utf8 string before deserializing json because this doesn't work as bytes
+    trait BodyTest {
+        fn as_str(&self) -> &str;
+    }
+    impl BodyTest for AnyBody {
+        fn as_str(&self) -> &str {
+            match self {
+                AnyBody::Bytes(ref b) => std::str::from_utf8(b).unwrap(),
+                _ => panic!()
+            }
         }
     }
-}
+
     #[actix_web::test]
     async fn test_query_paging() {
         let db_path = std::env::var("PHILOLOGUS_DB_PATH")
@@ -434,6 +433,10 @@ impl BodyTest for AnyBody {
         let result: QueryResponse = serde_json::from_str( resp.response().body().as_str() ).unwrap();
         assert_eq!(result.arr_options[0].1, 1);
         assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 101);
+        assert_eq!(result.lastpage_up, 1);
+        assert_eq!(result.last_page, 0);
+        assert_eq!(result.page, 0);
+
         //page 1
         let resp = test::TestRequest::get()
             .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=1&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%22}"#)
@@ -441,6 +444,9 @@ impl BodyTest for AnyBody {
         let result: QueryResponse = serde_json::from_str( resp.response().body().as_str() ).unwrap();
         assert_eq!(result.arr_options[0].1, 102);
         assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 202);
+        assert_eq!(result.lastpage_up, 0);
+        assert_eq!(result.last_page, 0);
+        assert_eq!(result.page, 1);
         //page 2
         let resp = test::TestRequest::get()
             .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=2&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%22}"#)
@@ -448,6 +454,20 @@ impl BodyTest for AnyBody {
         let result: QueryResponse = serde_json::from_str( resp.response().body().as_str() ).unwrap();
         assert_eq!(result.arr_options[0].1, 203);
         assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 303);
+        assert_eq!(result.lastpage_up, 0);
+        assert_eq!(result.last_page, 0);
+        assert_eq!(result.page, 2);
+
+        //alpha query returns seq 1 for first row (exactly like empty query)
+        let resp = test::TestRequest::get()
+            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CE%B1%22}"#)
+            .send_request(&mut app).await;
+        let result: QueryResponse = serde_json::from_str( resp.response().body().as_str() ).unwrap();
+        assert_eq!(result.arr_options[0].1, 1);
+        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 101);
+        assert_eq!(result.lastpage_up, 1);
+        assert_eq!(result.last_page, 0);
+        assert_eq!(result.page, 0);
 
 
         //last page
@@ -457,6 +477,9 @@ impl BodyTest for AnyBody {
         let result: QueryResponse = serde_json::from_str( resp.response().body().as_str() ).unwrap();
         assert_eq!(result.arr_options[0].1, 116494);
         assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 116596);
+        assert_eq!(result.lastpage_up, 0);
+        assert_eq!(result.last_page, 1);
+        assert_eq!(result.page, 0);
 
         //last page - 1 (remember these pages are delivered in reverse order when page < 0)
         let resp = test::TestRequest::get()
@@ -465,6 +488,9 @@ impl BodyTest for AnyBody {
         let result: QueryResponse = serde_json::from_str( resp.response().body().as_str() ).unwrap();
         assert_eq!(result.arr_options[0].1, 116493);
         assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 116393);
+        assert_eq!(result.lastpage_up, 0);
+        assert_eq!(result.last_page, 0);
+        assert_eq!(result.page, -1);
 
         //last page - 2 (remember these pages are delivered in reverse order when page < 0)
         let resp = test::TestRequest::get()
@@ -473,6 +499,9 @@ impl BodyTest for AnyBody {
         let result: QueryResponse = serde_json::from_str( resp.response().body().as_str() ).unwrap();
         assert_eq!(result.arr_options[0].1, 116392);
         assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 116292);
+        assert_eq!(result.lastpage_up, 0);
+        assert_eq!(result.last_page, 0);
+        assert_eq!(result.page, -2);
 
         //beyond last page (almost the same as last page: 1 fewer rows since all from before and none from equal and after)
         let resp = test::TestRequest::get()
@@ -481,5 +510,17 @@ impl BodyTest for AnyBody {
         let result: QueryResponse = serde_json::from_str( resp.response().body().as_str() ).unwrap();
         assert_eq!(result.arr_options[0].1, 116495);
         assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 116596);
+        assert_eq!(result.lastpage_up, 0);
+        assert_eq!(result.last_page, 1);
+        assert_eq!(result.page, 0);
     }
+
+    /* other tests
+    to fix: don't set last page for opposite direction: none
+    check a page 0 in middle and page up and down from it
+    check page 0 near top and bottom and check that last page is set.
+    check page <> 0 near top and bottom and check that last page is set.
+    */
 }
+
+

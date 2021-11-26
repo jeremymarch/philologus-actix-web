@@ -125,14 +125,14 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
         "slater" => "ZSLATER",
         _ => "ZGREEK"
     };
-    let seq;
-    if query_params.wordid.is_none() {
-        seq = get_seq_by_prefix(&db, &table, &query_params.w).await.map_err(map_sqlx_error)?;
+    
+    let seq = if query_params.wordid.is_none() {
+        get_seq_by_prefix(&db, &table, &query_params.w).await.map_err(map_sqlx_error)?
     }
     else {
         let decoded_word = percent_decode_str(query_params.wordid.as_ref().unwrap()).decode_utf8().map_err(map_utf8_error)?;
-        seq = get_seq_by_word(&db, &table, &decoded_word).await.map_err(map_sqlx_error)?;
-    }
+        get_seq_by_word(&db, &table, &decoded_word).await.map_err(map_sqlx_error)?
+    };
 
     let mut before_rows = vec![];
     let mut after_rows = vec![];
@@ -195,16 +195,18 @@ async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> 
         _ => "ZGREEK"
     };
 
-    let def_row;
-
-    if !info.wordid.is_none() {
+    let def_row = if !info.wordid.is_none() {
         let decoded_word = percent_decode_str( &info.wordid.as_ref().unwrap() ).decode_utf8().map_err(map_utf8_error)?;
-        def_row = get_def_by_word(&db, &table, &decoded_word ).await.map_err(map_sqlx_error)?;
+        get_def_by_word(&db, &table, &decoded_word ).await.map_err(map_sqlx_error)?
     }
+    else { //if !info.id.is_none() {
+        get_def_by_seq(&db, &table, info.id.unwrap() ).await.map_err(map_sqlx_error)?
+    };
+    /*
     else {
-        def_row = get_def_by_seq(&db, &table, info.id.unwrap() ).await.map_err(map_sqlx_error)?;
+        return PhilologusError::Unknown;
     }
-
+    */
     let res = DefResponse {
         principal_parts: "".to_string(),
         def: def_row.def,

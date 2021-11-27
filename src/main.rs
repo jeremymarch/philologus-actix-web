@@ -60,16 +60,16 @@ struct QueryResponse {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct DefResponse {
-    #[serde(rename(serialize = "principalParts"))]
-    principal_parts: String,
+    #[serde(rename(serialize = "principalParts"), rename(deserialize = "principalParts"))]
+    principal_parts: Option<String>,
     def: String,
-    #[serde(rename(serialize = "defName"))]
-    def_name: String,
+    #[serde(rename(serialize = "defName"), rename(deserialize = "defName"))]
+    def_name: Option<String>,
     word: String,
-    #[serde(rename(serialize = "unaccentedWord"))]
+    #[serde(rename(serialize = "unaccentedWord"), rename(deserialize = "unaccentedWord"))]
     unaccented_word: String,
-    lemma: String,
-    #[serde(rename(serialize = "requestTime"))]
+    lemma: Option<String>,
+    #[serde(rename(serialize = "requestTime"), rename(deserialize = "requestTime"))]
     request_time: u64,
     status: String,
     lexicon: String,
@@ -199,21 +199,20 @@ async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> 
         let decoded_word = percent_decode_str( &info.wordid.as_ref().unwrap() ).decode_utf8().map_err(map_utf8_error)?;
         get_def_by_word(&db, &table, &decoded_word ).await.map_err(map_sqlx_error)?
     }
-    else { //if !info.id.is_none() {
+    else if !info.id.is_none() {
         get_def_by_seq(&db, &table, info.id.unwrap() ).await.map_err(map_sqlx_error)?
-    };
-    /*
-    else {
-        return PhilologusError::Unknown;
     }
-    */
+    else {
+        return Err(PhilologusError::Unknown)?
+    };
+    
     let res = DefResponse {
-        principal_parts: "".to_string(),
+        principal_parts: None,
         def: def_row.def,
-        def_name: "".to_string(),
+        def_name: None,
         word: def_row.word,
         unaccented_word: def_row.sortword,
-        lemma: "".to_string(),
+        lemma: None,
         request_time: 0,
         status: "0".to_string(),
         lexicon: info.lexicon.to_string(),
@@ -416,6 +415,10 @@ mod tests {
             .service(
                 web::resource("/{lex}/query")
                     .route(web::get().to(philologus_words))
+        )
+        .service(
+            web::resource("/{lex}/item")
+                .route(web::get().to(philologus_defs)),
         )).await;
 
         let resp = test::TestRequest::get()
@@ -515,6 +518,14 @@ mod tests {
         assert_eq!(result.lastpage_up, 0);
         assert_eq!(result.last_page, 1);
         assert_eq!(result.page, 0);
+
+
+        let resp = test::TestRequest::get()
+            .uri(r#"/lsj/item?id=110628&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002"#)
+            .send_request(&mut app).await;
+        let result: DefResponse = serde_json::from_str( resp.response().body().as_str() ).unwrap();
+        assert_eq!(result.word_id, 110628);
+        
     }
 
     /* other tests

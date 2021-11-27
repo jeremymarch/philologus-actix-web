@@ -195,3 +195,4 @@ fn get_word_res(mut statement: Statement) -> PhilologusWordsResult {
         })
         .and_then(Iterator::collect)
 }
+

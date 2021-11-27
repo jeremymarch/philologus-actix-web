@@ -555,6 +555,30 @@ mod tests {
         assert_eq!(result.last_page, 0);
         assert_eq!(result.page, 1);
 
+        //query αβ: near beginning so we get lastpage_up == 1
+        let resp = test::TestRequest::get()
+            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CE%B1%CE%B2%22}"#)
+            .send_request(&mut app).await;
+        
+        let result: QueryResponse = serde_json::from_str( resp.response().body().as_str() ).unwrap();
+        assert_eq!(result.arr_options[0].1, 1);
+        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 135);
+        assert_eq!(result.lastpage_up, 1);
+        assert_eq!(result.last_page, 0);
+        assert_eq!(result.page, 0);
+
+        //query ωσσ: near end so we get lastpage == 1
+        let resp = test::TestRequest::get()
+            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CF%89%CF%83%CF%83%22}"#)
+            .send_request(&mut app).await;
+        
+        let result: QueryResponse = serde_json::from_str( resp.response().body().as_str() ).unwrap();
+        assert_eq!(result.arr_options[0].1, 116411);
+        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 116596);
+        assert_eq!(result.lastpage_up, 0);
+        assert_eq!(result.last_page, 1);
+        assert_eq!(result.page, 0);
+
         //DefResponse
         let resp = test::TestRequest::get()
             .uri(r#"/lsj/item?id=110628&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002"#)
@@ -566,7 +590,6 @@ mod tests {
 
     /* other tests
     to fix: don't set last page for opposite direction: none
-    check page 0 near top and bottom and check that last page is set.
     check page <> 0 near top and bottom and check that last page is set.
     */
 }

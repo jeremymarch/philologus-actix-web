@@ -249,8 +249,8 @@ async fn main() -> io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(db_pool.clone())
-            .wrap(middleware::Compress::default())
             .wrap(middleware::Logger::default())
+            .wrap(middleware::Compress::default())
             //.wrap(error_handlers)
             .service(
                 web::resource("/{lex}/query")

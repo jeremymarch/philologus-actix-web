@@ -313,7 +313,7 @@ impl ResponseError for PhilologusError {
         let error_response = ErrorResponse {
             code: self.code.as_u16(),
             message: self.error.to_string(),
-            error: self.error.to_string(),
+            error: self.name.to_string(),
         };
         HttpResponse::build(self.code).json(error_response)
     }

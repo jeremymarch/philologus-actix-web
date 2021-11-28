@@ -147,16 +147,18 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
         after_rows = get_equal_and_after(&db, table, seq, info.page, info.n).await.map_err(map_sqlx_error)?;
     }
 
-    let mut vlast_page = 0;
-    let mut vlast_page_up = 0;
-    //if info.page == 0 {
-        if before_rows.len() < info.n as usize && info.page <= 0 { //only check page 0 or page less than 0
-            vlast_page_up = 1;
-        }
-        else if after_rows.len() < info.n as usize && info.page >= 0 { //only check page 0 or page greater than 0
-            vlast_page = 1;
-        }
-    //}
+    let vlast_page_up = if before_rows.len() < info.n as usize && info.page <= 0 { //only check page 0 or page less than 0
+        1
+    }
+    else {
+        0
+    };
+    let vlast_page = if after_rows.len() < info.n as usize && info.page >= 0 { //only check page 0 or page greater than 0
+        1
+    }
+    else {
+        0
+    };
 
     let result_rows = [before_rows, after_rows].concat();
 
@@ -605,11 +607,4 @@ mod tests {
         assert_eq!(resp.status(), 500);
         
     }
-
-    /* other tests
-    to fix: don't set last page for opposite direction: none
-    check page <> 0 near top and bottom and check that last page is set.
-    */
 }
-
-

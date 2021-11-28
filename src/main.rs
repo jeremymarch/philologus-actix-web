@@ -147,18 +147,10 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
         after_rows = get_equal_and_after(&db, table, seq, info.page, info.n).await.map_err(map_sqlx_error)?;
     }
 
-    let vlast_page_up = if before_rows.len() < info.n as usize && info.page <= 0 { //only check page 0 or page less than 0
-        1
-    }
-    else {
-        0
-    };
-    let vlast_page = if after_rows.len() < info.n as usize && info.page >= 0 { //only check page 0 or page greater than 0
-        1
-    }
-    else {
-        0
-    };
+    //only check page 0 or page less than 0
+    let vlast_page_up = if before_rows.len() < info.n as usize && info.page <= 0 { 1 } else { 0 };
+    //only check page 0 or page greater than 0
+    let vlast_page = if after_rows.len() < info.n as usize && info.page >= 0 { 1 } else { 0 };
 
     let result_rows = [before_rows, after_rows].concat();
 

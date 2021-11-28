@@ -127,24 +127,24 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
     };
     
     let seq = if query_params.wordid.is_none() {
-        get_seq_by_prefix(&db, &table, &query_params.w).await.map_err(map_sqlx_error)?
+        get_seq_by_prefix(db, table, &query_params.w).await.map_err(map_sqlx_error)?
     }
     else {
         let decoded_word = percent_decode_str(query_params.wordid.as_ref().unwrap()).decode_utf8().map_err(map_utf8_error)?;
-        get_seq_by_word(&db, &table, &decoded_word).await.map_err(map_sqlx_error)?
+        get_seq_by_word(db, table, &decoded_word).await.map_err(map_sqlx_error)?
     };
 
     let mut before_rows = vec![];
     let mut after_rows = vec![];
     if info.page <= 0 {
         
-        before_rows = get_before(&db, table, seq, info.page, info.n).await.map_err(map_sqlx_error)?;
+        before_rows = get_before(db, table, seq, info.page, info.n).await.map_err(map_sqlx_error)?;
         if info.page == 0 { //only reverse if page 0. if < 0, each row is inserted under top of container one-by-one in order
             before_rows.reverse();
         }
     }
     if info.page >= 0 {
-        after_rows = get_equal_and_after(&db, table, seq, info.page, info.n).await.map_err(map_sqlx_error)?;
+        after_rows = get_equal_and_after(db, table, seq, info.page, info.n).await.map_err(map_sqlx_error)?;
     }
 
     //only check page 0 or page less than 0
@@ -168,7 +168,7 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
         page: info.page,
         last_page: vlast_page,
         lastpage_up: vlast_page_up,
-        scroll: if query_params.w == "" && info.page == 0 && seq == 1 { "top".to_string() } else { "".to_string() }, //scroll really only needs to return top
+        scroll: if query_params.w.is_empty() && info.page == 0 && seq == 1 { "top".to_string() } else { "".to_string() }, //scroll really only needs to return top
         query: query_params.w.to_owned(),
         arr_options: result_rows_stripped
     };
@@ -189,15 +189,15 @@ async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> 
         _ => "ZGREEK"
     };
 
-    let def_row = if !info.wordid.is_none() {
-        let decoded_word = percent_decode_str( &info.wordid.as_ref().unwrap() ).decode_utf8().map_err(map_utf8_error)?;
-        get_def_by_word(&db, &table, &decoded_word ).await.map_err(map_sqlx_error)?
+    let def_row = if info.wordid.is_some() {
+        let decoded_word = percent_decode_str( info.wordid.as_ref().unwrap() ).decode_utf8().map_err(map_utf8_error)?;
+        get_def_by_word(db, table, &decoded_word ).await.map_err(map_sqlx_error)?
     }
-    else if !info.id.is_none() {
-        get_def_by_seq(&db, &table, info.id.unwrap() ).await.map_err(map_sqlx_error)?
+    else if info.id.is_some() {
+        get_def_by_seq(db, table, info.id.unwrap() ).await.map_err(map_sqlx_error)?
     }
     else {
-        return Err(PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "philologus_defs error: word and id are both empty".to_string(), error: "philologus_defs error: word and id are both empty".to_string() })?
+        return Err(PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "philologus_defs error: word and id are both empty".to_string(), error: "philologus_defs error: word and id are both empty".to_string() }.into() )
     };
     
     let res = DefResponse {

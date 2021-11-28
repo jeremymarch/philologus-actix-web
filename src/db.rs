@@ -38,7 +38,7 @@ pub async fn get_def_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result
     let query = format!("SELECT word,sortword,def,seq FROM {} WHERE word = '{}' LIMIT 1;", table, word);
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
-    .fetch_one(&*pool)
+    .fetch_one(pool)
     .await?;
 
     Ok(rec)
@@ -48,7 +48,7 @@ pub async fn get_def_by_seq(pool: &SqlitePool, table:&str, id:u32) -> Result<Def
     let query = format!("SELECT word,sortword,def,seq FROM {} WHERE seq = {} LIMIT 1;", table, id);
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
-    .fetch_one(&*pool)
+    .fetch_one(pool)
     .await?;
 
     Ok(rec)
@@ -58,7 +58,7 @@ pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, prefix:&str) -> Re
     let query = format!("SELECT seq,word,def,sortword FROM {} WHERE sortword >= '{}' ORDER BY sortword LIMIT 1;", table, prefix);
     
     let rec = sqlx::query_as::<_, DefRow>(&query)
-    .fetch_one(&*pool)
+    .fetch_one(pool)
     .await;
 
     match rec {
@@ -66,7 +66,7 @@ pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, prefix:&str) -> Re
         Err(sqlx::Error::RowNotFound) => { //not found, return seq of last word
             let max_query = format!("SELECT MAX(seq) as seq,word,def,sortword FROM {} LIMIT 1;", table);
             let max_rec = sqlx::query_as::<_, DefRow>(&max_query)  //fake it by loading it into DefRow for now
-            .fetch_one(&*pool)
+            .fetch_one(pool)
             .await?;
         
             Ok(max_rec.seq)
@@ -79,14 +79,14 @@ pub async fn get_seq_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result
     let query = format!("SELECT seq,word,def,sortword FROM {} WHERE word = '{}' LIMIT 1;", table, word);
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
-    .fetch_one(&*pool)
+    .fetch_one(pool)
     .await?;
 
     Ok(rec.seq)
 }
 
 pub async fn get_before(pool: &SqlitePool, table:&str, seq: u32, page: i32, limit: u32) -> Result<Vec<(String,u32)>, sqlx::Error> {
-    let query = format!("SELECT seq,word FROM {} WHERE seq < {} ORDER BY seq DESC LIMIT {},{};", table, seq, page * limit as i32 * -1, limit);
+    let query = format!("SELECT seq,word FROM {} WHERE seq < {} ORDER BY seq DESC LIMIT {},{};", table, seq, -page * limit as i32, limit);
     let res: Result<Vec<(String,u32)>, sqlx::Error> = sqlx::query(&query)
     .map(|rec: SqliteRow| (rec.get("word"),rec.get("seq")) )
     .fetch_all(pool)

@@ -475,6 +475,7 @@ mod tests {
         let result: QueryResponse = serde_json::from_str( resp.response().body().as_str() ).unwrap();
         assert_eq!(result.arr_options[0].1, 116493);
         assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 116393);
+        assert!(result.arr_options[result.arr_options.len() - 1].1 < result.arr_options[0].1);
         assert_eq!(result.lastpage_up, 0);
         assert_eq!(result.last_page, 0);
         assert_eq!(result.page, -1);

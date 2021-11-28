@@ -203,7 +203,7 @@ async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> 
         get_def_by_seq(&db, &table, info.id.unwrap() ).await.map_err(map_sqlx_error)?
     }
     else {
-        return Err(PhilologusError::Unknown)?
+        return Err(PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "philologus_defs error: word and id are both empty".to_string(), error: "philologus_defs error: word and id are both empty".to_string() })?
     };
     
     let res = DefResponse {
@@ -285,14 +285,18 @@ async fn main() -> io::Result<()> {
 }
 
 #[derive(Error, Debug)]
-pub enum PhilologusError {
-    /*#[error("Requested file was not found")]
-    NotFound,
-    #[error("You are forbidden to access requested file.")]
-    Forbidden,*/
-    #[error("Unknown Internal Error")]
-    Unknown
+pub struct PhilologusError {
+       code: StatusCode,
+       name: String,
+       error: String,
 }
+
+impl std::fmt::Display for PhilologusError {
+    fn fmt(&self, fmt: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(fmt, "PhilologusError: {} {}: {}.", self.code.as_u16(), self.name, self.error)
+    }
+}
+
 /*
 impl From<sqlx::Error> for PhilologusError {
     fn from(err: sqlx::Error) -> PhilologusError {
@@ -303,53 +307,36 @@ impl From<sqlx::Error> for PhilologusError {
     }
 }
 */
-impl PhilologusError {
-    pub fn name(&self) -> String {
-        match self {
-            /*Self::NotFound => "NotFound".to_string(),
-            Self::Forbidden => "Forbidden".to_string(),*/
-            Self::Unknown => "Unknown".to_string(),
-        }
-    }
-}
-impl ResponseError for PhilologusError {
-    fn status_code(&self) -> StatusCode {
-        match *self {
-            /*Self::NotFound  => StatusCode::NOT_FOUND,
-            Self::Forbidden => StatusCode::FORBIDDEN,*/
-            Self::Unknown => StatusCode::INTERNAL_SERVER_ERROR,
-        }
-    }
 
+impl ResponseError for PhilologusError {
     fn error_response(&self) -> HttpResponse {
-        let status_code = self.status_code();
         let error_response = ErrorResponse {
-            code: status_code.as_u16(),
-            message: self.to_string(),
-            error: self.name(),
+            code: self.code.as_u16(),
+            message: self.error.to_string(),
+            error: self.error.to_string(),
         };
-        HttpResponse::build(status_code).json(error_response)
+        HttpResponse::build(self.code).json(error_response)
     }
 }
 
 fn map_sqlx_error(e: sqlx::Error) -> PhilologusError {   
     match e {
-        sqlx::Error::Configuration { .. } => PhilologusError::Unknown,
-        sqlx::Error::Database { .. } => PhilologusError::Unknown,
-        sqlx::Error::Io { .. } => PhilologusError::Unknown,
-        sqlx::Error::Tls { .. } => PhilologusError::Unknown,
-        sqlx::Error::Protocol { .. } => PhilologusError::Unknown,
-        sqlx::Error::RowNotFound => PhilologusError::Unknown,
-        sqlx::Error::TypeNotFound { .. } => PhilologusError::Unknown,
-        sqlx::Error::ColumnIndexOutOfBounds { .. } => PhilologusError::Unknown,
-        sqlx::Error::ColumnNotFound { .. } => PhilologusError::Unknown,
-        sqlx::Error::ColumnDecode { .. } => PhilologusError::Unknown,
-        sqlx::Error::Decode { .. } => PhilologusError::Unknown,
-        sqlx::Error::PoolTimedOut => PhilologusError::Unknown,
-        sqlx::Error::PoolClosed => PhilologusError::Unknown,
-        sqlx::Error::WorkerCrashed => PhilologusError::Unknown,
-        sqlx::Error::Migrate { .. } => PhilologusError::Unknown,
-        _ => PhilologusError::Unknown,
+        sqlx::Error::Configuration(e) => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: format!("sqlx Configuration: {}", e) },
+        sqlx::Error::Database(e) => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: format!("sqlx Database: {}", e) },
+        sqlx::Error::Io(e) => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: format!("sqlx Io: {}", e) },
+        sqlx::Error::Tls(e) => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: format!("sqlx Tls: {}", e) },
+        sqlx::Error::Protocol(e) => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: format!("sqlx Protocol: {}", e) },
+        sqlx::Error::RowNotFound => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: "sqlx RowNotFound".to_string() },
+        sqlx::Error::TypeNotFound { .. } => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: "sqlx TypeNotFound".to_string() },
+        sqlx::Error::ColumnIndexOutOfBounds { .. } => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: "sqlx ColumnIndexOutOfBounds".to_string() },
+        sqlx::Error::ColumnNotFound(e) => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: format!("sqlx ColumnNotFound: {}", e) },
+        sqlx::Error::ColumnDecode { .. } => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: "sqlx ColumnDecode".to_string() },
+        sqlx::Error::Decode(e) => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: format!("sqlx Decode: {}", e) },
+        sqlx::Error::PoolTimedOut => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: "sqlx PoolTimeOut".to_string() },
+        sqlx::Error::PoolClosed => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: "sqlx PoolClosed".to_string() },
+        sqlx::Error::WorkerCrashed => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: "sqlx WorkerCrashed".to_string() },
+        sqlx::Error::Migrate(e) => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: format!("sqlx Migrate: {}", e) },
+        _ => PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "sqlx error".to_string(), error: "sqlx Unknown error".to_string() },
     }
 }
 
@@ -361,7 +348,7 @@ struct ErrorResponse {
 }
 
 fn map_utf8_error(_e: std::str::Utf8Error) -> PhilologusError {   
-    PhilologusError::Unknown
+    PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "percent_decode_str utf-8 error".to_string(), error: "percent_decode_str utf-8 error".to_string() }
 }
 
 

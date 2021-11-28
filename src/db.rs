@@ -86,7 +86,7 @@ pub async fn get_seq_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result
 }
 
 pub async fn get_before(pool: &SqlitePool, table:&str, seq: u32, page: i32, limit: u32) -> Result<Vec<(String,u32)>, sqlx::Error> {
-    let query = format!("SELECT seq,word FROM {} WHERE seq < {} ORDER BY seq DESC LIMIT {},{};", table, seq, page * limit as i32 * -1, limit);
+    let query = format!("SELECT seq,wxord FROM {} WHERE seq < {} ORDER BY seq DESC LIMIT {},{};", table, seq, page * limit as i32 * -1, limit);
     let res: Result<Vec<(String,u32)>, sqlx::Error> = sqlx::query(&query)
     .map(|rec: SqliteRow| (rec.get("word"),rec.get("seq")) )
     .fetch_all(pool)
@@ -96,7 +96,7 @@ pub async fn get_before(pool: &SqlitePool, table:&str, seq: u32, page: i32, limi
 }
 
 pub async fn get_equal_and_after(pool: &SqlitePool, table:&str, seq: u32, page: i32, limit: u32) -> Result<Vec<(String,u32)>, sqlx::Error> {
-    let query = format!("SELECT seq,word FROM {} WHERE seq >= {} ORDER BY seq LIMIT {},{};", table, seq, page * limit as i32, limit);
+    let query = format!("SELECT seq,wxord FROM {} WHERE seq >= {} ORDER BY seq LIMIT {},{};", table, seq, page * limit as i32, limit);
     let res: Result<Vec<(String,u32)>, sqlx::Error> = sqlx::query(&query)
     .map(|rec: SqliteRow| (rec.get("word"),rec.get("seq")) )
     .fetch_all(pool)

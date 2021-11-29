@@ -220,7 +220,7 @@ function saveHistory(lexicon, id, word) {
       else
         lexi = 2;
 
-      var h = localStorage.getItem("history");
+      var h = localStorage.getItem("history2");
       if (h && h.length > 0) {
         var tree = JSON.parse(h);
       } else {
@@ -239,11 +239,9 @@ function saveHistory(lexicon, id, word) {
         };
       }
 
-      if (tree.arrOptions.length < 1 || id != tree.arrOptions[0].i)
-        tree.arrOptions.splice(0, 0, {
-          "i": id,
-          "r": [word, id, lexi]
-        });
+      if (tree.arrOptions.length < 1 || id != tree.arrOptions[0][1]) {
+        tree.arrOptions.splice(0, 0, [word, id, lexi]);
+      }
 
       var max = 500;
       if (tree.arrOptions.length > max) {
@@ -253,7 +251,7 @@ function saveHistory(lexicon, id, word) {
 
       var h = JSON.stringify(tree);
 
-      localStorage.setItem("history", h);
+      localStorage.setItem("history2", h);
       if (w4)
         w4.refreshWithRows(h);
     }

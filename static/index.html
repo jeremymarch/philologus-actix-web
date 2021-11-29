@@ -690,7 +690,7 @@ height: 22px;
           if (vIsLoggedIn) {
             w4.refresh();
           } else if (supports_html5_storage()) {
-            var h = localStorage.getItem("history");
+            var h = localStorage.getItem("history2");
             if (w4 && h && h.length > 0)
               w4.refreshWithRows(h);
           } else {

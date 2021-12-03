@@ -222,6 +222,14 @@ async fn index(_req: HttpRequest) -> Result<NamedFile> {
     Ok(NamedFile::open(path)?)
 }
 
+async fn health(_req: HttpRequest) -> Result<HttpResponse, AWError> {
+    Ok(HttpResponse::Ok().finish())
+}
+
+async fn hc(_req: HttpRequest) -> Result<HttpResponse, AWError> {
+    Ok(HttpResponse::Ok().finish())
+}
+
 #[actix_web::main]
 async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=info");
@@ -271,6 +279,14 @@ async fn main() -> io::Result<()> {
             .service(
                 web::resource("/query")
                     .route(web::get().to(philologus_words)),
+            )
+            .service(
+                web::resource("/healthzzz")
+                    .route(web::get().to(health)),
+            )
+            .service(
+                web::resource("/hc.php")
+                    .route(web::get().to(hc)),
             )
             .service(fs::Files::new("/", "./static").prefer_utf8(true).index_file("index.html"))
     })
@@ -397,10 +413,18 @@ mod tests {
             .service(
                 web::resource("/{lex}/query")
                     .route(web::get().to(philologus_words))
-        )
-        .service(
-            web::resource("/{lex}/item")
-                .route(web::get().to(philologus_defs)),
+            )
+            .service(
+                web::resource("/healthzzz")
+                    .route(web::get().to(health)),
+            )
+            .service(
+                web::resource("/hc.php")
+                    .route(web::get().to(hc)),
+            )
+            .service(
+                web::resource("/{lex}/item")
+                    .route(web::get().to(philologus_defs)),
         )).await;
 
         let resp = test::TestRequest::get()
@@ -586,6 +610,19 @@ mod tests {
         assert_eq!(result.lastpage_up, 1);
         assert_eq!(result.last_page, 0);
         assert_eq!(result.page, -1);
+
+        //health check
+        let resp = test::TestRequest::get()
+            .uri(r#"/healthzzz"#)
+            .send_request(&mut app).await;
+        assert!(&resp.status().is_success());
+
+        //hoplite challenge
+        let resp = test::TestRequest::get()
+            .uri(r#"/hc.php"#)
+            .send_request(&mut app).await;
+        assert!(&resp.status().is_success());
+        
 
         //DefResponse
         let resp = test::TestRequest::get()

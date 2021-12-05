@@ -34,6 +34,14 @@ pub struct DefRow {
     pub seq: u32
 }
 
+pub async fn insert_log(pool: &SqlitePool, accessed: u128, lex:u8, wordid:u32, ip:&str, agent:&str) -> Result<u32, sqlx::Error> {
+    //let query = format!("INSERT INTO test VALUES (2)");
+    let query = format!("INSERT INTO log VALUES (NULL, {}, {}, {}, '{}', '{}')", accessed, lex, wordid, ip, agent);
+    sqlx::query(&query).execute(pool).await?;
+
+    Ok(1)
+}
+
 pub async fn get_def_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<DefRow, sqlx::Error> {
     let query = format!("SELECT word,sortword,def,seq FROM {} WHERE word = '{}' LIMIT 1;", table, word);
 

@@ -33,9 +33,16 @@ mod db;
 use crate::db::*;
 use serde::{Deserialize, Serialize};
 
+use std::time::{SystemTime, UNIX_EPOCH};
+
 /*
 {"error":"","wtprefix":"test1","nocache":"1","container":"test1Container","requestTime":"1635643672625","selectId":"32","page":"0","lastPage":"0","lastPageUp":"1","scroll":"32","query":"","arrOptions":[{"i":1,"r":["Α α",1,0]},{"i":2,"r":["ἀ-",2,0]},{"i":3,"r":["ἀ-",3,0]},{"i":4,"r":["ἆ",4,0]}...
 */
+
+//https://stackoverflow.com/questions/64348528/how-can-i-pass-multi-variable-by-actix-web-appdata
+//https://doc.rust-lang.org/rust-by-example/generics/new_types.html
+#[derive(Clone)]
+struct SqliteUpdatePool (SqlitePool);
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct QueryResponse {
@@ -176,12 +183,17 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
     Ok(HttpResponse::Ok().json(res))
 }
 
+fn get_user_agent(req: &HttpRequest) -> Option<&str> {
+    req.headers().get("user-agent")?.to_str().ok()
+}
+
 //http://127.0.0.1:8088/wordservjson.php?id=110628&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002
 //{"principalParts":"","def":"...","defName":"","word":"γεοῦχος","unaccentedWord":"γεουχοσ","lemma":"γεοῦχος","requestTime":0,"status":"0","lexicon":"lsj","word_id":"22045","wordid":"γεουχοσ","method":"setWord"}
 
 #[allow(clippy::eval_order_dependence)]
 async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
+    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
     
     let table = match info.lexicon.as_str() {
         "ls" => "ZLATIN",
@@ -199,6 +211,15 @@ async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> 
     else {
         return Err(PhilologusError { code: StatusCode::INTERNAL_SERVER_ERROR, name: "philologus_defs error: word and id are both empty".to_string(), error: "philologus_defs error: word and id are both empty".to_string() }.into() )
     };
+
+
+    let lex = match info.lexicon.as_str() { "ls" => 1, "slater" => 2, _ => 0 };
+    let time_stamp = SystemTime::now().duration_since(UNIX_EPOCH);
+    let time_stamp_ms = if time_stamp.is_ok() { time_stamp.unwrap().as_millis() } else { 0 };
+    let user_agent = get_user_agent(&req).unwrap_or("");
+    //https://stackoverflow.com/questions/66989780/how-to-retrieve-the-ip-address-of-the-client-from-httprequest-in-actix-web
+    let ip = if req.peer_addr().is_some() { req.peer_addr().unwrap().ip().to_string() } else { "".to_string() };
+    let _ = insert_log(&db2.0, time_stamp_ms, lex, def_row.seq, ip.as_str(), user_agent).await;
     
     let res = DefResponse {
         principal_parts: None,
@@ -222,8 +243,8 @@ async fn index(_req: HttpRequest) -> Result<NamedFile> {
     Ok(NamedFile::open(path)?)
 }
 
-async fn health(_req: HttpRequest) -> Result<HttpResponse, AWError> {
-    Ok(HttpResponse::Ok().finish())
+async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
+    Ok(HttpResponse::Ok().finish()) //send 200 with empty body
 }
 
 async fn hc(_req: HttpRequest) -> Result<HttpResponse, AWError> {
@@ -238,8 +259,20 @@ async fn main() -> io::Result<()> {
     //e.g. export PHILOLOGUS_DB_PATH=sqlite://philolog_us_local.sqlite?mode=ro
     let db_path = std::env::var("PHILOLOGUS_DB_PATH")
                    .unwrap_or_else(|_| panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH."));
-
     let db_pool = SqlitePool::connect(&db_path).await.expect("Could not connect to db.");
+
+    let db_log_path = std::env::var("PHILOLOGUS_LOG_DB_PATH")
+                    .unwrap_or_else(|_| panic!("Environment variable for sqlite log path not set: PHILOLOGUS_LOG_DB_PATH."));
+
+    //https://gitanswer.com/sqlx-how-to-create-the-sqlite-database-on-application-startup-if-it-does-not-already-exist-rust-833366308
+    /*
+    if !sqlx::Sqlite::database_exists(&db_log_path).await? {
+        sqlx::Sqlite::create_database(&db_log_path).await?;
+    }
+    */
+    let db_log_pool = SqliteUpdatePool(SqlitePool::connect(&db_log_path).await.expect("Could not connect to update db."));
+    let query = "CREATE TABLE IF NOT EXISTS log (id integer primary key autoincrement, accessed integer, lexicon integer, word integer, ip text, agent text);";
+    let _ = sqlx::query(&query).execute(&db_log_pool.0).await;
 
     /*
     https://github.com/SergioBenitez/Rocket/discussions/1989
@@ -258,6 +291,7 @@ async fn main() -> io::Result<()> {
     HttpServer::new(move || {
         App::new()
             .app_data(db_pool.clone())
+            .app_data(db_log_pool.clone())
             .wrap(middleware::Logger::default())
             .wrap(middleware::Compress::default())
             //.wrap(error_handlers)
@@ -282,7 +316,7 @@ async fn main() -> io::Result<()> {
             )
             .service(
                 web::resource("/healthzzz")
-                    .route(web::get().to(health)),
+                    .route(web::get().to(health_check)),
             )
             .service(
                 web::resource("/hc.php")
@@ -408,15 +442,19 @@ mod tests {
                    .unwrap_or_else(|_| panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH."));
 
         let db_pool = SqlitePool::connect(&db_path).await.expect("Could not connect to db.");
+        let db_pool2 = SqliteUpdatePool(SqlitePool::connect("sqlite://updatedb.sqlite").await.expect("Could not connect to update db."));
+
         let mut app = test::init_service(
-            App::new().app_data(db_pool.clone())
+            App::new()
+            .app_data(db_pool.clone())
+            .app_data(db_pool2.clone())
             .service(
                 web::resource("/{lex}/query")
                     .route(web::get().to(philologus_words))
             )
             .service(
                 web::resource("/healthzzz")
-                    .route(web::get().to(health)),
+                    .route(web::get().to(health_check)),
             )
             .service(
                 web::resource("/hc.php")

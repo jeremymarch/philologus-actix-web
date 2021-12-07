@@ -42,6 +42,80 @@ pub async fn insert_log(pool: &SqlitePool, accessed: u128, lex:u8, wordid:u32, i
     Ok(1)
 }
 
+pub async fn insert_hc_log(pool: &SqlitePool,
+    answer_text: &str,
+    expected_answer: &str,
+    is_correct: &str,
+    answer_seconds: &str,
+    answer_timed_out: &str,
+    multiple_forms_pressed: &str,
+    lives: &str,
+    _score: &str,
+    verb_id: &str,
+    person: &str,
+    number: &str,
+    tense: &str,
+    voice: &str,
+    mood: &str,
+    appversion: &str,
+    device: &str,
+    agent: &str,
+    screen: &str,
+    _accessdate: &str,
+    error: &str,
+    time_stamp_ms: &str,
+    ip: &str) -> Result<u32, sqlx::Error> {
+
+    let move_id = "NULL";
+    let game_id = "1";
+    let is_game = if lives != "-1" { 1 } else { 0 };
+    let answer_seconds2 = "0";
+    let ask_player_id = "1";
+    let answer_player_id = "1";
+
+
+    let query = format!("INSERT INTO hcmoves (moveID,gameID,verbID,person,number,tense,voice,mood,answerIsCorrect,answerText,expectedAnswer,mfPressed,isGame,answerSeconds,answerSeconds2,answerTimedOut,askPlayerID,askTimestamp,askIP,askDevice,askScreen,askOSVersion,askAppVersion,askError,answerPlayerID,answerTimestamp,answerIP,answerDevice,answerScreen,answerOSVersion,answerAppVersion,answerError,lastUpdated ) VALUES ({move_id},{game_id},{verb_id},{person},{number},{tense},{voice},{mood},{is_correct},'{answer_text}','{expected_answer}',{multiple_forms_pressed},{is_game},'{answer_seconds}',{answer_seconds2},{answer_timed_out},{ask_player_id},{ask_timestamp},'{ask_ip}','{ask_device}','{ask_screen}','{ask_os_version}','{ask_app_version}','{ask_error}',{answer_player_id},{answer_timestamp},'{answer_ip}','{answer_device}','{answer_screen}','{answer_os_version}','{answer_app_version}','{answer_error}', {last_updated});", 
+    move_id = move_id,
+    game_id = game_id,
+    verb_id = verb_id,
+    person = person,
+    number = number,
+    tense = tense,
+    voice = voice,
+    mood = mood,
+    is_correct = is_correct,
+    answer_text = answer_text,
+    expected_answer = expected_answer,
+    multiple_forms_pressed = multiple_forms_pressed,
+    is_game = is_game,
+    answer_seconds = answer_seconds,
+    answer_seconds2 = answer_seconds2,
+    answer_timed_out = answer_timed_out,
+    ask_player_id = ask_player_id,
+    ask_timestamp = time_stamp_ms,
+    ask_ip = ip,
+    ask_device = device,
+    ask_screen = screen,
+    ask_os_version = agent,
+    ask_app_version = appversion,
+    ask_error = error,
+    answer_player_id = answer_player_id,
+    answer_timestamp = time_stamp_ms,
+    answer_ip = ip,
+    answer_device = device,
+    answer_screen = screen,
+    answer_os_version = agent,
+    answer_app_version = appversion,
+    answer_error = error,
+    last_updated = time_stamp_ms);
+
+    //println!("query: {}", query);
+
+    sqlx::query(&query).execute(pool).await?;
+
+    Ok(1)
+}
+
 pub async fn get_def_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<DefRow, sqlx::Error> {
     let query = format!("SELECT word,sortword,def,seq FROM {} WHERE word = '{}' LIMIT 1;", table, word);
 

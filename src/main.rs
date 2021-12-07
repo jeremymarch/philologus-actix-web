@@ -97,6 +97,64 @@ pub struct QueryRequest {
     pub lex: Option<String>,
 }
 
+/*
+    [{
+    "type" : "debugRequestPlusAnswer",   
+    "answerText" : "Expected: \'κεοίμην\', Given: \'φφ\', MF: false",
+
+    "isCorrect" : "false",
+    "answerSeconds" : "2.82 sec",
+    "timedOut" : "false",
+
+    "lives" : "-1",
+    "score" : "-1",
+    "verbID" : "122",
+    "person" : "0",
+    "number" : "0",
+    "tense" : "0",
+    "voice" : "1",
+    "mood" : "2",
+    "appversion" : "1.5.1",
+    "device" : "C4A9C677-66FC-4A1F-BA6E-0AE96A25EC23",
+    "agent" : "iOS 13.3",
+    "screen" : "2436.0 x 1125.0",
+    "accessdate" : "2020-01-02 07:25:23",
+    "error" : ""
+}]
+*/
+#[derive(Deserialize)]
+struct HopliteChallengeRequest {
+    #[serde(rename(deserialize = "type"))]
+    req_type: String,
+    #[serde(rename(deserialize = "answerText"))]
+    answer_text: String,
+    #[serde(rename(deserialize = "expectedForm"))]
+    expected_form: String,
+    #[serde(rename(deserialize = "isCorrect"))]
+    is_correct: String,
+    #[serde(rename(deserialize = "answerSeconds"))]
+    answer_seconds: String,
+    #[serde(rename(deserialize = "timedOut"))]
+    timed_out: String,
+    #[serde(rename(deserialize = "mfPressed"))]
+    mf_pressed: String,
+    lives: String,
+    score: String,
+    #[serde(rename(deserialize = "verbID"))]
+    verb_id: String,
+    person: String,
+    number: String,
+    tense: String,
+    voice: String,
+    mood: String,
+    appversion: String,
+    device: String,
+    agent: String,
+    screen: String,
+    accessdate: String,
+    error: String,
+}
+
 #[derive(Deserialize)]
 pub struct WordQuery {
     pub regex: String,
@@ -247,7 +305,39 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     Ok(HttpResponse::Ok().finish()) //send 200 with empty body
 }
 
-async fn hc(_req: HttpRequest) -> Result<HttpResponse, AWError> {
+async fn hc((info, req): (web::Query<HopliteChallengeRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
+    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+
+    let time_stamp = SystemTime::now().duration_since(UNIX_EPOCH);
+    let time_stamp_ms = if time_stamp.is_ok() { time_stamp.unwrap().as_millis() } else { 0 };
+    //let user_agent = get_user_agent(&req).unwrap_or("");
+    //https://stackoverflow.com/questions/66989780/how-to-retrieve-the-ip-address-of-the-client-from-httprequest-in-actix-web
+    let ip = if req.peer_addr().is_some() { req.peer_addr().unwrap().ip().to_string() } else { "".to_string() };
+    
+    let _ = insert_hc_log(&db2.0,
+        info.answer_text.as_str(),
+        info.expected_form.as_str(),
+        info.is_correct.as_str(),
+        info.answer_seconds.as_str(),
+        info.timed_out.as_str(),
+        info.mf_pressed.as_str(),
+        info.lives.as_str(),
+        info.score.as_str(),
+        info.verb_id.as_str(),
+        info.person.as_str(),
+        info.number.as_str(),
+        info.tense.as_str(),
+        info.voice.as_str(),
+        info.mood.as_str(),
+        info.appversion.as_str(),
+        info.device.as_str(),
+        info.agent.as_str(),
+        info.screen.as_str(),
+        info.accessdate.as_str(),
+        info.error.as_str(),
+        &time_stamp_ms.to_string(),
+        &ip).await;
+
     Ok(HttpResponse::Ok().finish())
 }
 
@@ -261,10 +351,11 @@ async fn main() -> io::Result<()> {
                    .unwrap_or_else(|_| panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH."));
     let db_pool = SqlitePool::connect(&db_path).await.expect("Could not connect to db.");
 
+    ////e.g. export PHILOLOGUS_DB_PATH=sqlite://updatedb.sqlite?mode=rwc
     let db_log_path = std::env::var("PHILOLOGUS_LOG_DB_PATH")
                     .unwrap_or_else(|_| panic!("Environment variable for sqlite log path not set: PHILOLOGUS_LOG_DB_PATH."));
 
-    //https://gitanswer.com/sqlx-how-to-create-the-sqlite-database-on-application-startup-if-it-does-not-already-exist-rust-833366308
+    //https://github.com/launchbadge/sqlx/issues/1114
     /*
     if !sqlx::Sqlite::database_exists(&db_log_path).await? {
         sqlx::Sqlite::create_database(&db_log_path).await?;
@@ -320,7 +411,7 @@ async fn main() -> io::Result<()> {
             )
             .service(
                 web::resource("/hc.php")
-                    .route(web::get().to(hc)),
+                    .route(web::post().to(hc)),
             )
             .service(fs::Files::new("/", "./static").prefer_utf8(true).index_file("index.html"))
     })
@@ -464,6 +555,9 @@ mod tests {
                 web::resource("/{lex}/item")
                     .route(web::get().to(philologus_defs)),
         )).await;
+
+
+        //$content = '[{"answerText" : "Expected: \'κεοίμην\', Given: \'φφ\', MF: false","answerSeconds" : "2.82 sec","person" : "0","number" : "0","appversion" : "1.5.1","timedOut" : "false","score" : "-1","isCorrect" : "false","tense" : "0","voice" : "1","mood" : "2","device" : "C4A9C677-66FC-4A1F-BA6E-0AE96A25EC23","agent" : "iOS 13.3","screen" : "2436.0 x 1125.0","accessdate" : "2020-01-02 07:25:23","error" : "","type" : "debugRequestPlusAnswer","verbID" : "122","lives" : "-1"}]';
 
         let resp = test::TestRequest::get()
             .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CF%86%CE%B1%22}"#)

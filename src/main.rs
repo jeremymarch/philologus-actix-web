@@ -257,6 +257,7 @@ async fn main() -> io::Result<()> {
     env_logger::init();
 
     //e.g. export PHILOLOGUS_DB_PATH=sqlite://philolog_us_local.sqlite?mode=ro
+    //e.g. export PHILOLOGUS_LOG_DB_PATH=sqlite://updatedb.sqlite?mode=rwc
     let db_path = std::env::var("PHILOLOGUS_DB_PATH")
                    .unwrap_or_else(|_| panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH."));
     let db_pool = SqlitePool::connect(&db_path).await.expect("Could not connect to db.");

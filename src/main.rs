@@ -16,6 +16,9 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>. 
 */
+extern crate unicode_normalization;
+use unicode_normalization::UnicodeNormalization;
+
 use thiserror::Error;
 use actix_web::{ ResponseError, http::StatusCode};
 use percent_encoding::percent_decode_str;
@@ -134,7 +137,11 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
     };
     
     let seq = if query_params.wordid.is_none() {
-        get_seq_by_prefix(db, table, &query_params.w).await.map_err(map_sqlx_error)?
+        //remove any diacritics and make lowercase
+        //println!("1: {}",query_params.w);
+        let q = query_params.w.nfd().filter(|x| !unicode_normalization::char::is_combining_mark(*x) && *x != '´' && *x != '`' && *x != '῀').collect::<String>().to_lowercase();
+        //println!("2: {}",q);
+        get_seq_by_prefix(db, table, &q).await.map_err(map_sqlx_error)?
     }
     else {
         let decoded_word = percent_decode_str(query_params.wordid.as_ref().unwrap()).decode_utf8().map_err(map_utf8_error)?;
@@ -423,6 +430,12 @@ mod tests {
         assert!(resp.status().is_client_error());
     }
 */
+
+    #[test]
+    async fn test_unicode_strip_diacritics_and_lowercase() {
+        let a = "ἄέώΏ".nfd().filter(|x| !unicode_normalization::char::is_combining_mark(*x)).collect::<String>().to_lowercase();
+        assert_eq!(a, "αεωω");
+    }
 
     #[actix_web::test]
     async fn test_query_paging() {

@@ -227,10 +227,12 @@ async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> 
     //https://stackoverflow.com/questions/66989780/how-to-retrieve-the-ip-address-of-the-client-from-httprequest-in-actix-web
     let ip = if req.peer_addr().is_some() { req.peer_addr().unwrap().ip().to_string() } else { "".to_string() };
     let _ = insert_log(&db2.0, time_stamp_ms, lex, def_row.seq, ip.as_str(), user_agent).await;
+
+    let def = add_bibl_links(&def_row.def);
     
     let res = DefResponse {
         principal_parts: None,
-        def: def_row.def,
+        def: def,
         def_name: None,
         word: def_row.word,
         unaccented_word: def_row.sortword,
@@ -243,6 +245,14 @@ async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> 
     };
 
     Ok(HttpResponse::Ok().json(res))
+}
+
+fn add_bibl_links(def:&str) -> String {
+
+    let re = Regex::new(r####"biblink="(?P<l>[^"]*)""####).unwrap();
+    let def_with_links = re.replace_all(&def, r#"href="http://www.perseus.tufts.edu/hopper/text.jsp?doc=$l&amp;lang=original""#);
+
+    return def_with_links.to_string();
 }
 
 async fn index(_req: HttpRequest) -> Result<NamedFile> {
@@ -435,6 +445,13 @@ mod tests {
     async fn test_unicode_strip_diacritics_and_lowercase() {
         let a = "ἄέώΏ".nfd().filter(|x| !unicode_normalization::char::is_combining_mark(*x)).collect::<String>().to_lowercase();
         assert_eq!(a, "αεωω");
+    }
+
+    #[test]
+    async fn test_add_links() {
+        let a = r#"blah biblink="Perseus:abo:tlg,0059,005:405c"> blahblah biblink="Perseus:abo:tlg,4083,001:641:61">"#;
+        let b = add_bibl_links(a);
+        assert_eq!(b, r#"blah href="http://www.perseus.tufts.edu/hopper/text.jsp?doc=Perseus:abo:tlg,0059,005:405c&amp;lang=original"> blahblah href="http://www.perseus.tufts.edu/hopper/text.jsp?doc=Perseus:abo:tlg,4083,001:641:61&amp;lang=original">"#);
     }
 
     #[actix_web::test]

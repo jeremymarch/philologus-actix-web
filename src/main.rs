@@ -232,7 +232,7 @@ async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> 
     
     let res = DefResponse {
         principal_parts: None,
-        def: def,
+        def,
         def_name: None,
         word: def_row.word,
         unaccented_word: def_row.sortword,
@@ -249,10 +249,10 @@ async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> 
 
 fn add_bibl_links(def:&str) -> String {
 
-    let re = Regex::new(r####"biblink="(?P<l>[^"]*)""####).unwrap();
-    let def_with_links = re.replace_all(&def, r#"href="http://www.perseus.tufts.edu/hopper/text.jsp?doc=$l&amp;lang=original""#);
+    let re = Regex::new(r#"biblink="(?P<l>[^"]*)""#).unwrap();
+    let def_with_links = re.replace_all(def, r#"href="http://www.perseus.tufts.edu/hopper/text.jsp?doc=$l&amp;lang=original" target="_blank""#);
 
-    return def_with_links.to_string();
+    def_with_links.to_string()
 }
 
 async fn index(_req: HttpRequest) -> Result<NamedFile> {
@@ -451,7 +451,7 @@ mod tests {
     async fn test_add_links() {
         let a = r#"blah biblink="Perseus:abo:tlg,0059,005:405c"> blahblah biblink="Perseus:abo:tlg,4083,001:641:61">"#;
         let b = add_bibl_links(a);
-        assert_eq!(b, r#"blah href="http://www.perseus.tufts.edu/hopper/text.jsp?doc=Perseus:abo:tlg,0059,005:405c&amp;lang=original"> blahblah href="http://www.perseus.tufts.edu/hopper/text.jsp?doc=Perseus:abo:tlg,4083,001:641:61&amp;lang=original">"#);
+        assert_eq!(b, r#"blah href="http://www.perseus.tufts.edu/hopper/text.jsp?doc=Perseus:abo:tlg,0059,005:405c&amp;lang=original" target="_blank"> blahblah href="http://www.perseus.tufts.edu/hopper/text.jsp?doc=Perseus:abo:tlg,4083,001:641:61&amp;lang=original" target="_blank">"#);
     }
 
     #[actix_web::test]

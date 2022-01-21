@@ -133,7 +133,8 @@ function setWord(json, status) {
   //attr += "</div>";
 
   con.innerHTML = "<div id='lsj222'  style='padding:10px 18px;'><div style='font-size:20pt;margin-bottom:16px;'>" + word + "</div><div style='margin-bottom:24px;'>" + pps + "</div>" + def + attr + "</div>"; //the firstChild is the CDATA node
-
+  con.scrollTo(0,0);
+  
   if (useDefCache) {
     defAddResultToCache(lexicon, id, json);
   }

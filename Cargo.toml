@@ -1,6 +1,6 @@
 [package]
 name = "philologus-actix-web"
-version = "2.0.7"
+version = "2.0.8"
 authors = ["Jeremy March <jmarch@gradcenter.cuny.edu>"]
 edition = "2021"
 
@@ -14,8 +14,8 @@ env_logger = "0.9"
 futures = "0.3.19"
 
 sqlx = { version = "0.5.10", features = ["sqlite", "runtime-actix-rustls", "any", "macros"] }
-serde = { version = "1.0.117", features = ["derive"] }
-serde_json = "1.0.73"
+serde = { version = "1.0.133", features = ["derive"] }
+serde_json = "1.0.75"
 
 regex = "1.5.4"
 percent-encoding = "2.1.0"
@@ -23,7 +23,7 @@ percent-encoding = "2.1.0"
 thiserror = "1.0.30"
 
 [dev-dependencies]
-actix-rt = "2.5.0"
+actix-rt = "2.6.0"
 
 [profile.release]
 opt-level = 3

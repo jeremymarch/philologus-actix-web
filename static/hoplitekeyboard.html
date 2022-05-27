@@ -1,3 +1,4 @@
+<!DOCTYPE html>
 <html>
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
@@ -5,9 +6,12 @@
 	<title>Hoplite Polytonic Greek Keyboard</title>
   <meta name="description" content="The Hoplite Polytonic Greek Keyboard facilitates typing polytonic Greek diacritics.  It is available for iOS, Android, and as a LibreOffice extension." />
   <meta name="keywords" content="polytonic Greek, ancient Greek, keyboard, Classics, Greek diacritics, Greek accents, iOS, Android, LibreOffice, Greek Unicode" />
-
-	
-	<style type="text/css">BODY { width:600px;margin:24px auto;background-color:#323233;color:white;font-family:helvetica neue,helvetica, arial, sans-serif;line-height:1.3; }
+	<style type="text/css">
+	@font-face {
+  		font-family: 'WebNewAthenaUnicode';
+  		src: url('/newathu5_8.ttf') format('truetype');
+	}
+	BODY { width:600px;margin:24px auto;background-color:#323233;color:white;font-family:helvetica neue,helvetica, arial, sans-serif;line-height:1.3; }
         a:visited { color:#dd6644; }
         a { color:#6677dd; }
 
@@ -15,18 +19,223 @@
         ul { margin-top: 4px; }
         h2 {margin-bottom: 2px; }
 
-	</style>
+		.gkinput, .gkinputnontyping {
+    font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
+}
+.rotate { 
+	transform: rotate(-42deg);
+	width: 10%;
+	height: 62px;
+	text-align: left;
+	white-space: nowrap;
+	position: relative;
+}
+.dnum { 
+	border-collapse: collapse;
+	text-align:center;
+	border:1px solid white;
+	height:30px;
+}
+.gkinput, .gkinputcodes, .gkinputnontyping {
+    -webkit-box-sizing: border-box; /* Safari/Chrome, other WebKit */
+    -moz-box-sizing: border-box;    /* Firefox, other Gecko */
+    box-sizing: border-box;         /* Opera/IE 8+ */
+    width: 100%;
+    padding: 0px 0.5em;
+    height: 40px;
+    font-size: 20pt;
+    border-radius: 6px;
+    border: 2px solid #666;
+    margin:6px 0px;
+}
+
+.gkinput:focus, .gkinputcodes:focus, .gkinputnontyping:focus{
+    outline:2px solid #6677dd;
+}
+</style>
+<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+<script>
+
+	// Check for wasm support.
+	if (!('WebAssembly' in window)) {
+		alert('you need a browser with wasm support enabled :(');
+	}
+	
+	function loadWebAssembly(filename, imports) {
+		return fetch(filename)
+		.then(response => response.arrayBuffer())
+		.then(buffer => WebAssembly.compile(buffer))
+		.then(module => {
+			return WebAssembly.instantiate(module);
+		});
+	}
+	
+	var wasmBuffer0;
+	var accentSyllableWASM;
+	var transliterateWASM;
+	
+	var wasmBufferLength = 256;
+	var memory;
+	loadWebAssembly('hoplitekb.wasm', { js: { mem: memory } })
+		.then(instance => {
+			var exports = instance.exports;
+			accentSyllableWASM = exports.accentSyllable2;
+			transliterateWASM = exports.transliterate;
+			memory = exports.memory;
+	
+			console.log("memory: " + memory.buffer.byteLength);
+	
+			//https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/2020/06/07/wasm-arrays.html
+			//offset is in bytes, length is in array elements
+			//https://stackoverflow.com/questions/15417310/why-typed-array-constructors-require-offset-to-be-multiple-of-underlying-type-si
+			var offset = 2; //don't set start at zero (null), use 2 for proper alignment
+			wasmBuffer0 = new Uint16Array(memory.buffer, offset, wasmBufferLength);
+			console.log("offset0: " + offset + ", " + wasmBuffer0.byteOffset + ", " + wasmBuffer0.length);
+		}
+	);
+	
+	function strToCodePoints(str)
+	{
+		var a = "";
+		for (var i = 0; i < str.length; i++) {
+			a += str.codePointAt(i).toString(16).padStart(4,"0").toUpperCase() + " ";
+		}
+		return a.trim();
+	}
+	
+	function start() {
+	const supported = (() => {
+		try {
+			if (typeof WebAssembly === "object"
+				&& typeof WebAssembly.instantiate === "function") {
+				const module = new WebAssembly.Module(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
+				if (module instanceof WebAssembly.Module)
+					return new WebAssembly.Instance(module) instanceof WebAssembly.Instance;
+			}
+		} catch (e) {
+		}
+		return false;
+	})();
+	console.log(supported ? "WebAssembly is supported" : "WebAssembly is not supported");
+	
+		$(".gkinput").keypress(handleKey);
+		$("#inp").focus();
+	}
+	
+	var forceLowercase = false;
+	
+	function accentSyllable(origChars, key) {
+		var len = origChars.length;
+		//add letter and any combining diacritics to the buffer as code points
+		for (var i = 0; i < len && i < wasmBufferLength; i++) {
+			wasmBuffer0[i] = origChars.codePointAt(i);
+			console.log("accent1: " + origChars.codePointAt(i));
+		}
+		console.log("accent1a: " + len + ", " + key);
+		len = accentSyllableWASM(wasmBuffer0.byteOffset, len, key, 1, parseInt(unicodeMode) );
+	
+		//transform the returned code points back to a string
+		var newLetter = "";
+		for (var i = 0; i < len && i < wasmBufferLength; i++) {
+			newLetter += String.fromCodePoint(wasmBuffer0[i]);
+			console.log("accent2: " + String.fromCodePoint(wasmBuffer0[i]));
+		}
+		/*
+		for (var i = 0; i < 10; i++) {
+			wasmBuffer0[i] = 0;
+		}*/
+		console.log("ptr2: " + wasmBuffer0.byteOffset + ", " + wasmBuffer0.length);
+		//let win1251decoder = new TextDecoder('utf-16le');
+		return newLetter;
+	}
+	
+	var unicodeMode = 0;
+	function handleKey(e) {
+	
+		var val = this.value;
+		e = e || event;
+		if (typeof(this.selectionStart) == "number" && typeof(this.selectionEnd) == "number") 
+		{
+			var start = this.selectionStart;
+			var end = this.selectionEnd;
+			var newLetter = "";
+			var replacing = 0;
+			var charCode = typeof(e.which) == "number" ? e.which : e.keyCode;
+			console.log("handlekey1: " + charCode);
+			var key = String.fromCharCode(charCode);
+	
+			if (charCode && charCode > 64 && charCode < 123) //transliterate letter
+			{
+				//newLetter = accentSyllable("", key.codePointAt(0));
+				newLetter = String.fromCharCode( transliterateWASM( key.codePointAt(0) ) );
+				console.log("new: " + newLetter);
+			}
+			else if (charCode && charCode > 47 && charCode < 58) //number: 0-9 are 48-57
+			{ 
+				//underdot,rough,smooth,acute,grave,circ,macron,breve,iotasub,diaeresis
+				var diacriticKeys = [11,5,6,1,3,2,4,10,7,9];
+				var hckey = diacriticKeys[ parseInt(key) ];
+	
+				var combining = [0x0300, 0x0301, 0x0304, 0x0306, 0x0308, 0x0313, 0x0314, 0x0323, 0x0342, 0x0345];
+				var offset = 1;
+				for (var i = start; i > -1; i--) {
+					if (combining.indexOf(val.codePointAt(i - 1)) > -1) {
+						offset++;
+					}
+					else {
+						break;
+					}
+				}
+	
+				unicodeMode = 0;//$("input:radio[name='unicodeMode']:checked").val();
+	
+				newLetter = accentSyllable(val.slice(start - offset, start), hckey);
+				replacing = start - (start - offset);
+			}
+	
+			if (newLetter.length > 0) {
+				//update the input/textarea
+				this.value = val.slice(0, start - replacing) + newLetter + val.slice(end);
+				// Move the caret
+				this.selectionStart = this.selectionEnd = (start - replacing) + newLetter.length;
+				return false;
+			}
+		}    
+		return true; //this allows most punctuation to pass through
+	}
+	</script>
 </head>
-<body>
+<body onload="start()">
 <h1>Hoplite Polytonic Greek Keyboard</h1>
 
 
 	<img alt="" src="hopicon7-400.gif" style="border: 4px solid black; margin-top: 14px; width: 150px; height: 150px;position:relative;left:-30px;" align="left" />
 <p>
 <br> 
-The Hoplite Polytonic Greek Keyboard facilitates typing polytonic Greek diacritics.  On iOS and Android, the Hoplite Keyboard can be installed as an alternate keyboard system-wide and used in any application. On Mac, Windows, and Linux the Hoplite Keyboard can be used as a LibreOffice extension: type base letters with the Greek keyboard provided by your operating system and toggle on/off diacritics with the Hoplite Keyboard's hot keys.</p>
-
-
+The Hoplite Polytonic Greek Keyboard facilitates the typing of polytonic Greek diacritics.  
+<ul style="padding-left: 0px;"><li>On iOS and Android, the Hoplite Keyboard can be installed as an alternate keyboard system-wide and used in any application.</li>
+	<li>On Mac, Windows, and Linux the Hoplite Keyboard can be used as a LibreOffice extension: type base letters with the Greek keyboard provided by your operating system and toggle on/off diacritics with the Hoplite Keyboard's hot keys.</li>
+</ul>
+	</p>
+<br>
+<h2>Demonstration:</h2>
+<ul>
+<li>Type a Greek vowel</li>  
+<li>Then toggle diacritics on and off with the number keys</li>
+<li>Contrasting diacritics will replace each other</li>
+</ul>
+<div class="tophelp">
+	<table style="width:100%;" cellspacing="0" cellpadding="0">
+		<tbody><tr><td class="rotate" style="left: 20px;">rough</td><td class="rotate" style="left: 28px;">smooth</td><td class="rotate" style="left: 33px;">acute</td><td class="rotate" style="left: 45px;">grave</td><td class="rotate" style="left: 55px;top: -4px;">circumflex</td><td class="rotate" style="left: 45px;">macron</td><td class="rotate" style="left: 50px;">breve</td><td class="rotate" style="left: 55px;top: -13px;">iota subscript</td><td class="rotate" style="left: 24px;">diaeresis</td><td class="rotate" style="left: 20px;">underdot</td></tr>
+	</tbody></table>	
+	<table cellpadding=0 cellspacing=0 style="width:100%;">
+		<tr><td class="dnum">1</td><td class="dnum">2</td><td class="dnum">3</td><td class="dnum">4</td><td class="dnum">5</td><td class="dnum">6</td><td class="dnum">7</td><td class="dnum">8</td><td class="dnum">9</td><td class="dnum">0</td></tr>
+	</table>
+</div>
+<!--<input class="gkinput" type="text" id="inp" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>-->
+<textarea class="gkinput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="height:120px;width:100%;padding:10px;font-size:24pt;">
+ᾱ̔́ͅ</textarea>
+<br><br>
 <h2>Available for:</h2>
 <ul>
 	<li><a href="https://itunes.apple.com/us/app/hoplite-greek-keyboard/id1200319047">iOS</a></li>
@@ -66,10 +275,10 @@ The Hoplite Polytonic Greek Keyboard facilitates typing polytonic Greek diacriti
 	<li><b>Combining-only</b> mode uses combining diacritics to type decomposed characters. Few fonts handle combining diacritics well at this point; New Athena Unicode is currently the best.</li>
 </ul>
 
-<p>There is a discussion of these differences <a href="https://apagreekkeys.org/technicalDetails.html">here</a>.</p>
+<p>Read more about the differences <a href="https://apagreekkeys.org/technicalDetails.html">here</a>.</p>
 
 <h2>Support:</h2>
-<p>Send questions and comments to: jeremy &commat; philolog.us</p>
+<p>Send questions and comments to: jeremy.w.march &commat; gmail.com</p>
 
 <h2>Developers:</h2>
 

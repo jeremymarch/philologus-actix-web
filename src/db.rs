@@ -20,6 +20,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqlitePool };
 use serde::{Deserialize, Serialize};
+use crate::SynopsisSaverRequest;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum PhilologusWords {
@@ -32,6 +33,25 @@ pub struct DefRow {
     pub sortword: String,
     pub def: String,
     pub seq: u32
+}
+
+pub async fn get_synopsis_list(pool: &SqlitePool) -> Result<Vec<(i64,i64,String,String,String)>, sqlx::Error> {
+    let query = "SELECT id,updated,sname,advisor,selectedverb FROM synopsisresults ORDER BY updated DESC;";
+    let res: Vec<(i64,i64,String,String,String)> = sqlx::query_as(&query)
+    .fetch_all(pool)
+    .await?;
+
+    Ok(res)
+}
+
+pub async fn insert_synopsis(pool: &SqlitePool, info:&SynopsisSaverRequest, accessed: u128, ip:&str, agent:&str) -> Result<u32, sqlx::Error> {
+    let query = format!("INSERT INTO synopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')", 
+        accessed, info.sname, info.advisor, info.day, info.verb, info.pp, 
+        info.number, info.person, info.ptcgender, info.ptcnumber, info.ptccase, ip, agent, 
+        info.r.join("', '"));
+    sqlx::query(&query).execute(pool).await?;
+
+    Ok(1)
 }
 
 pub async fn insert_log(pool: &SqlitePool, accessed: u128, lex:u8, wordid:u32, ip:&str, agent:&str) -> Result<u32, sqlx::Error> {

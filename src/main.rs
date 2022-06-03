@@ -32,6 +32,11 @@ use sqlx::SqlitePool;
 use actix_files::NamedFile;
 use std::path::PathBuf;
 
+
+extern crate chrono;
+use chrono::prelude::*;
+use std::time::Duration;
+
 mod db;
 use crate::db::*;
 use serde::{Deserialize, Serialize};
@@ -120,6 +125,21 @@ pub struct DefRequest {
     pub skipcache: u32,
     pub addwordlinks: u32,
     pub lex: Option<String>,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SynopsisSaverRequest {
+    pub advisor: String,
+    pub day: String,
+    pub sname: String,
+    pub number: String,
+    pub person: String,
+    pub pp: String,
+    pub ptccase: String,
+    pub ptcgender: String,
+    pub ptcnumber: String,
+    pub r: Vec<String>,
+    pub verb: String,
 }
 
 //http://127.0.0.1:8088/philwords?n=101&idprefix=test1&x=0.1627681205837177&requestTime=1635643672625&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22wordid%22:%22%CE%B1%CE%B1%CF%84%CE%BF%CF%832%22,%22w%22:%22%22}
@@ -264,9 +284,115 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     Ok(HttpResponse::Ok().finish()) //send 200 with empty body
 }
 
+#[allow(clippy::eval_order_dependence)]
+async fn synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
+    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+
+    let list = get_synopsis_list(&db2.0).await.map_err(map_sqlx_error)?;
+
+    let mut res = String::from(r#"<!DOCTYPE html>
+    <html>
+    <head>
+    <meta charset="UTF-8">
+    </head>
+    <body><table>"#);
+    for l in list {
+        let d = UNIX_EPOCH + Duration::from_millis(l.1.try_into().unwrap());
+        let datetime = DateTime::<Local>::from(d);
+        let timestamp_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+
+        res.push_str(format!("<tr><td><a href='synopsisresult?sid={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
+    }
+    res.push_str("</table></body></html>");
+
+    Ok(HttpResponse::Ok()
+            .content_type("text/html")
+            .body(res))
+}
+
+#[allow(clippy::eval_order_dependence)]
+async fn synopsis_result((info, req):(web::Query<SynopsisResult>, HttpRequest)) -> Result<HttpResponse, AWError> {
+    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+
+    let list = get_synopsis_result(&db2.0, info.id).await.map_err(map_sqlx_error)?;
+
+    let mut res = String::from(r#"<!DOCTYPE html>
+    <html>
+    <head>
+    <meta charset="UTF-8">
+    </head>
+    <body><table>"#);
+    for l in list {
+        let d = UNIX_EPOCH + Duration::from_millis(l.1.try_into().unwrap());
+        let datetime = DateTime::<Local>::from(d);
+        let timestamp_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+
+        res.push_str(format!("<tr><td><a href='synopsisresult?sid={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
+    }
+    res.push_str("</table></body></html>");
+
+    Ok(HttpResponse::Ok()
+            .content_type("text/html")
+            .body(res))
+}
+
+#[allow(clippy::eval_order_dependence)]
+async fn synopsis_saver((info, req): (web::Json<SynopsisSaverRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
+    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+
+    let time_stamp = SystemTime::now().duration_since(UNIX_EPOCH);
+    let time_stamp_ms = if time_stamp.is_ok() { time_stamp.unwrap().as_millis() } else { 0 };
+    let user_agent = get_user_agent(&req).unwrap_or("");
+    //https://stackoverflow.com/questions/66989780/how-to-retrieve-the-ip-address-of-the-client-from-httprequest-in-actix-web
+    let ip = if req.peer_addr().is_some() { req.peer_addr().unwrap().ip().to_string() } else { "".to_string() };
+
+    let _ = insert_synopsis(&db2.0, &info.into_inner(), time_stamp_ms, ip.as_str(), user_agent).await.map_err(map_sqlx_error)?;
+    
+    //Ok(HttpResponse::Ok().finish())
+    //let res = 1;
+    Ok(HttpResponse::Ok().json(1))
+}
+
+#[allow(clippy::eval_order_dependence)]
+async fn synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> {
+    let mut template = include_str!("synopsis.html").to_string();
+
+    let mut rows = String::from("");
+    let mut count = 0;
+    let rowlabels = vec!["Present Indicative", "Future Indicative", "Imperfect Indicative", "Aorist Indicative", "Perfect Indicative", "Pluperfect Indicative", "Present Subjunctive", "Aorist Subjunctive", "Present Optative", "Future Optative", "Aorist Optative","Present Imperative", "Aorist Imperative", "Present Infinitive", "Future Infinitive", "Aorist Infinitive", "Perfect Infinitive", "Present Participle", "Future Participle", "Aorist Participle", "Perfect Participle"];
+    let voices = vec!["Active", "Middle", "Passive"];
+    for l in rowlabels {
+        rows.push_str(format!(r#"<tr class="{}"><td>{}</td>"#, l.to_lowercase(), l).as_str());
+        for v in &voices {
+            rows.push_str(format!(
+            r#"<td class="formcell {}">
+                <div class="formcellInner">
+                <input type="text" id="gkform{}" class="gkinput formcellinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
+                </div>
+            </td>"#, 
+            v.to_lowercase(), count).as_str());
+            count += 1;
+        }
+        rows.push_str("</tr>");
+    }
+
+    template = template.replacen("%rows%", &rows, 1);
+
+    Ok(HttpResponse::Ok()
+            .content_type("text/html")
+            .body(template))
+}
+
 async fn hc(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     Ok(HttpResponse::Ok().finish())
 }
+
+// fn json_error_handler(error: JsonPayloadError, _: &HttpRequest) -> actix_web::Error {
+//     match error {
+//         JsonPayloadError::Overflow => ServiceError::PayloadTooLarge.into(),
+//         _ => ServiceError::BadRequest(error.to_string()).into(),
+//     }
+// }
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
@@ -312,6 +438,12 @@ async fn main() -> io::Result<()> {
             .app_data(db_log_pool.clone())
             .wrap(middleware::Logger::default())
             .wrap(middleware::Compress::default())
+            // .app_data(
+            //     web::JsonConfig::default()
+            //         .error_handler(json_error_handler)
+            //         .limit(262_144),
+            // )
+            .app_data(web::PayloadConfig::default().limit(262_144))
             //.wrap(error_handlers)
             .service(
                 web::resource("/{lex}/query")
@@ -335,6 +467,18 @@ async fn main() -> io::Result<()> {
             .service(
                 web::resource("/healthzzz")
                     .route(web::get().to(health_check)),
+            )
+            .service(
+                web::resource("/synopsislist")
+                    .route(web::get().to(synopsis_list)),
+            )
+            .service(
+                web::resource("/synopsissaver")
+                    .route(web::post().to(synopsis_saver)),
+            )
+            .service(
+                web::resource("/synopsis")
+                    .route(web::get().to(synopsis)),
             )
             .service(
                 web::resource("/hc.php")
@@ -440,6 +584,14 @@ mod tests {
         assert!(resp.status().is_client_error());
     }
 */
+
+    #[test]
+    async fn json_test() {
+        let s = r#"{"pp":"ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην","day":22,"verb":"αα","person":"2nd","number":"sing","ptccase":"dat","ptcgender":"fem","ptcnumber":"","sname":"name","advisor":"advisor","r":["ββ","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","γγ"]}"#;
+        let r: SynopsisSaverRequest = serde_json::from_str(&s).unwrap();
+        assert_eq!(r.verb, "αα".to_string());
+        assert_eq!(r.r[62], "γγ".to_string());
+    }
 
     #[test]
     async fn test_unicode_strip_diacritics_and_lowercase() {

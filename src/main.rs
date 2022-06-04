@@ -142,6 +142,11 @@ pub struct SynopsisSaverRequest {
     pub verb: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SynopsisResultRequest {
+    pub id:u32,
+}
+
 //http://127.0.0.1:8088/philwords?n=101&idprefix=test1&x=0.1627681205837177&requestTime=1635643672625&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22wordid%22:%22%CE%B1%CE%B1%CF%84%CE%BF%CF%832%22,%22w%22:%22%22}
 
 #[allow(clippy::eval_order_dependence)]
@@ -311,7 +316,7 @@ async fn synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
 }
 
 #[allow(clippy::eval_order_dependence)]
-async fn synopsis_result((info, req):(web::Query<SynopsisResult>, HttpRequest)) -> Result<HttpResponse, AWError> {
+async fn synopsis_result((info, req):(web::Query<SynopsisResultRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
 
     let list = get_synopsis_result(&db2.0, info.id).await.map_err(map_sqlx_error)?;
@@ -467,6 +472,10 @@ async fn main() -> io::Result<()> {
             .service(
                 web::resource("/healthzzz")
                     .route(web::get().to(health_check)),
+            )
+            .service(
+                web::resource("/synopsisresult")
+                    .route(web::get().to(synopsis_result)),
             )
             .service(
                 web::resource("/synopsislist")

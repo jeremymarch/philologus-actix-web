@@ -44,6 +44,15 @@ pub async fn get_synopsis_list(pool: &SqlitePool) -> Result<Vec<(i64,i64,String,
     Ok(res)
 }
 
+pub async fn get_synopsis_result(pool: &SqlitePool, id:u32) -> Result<Vec<(i64,i64,String,String,String)>, sqlx::Error> {
+    let query = format!("SELECT id,updated,sname,advisor,selectedverb FROM synopsisresults WHERE id={} ORDER BY updated DESC;", id);
+    let res: Vec<(i64,i64,String,String,String)> = sqlx::query_as(&query)
+    .fetch_all(pool)
+    .await?;
+
+    Ok(res)
+}
+
 pub async fn insert_synopsis(pool: &SqlitePool, info:&SynopsisSaverRequest, accessed: u128, ip:&str, agent:&str) -> Result<u32, sqlx::Error> {
     let query = format!("INSERT INTO synopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')", 
         accessed, info.sname, info.advisor, info.day, info.verb, info.pp, 

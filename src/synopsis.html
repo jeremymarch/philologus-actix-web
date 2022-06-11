@@ -202,6 +202,10 @@ function start() {
 		document.getElementById("dayfilter").value = day;
 		document.body.classList = "day" + day;
 	}
+	var legend = getCookie("legend");
+	if (legend && legend == "hidden") {
+		document.querySelector(".tophelp").style.display = "none";
+	}
 	$(".gkinput").keypress(handleKey);
 	$("#submitbutton").click(submitSynopsis);
 }
@@ -230,6 +234,18 @@ function getCookie(name) {
 function eraseCookie(name) 
 {
 	setCookie(name, "", -1);
+}
+
+function togglelegend() {
+	var a = document.querySelector(".tophelp");
+	if (a.style.display == "none") {
+		a.style.display = "";
+		setCookie("legend", "displayed", 365);
+	}
+	else {
+		a.style.display = "none";
+		setCookie("legend", "hidden", 365);
+	}
 }
 
 </script>
@@ -301,7 +317,6 @@ padding: 3px;
 }
 .day22 { }
 
-.tophelp { display:none;}
 #namecell { display:none;}
 #submitcell { display:none; }
 
@@ -310,9 +325,14 @@ padding: 3px;
 .verbparam { font-size:14pt; }
 
 #dayfilter {
-position: absolute;
-right: 20px;
-top: 20px;
+	position: absolute;
+	right: 20px;
+	top: 20px;
+}
+#legendlink {
+	position:absolute;
+	right:20px;
+	top:50px;
 }
 
 </style>
@@ -326,6 +346,7 @@ top: 20px;
 			<tr><td class="dnum">1</td><td class="dnum">2</td><td class="dnum">3</td><td class="dnum">4</td><td class="dnum">5</td><td class="dnum">6</td><td class="dnum">7</td><td class="dnum">8</td><td class="dnum">9</td><td class="dnum">0</td></tr>
 		</table>
 	</div>-->
+	<div id="legendlink"><a href="javascript:togglelegend()">keys</a></div>
 	<table cellpadding=0 cellspacing=0 style="width:100%;margin:0px auto;">
 		<tr>
 			<td colspan="4">
@@ -389,53 +410,6 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 		</tr>
 		<tr><td></td><td class="colheader active">Active</td><td class="colheader middle">Middle</td><td class="colheader passive">Passive</td></tr>
 %rows%
-<!--<?php
-$template = <<<EOT
-<tr><td>%LABEL%</td>
-	<td class="formcell">
-		<div class="formcellInner">
-		<input type="text" id="gkform%IDa%" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
-		</div>
-	</td>
-	<td class="formcell">
-		<div class="formcellInner">
-		<input type="text" id="gkform%IDb%" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
-		</div>
-	</td>
-	<td class="formcell">
-		<div class="formcellInner">
-		<input type="text" id="gkform%IDc%" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
-		</div>
-	</td>
-</tr>
-EOT;
-
-$rows = ["Present Indicative", "Future Indicative", "Imperfect Indicative", "Aorist Indicative", "Perfect Indicative", "Pluperfect Indicative", "Present Subjunctive", "Aorist Subjunctive", "Present Optative", "Future Optative", "Aorist Optative","Present Imperative", "Aorist Imperative", "Present Infinitive", "Aorist Infinitive", "Perfect Infinitive", "Present Partciple", "Future Participle", "Aorist Participle", "Perfect Participle"];
-$n = 1;
-for ($i = 0; $i < count($rows); $i++)
-{
-	$a = str_replace("%LABEL%", $rows[$i], $template);
-	$a = str_replace("%IDa%", $n++, $a);
-	$a = str_replace("%IDb%", $n++, $a);
-	$a = str_replace("%IDc%", $n++, $a);
-	echo $a;
-}
-?>-->
 </table>
-
-<div class="tophelp" style="display:none;">
-	<table cellpadding=0 cellspacing=0>
-		<tr><td>rough breathing</td><td>1</td></tr>
-		<tr><td>smooth breathing</td><td>2</td></tr>
-		<tr><td>acute</td><td>3</td></tr>
-		<tr><td>grave</td><td>4</td></tr>
-		<tr><td>circumflex</td><td>5</td></tr>
-		<tr><td>macron</td><td>6</td></tr>
-		<tr><td>breve</td><td>7</td></tr>
-		<tr><td>iota subscript</td><td>8</td></tr>
-		<tr><td>diaeresis</td><td>9</td></tr>
-	</table>
-</div>
-
 </body>
 </html>

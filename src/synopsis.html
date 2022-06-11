@@ -197,12 +197,39 @@ function submitSynopsis() {
 }
 
 function start() {
+	var day = getCookie("day");
+	if (day) {
+		document.getElementById("dayfilter").value = day;
+		document.body.classList = "day" + day;
+	}
 	$(".gkinput").keypress(handleKey);
 	$("#submitbutton").click(submitSynopsis);
 }
 
 function setday() {
-	document.body.classList = "day" + document.getElementById("dayfilter").value;
+	var day = document.getElementById("dayfilter").value;
+	document.body.classList = "day" + day;
+	setCookie("day", day, 365);
+}
+
+function setCookie(name, value, days) {
+	if (typeof(localStorage) != "undefined") {
+		localStorage.setItem(name, value);
+	}
+}
+
+function getCookie(name) {
+	if (typeof(localStorage) != "undefined") {
+		var value = localStorage.getItem(name);
+		console.log("localstorage: " + name + ": " + value);
+		return value;
+	}
+	return null;
+}
+  
+function eraseCookie(name) 
+{
+	setCookie(name, "", -1);
 }
 
 </script>
@@ -248,8 +275,6 @@ BODY {
 	max-width:1024px;
 	width:90%;
 	margin:10px auto;
-	height: 100%;
-	overflow:hidden;
 }
 .formcell { margin:0px;padding:0px 8px; }
 .formcellInner { height:100%;width:100%; }
@@ -259,13 +284,13 @@ border: 1px solid #666;
 padding: 3px;
 }
 
-.day4 .passive,.day4 .middle,.day4 .imperative,.day4 .participle, .day4 .future.optative, .day4 .future.infinitive {
+.day4 .passive,.day4 .middle,.day4 .imperative,.day4 .participle, .day4 .future.optative, .day4 .future.infinitive, .day4 #ptccase, .day4 #ptcgender {
 	display:none;
 }
-.day7 .middle,.day7 .imperative,.day7 .participle, .day7 .future.optative, .day7 .future.infinitive {
+.day7 .middle,.day7 .imperative,.day7 .participle, .day7 .future.optative, .day7 .future.infinitive, .day7 #ptccase, .day7 #ptcgender {
 	display:none;
 }
-.day9 .imperative,.day9 .participle, .day9 .future.optative, .day9 .future.infinitive {
+.day9 .imperative,.day9 .participle, .day9 .future.optative, .day9 .future.infinitive, .day9 #ptccase, .day9 #ptcgender {
 	display:none;
 }
 .day11 .imperative, .day11 .future.optative, .day11 .future.infinitive {
@@ -275,6 +300,20 @@ padding: 3px;
 	display:none;
 }
 .day22 { }
+
+.tophelp { display:none;}
+#namecell { display:none;}
+#submitcell { display:none; }
+
+#selectedverb {width:250px;}
+
+.verbparam { font-size:14pt; }
+
+#dayfilter {
+position: absolute;
+right: 20px;
+top: 20px;
+}
 
 </style>
 </head>
@@ -312,33 +351,33 @@ padding: 3px;
 						<option value="11">Day 11</option>
 						<option value="14">Day 14</option>
 						<option value="22">Day 22</option>
-					</select></td><td align="right">
+					</select></td><td align="right" id="namecell">
 						Name: <input type="text" id="sname" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
 Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
 					</td></tr>
 					<tr><td width="50%"><h3>Synopsis of: 
 						<input type="text" id="selectedverb" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
-						<select id="person">
+						<select id="person" class="verbparam">
 							<option value="1st">First Person</option>
 							<option value="2nd">Second Person</option>
 							<option value="3rd">Third Person</option>
 						</select>
-						<select id="number">
+						<select id="number" class="verbparam">
 							<option value="sing">Singular</option>
 							<option value="pl">Plural</option>
 						</select>
-						<select id="ptccase">
+						<select id="ptccase" class="verbparam">
 							<option value="nom">Nominative</option>
 							<option value="gen">Genitive</option>
 							<option value="dat">Dative</option>
 							<option value="acc">Accusative</option>
 						</select>
-						<select id="ptcgender">
+						<select id="ptcgender" class="verbparam">
 							<option value="masc">Masculine</option>
 							<option value="fem">Feminine</option>
 							<option value="neut">Neuter</option>
 						</select>	
-					</h3></td><td align="right" colspan="2"><button id="submitbutton">Submit</button></td></tr>
+					</h3></td><td align="right" colspan="2" id="submitcell"><button id="submitbutton">Submit</button></td></tr>
 		</table>
 		</td>
 		</tr>
@@ -349,14 +388,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 			</td>
 		</tr>
 		<tr><td></td><td class="colheader active">Active</td><td class="colheader middle">Middle</td><td class="colheader passive">Passive</td></tr>
-		<tr><td colspan="4">
-			<div style="width: 100%;height: 100%;margin: 0;padding: 0;overflow: auto;">
-			<table cellpadding=0 cellspacing=0>
-			%rows%
-			</table>
-			</div>
-		</td></tr>
-
+%rows%
 <!--<?php
 $template = <<<EOT
 <tr><td>%LABEL%</td>

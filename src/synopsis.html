@@ -202,12 +202,58 @@ function start() {
 		document.getElementById("dayfilter").value = day;
 		document.body.classList = "day" + day;
 	}
+	else {
+		document.getElementById("dayfilter").value = 22;
+		document.body.classList = "day" + 22;
+	}
 	var legend = getCookie("legend");
 	if (legend && legend == "hidden") {
 		document.querySelector(".tophelp").style.display = "none";
 	}
 	$(".gkinput").keypress(handleKey);
+	$(".gkinput").blur(savefields);
 	$("#submitbutton").click(submitSynopsis);
+
+	retrievefields();
+}
+
+function savefields() {
+	if (!lsTest()) return;
+	console.log("save fields");
+	$(".gkinput").each(function () {
+		console.log("save: " + this.id + ": " + this.value);
+		setCookie(this.id, this.value, 365);
+	});
+}
+
+function retrievefields() {
+	if (!lsTest()) return;
+	for (var i = 0; i < localStorage.length; i++) {
+		var id = localStorage.key(i);
+		var val = localStorage.getItem(localStorage.key(i));
+		console.log("set:" + id + ": " + val);
+    	$( "#" + id ).val( val );
+	}
+}
+
+function clearForm() {
+	$(".gkinput").val("");
+	if (!lsTest()) return;
+	$(".gkinput").each(function () {
+		localStorage.removeItem( this.id );
+	});
+	//localStorage.clear();
+}
+
+function lsTest() {
+  var test = 'test';
+  try {
+    localStorage.setItem(test, test);
+    localStorage.removeItem(test);
+    return true;
+  } catch (e) {
+    return false;
+  }
 }
 
 function setday() {
@@ -332,6 +378,12 @@ padding: 3px;
 #legendlink {
 	position:absolute;
 	right:20px;
+	top:78px;
+}
+
+#clearbutton {
+	position:absolute;
+	right:20px;
 	top:50px;
 }
 
@@ -346,7 +398,8 @@ padding: 3px;
 			<tr><td class="dnum">1</td><td class="dnum">2</td><td class="dnum">3</td><td class="dnum">4</td><td class="dnum">5</td><td class="dnum">6</td><td class="dnum">7</td><td class="dnum">8</td><td class="dnum">9</td><td class="dnum">0</td></tr>
 		</table>
 	</div>-->
-	<div id="legendlink"><a href="javascript:togglelegend()">keys</a></div>
+	<div id="legendlink"><a tabindex="-1" href="javascript:togglelegend()">keys</a></div>
+	<button id="clearbutton" tabindex="-1" onclick="clearForm()">Clear</button>
 	<table cellpadding=0 cellspacing=0 style="width:100%;margin:0px auto;">
 		<tr>
 			<td colspan="4">
@@ -365,7 +418,7 @@ padding: 3px;
 		<tr>
 			<td align="left" colspan="4">
 				<table cellpadding=0 cellspacing=0>
-					<tr><td width="50%"><select id="dayfilter" onchange="setday()">
+					<tr><td width="50%"><select tabindex="-1" id="dayfilter" onchange="setday()">
 						<option value="4">Day 4</option>
 						<option value="7">Day 7</option>
 						<option value="9">Day 9</option>

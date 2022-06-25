@@ -224,6 +224,10 @@ function savefields() {
 		console.log("save: " + this.id + ": " + this.value);
 		setCookie(this.id, this.value, 365);
 	});
+	setCookie("person", $("#person").val(), 365);
+	setCookie("number", $("#number").val(), 365);
+	setCookie("ptccase", $("#ptccase").val(), 365);
+	setCookie("ptcgender", $("#ptcgender").val(), 365);
 }
 
 function retrievefields() {
@@ -234,6 +238,10 @@ function retrievefields() {
 		console.log("set:" + id + ": " + val);
     	$( "#" + id ).val( val );
 	}
+	$("#person").val( localStorage.getItem("person") );
+	$("#number").val(localStorage.getItem("number"));
+	$("#ptccase").val(localStorage.getItem("ptccase"));
+	$("#ptcgender").val(localStorage.getItem("ptcgender"));
 }
 
 function clearForm() {
@@ -242,6 +250,14 @@ function clearForm() {
 	$(".gkinput").each(function () {
 		localStorage.removeItem( this.id );
 	});
+	$("#person").val("");
+	$("#number").val("");
+	$("#ptccase").val("");
+	$("#ptcgender").val("");
+	setCookie("person", "", 365);
+	setCookie("number", "", 365);
+	setCookie("ptccase", "", 365);
+	setCookie("ptcgender", "", 365);
 	//localStorage.clear();
 }
 
@@ -432,21 +448,25 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 					<tr><td width="50%"><h3>Synopsis of: 
 						<input type="text" id="selectedverb" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
 						<select id="person" class="verbparam">
+							<option value=""></option>
 							<option value="1st">First Person</option>
 							<option value="2nd">Second Person</option>
 							<option value="3rd">Third Person</option>
 						</select>
 						<select id="number" class="verbparam">
+							<option value=""></option>
 							<option value="sing">Singular</option>
 							<option value="pl">Plural</option>
 						</select>
 						<select id="ptccase" class="verbparam">
+							<option value=""></option>
 							<option value="nom">Nominative</option>
 							<option value="gen">Genitive</option>
 							<option value="dat">Dative</option>
 							<option value="acc">Accusative</option>
 						</select>
 						<select id="ptcgender" class="verbparam">
+							<option value=""></option>
 							<option value="masc">Masculine</option>
 							<option value="fem">Feminine</option>
 							<option value="neut">Neuter</option>

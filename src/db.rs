@@ -55,7 +55,7 @@ pub async fn get_synopsis_result(pool: &SqlitePool, id:u32) -> Result<Vec<(i64,i
 
 pub async fn insert_synopsis(pool: &SqlitePool, info:&SynopsisSaverRequest, accessed: u128, ip:&str, agent:&str) -> Result<u32, sqlx::Error> {
     let query = format!("INSERT INTO synopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')", 
-        accessed, info.sname, info.advisor, info.day, info.verb, info.pp, 
+        accessed, info.sname, info.advisor, info.unit, info.verb, info.pp, 
         info.number, info.person, info.ptcgender, info.ptcnumber, info.ptccase, ip, agent, 
         info.r.join("', '"));
     sqlx::query(&query).execute(pool).await?;

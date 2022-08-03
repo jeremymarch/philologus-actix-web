@@ -160,7 +160,7 @@ function handleKey(evt) {
 function submitSynopsis() {
 	var json = new Object();
 	json.pp = $("#pppppp0").val().trim();
-	json.day = $("#dayfilter").val().trim();
+	json.unit = $("#unitfilter").val().trim();
 	json.verb = $("#selectedverb").val().trim();
 	json.person = $("#person").val().trim();
 	json.number = $("#number").val().trim();
@@ -197,14 +197,14 @@ function submitSynopsis() {
 }
 
 function start() {
-	var day = getCookie("day");
-	if (day) {
-		document.getElementById("dayfilter").value = day;
-		document.body.classList = "day" + day;
+	var unit = getCookie("unit");
+	if (unit) {
+		document.getElementById("unitfilter").value = unit;
+		document.body.classList = "unit" + unit;
 	}
 	else {
-		document.getElementById("dayfilter").value = 22;
-		document.body.classList = "day" + 22;
+		document.getElementById("unitfilter").value = 16;
+		document.body.classList = "unit" + 16;
 	}
 	var legend = getCookie("legend");
 	if (legend && legend == "hidden") {
@@ -272,10 +272,10 @@ function lsTest() {
   }
 }
 
-function setday() {
-	var day = document.getElementById("dayfilter").value;
-	document.body.classList = "day" + day;
-	setCookie("day", day, 365);
+function setunit() {
+	var unit = document.getElementById("unitfilter").value;
+	document.body.classList = "unit" + unit;
+	setCookie("unit", unit, 365);
 }
 
 function setCookie(name, value, days) {
@@ -361,23 +361,30 @@ width: 11%;
 border: 1px solid #666;
 padding: 3px;
 }
-
-.day4 .passive,.day4 .middle,.day4 .imperative,.day4 .participle, .day4 .future.optative, .day4 .future.infinitive, .day4 #ptccase, .day4 #ptcgender {
+/*
+day4	u2
+day7	u5
+day9	u7
+day11	u8
+day14	u11
+day22	u16
+*/
+.unit2 .passive,.unit2 .middle,.unit2 .imperative,.unit2 .participle, .unit2 .future.optative, .unit2 .future.infinitive, .unit2 #ptccase, .unit2 #ptcgender {
 	display:none;
 }
-.day7 .middle,.day7 .imperative,.day7 .participle, .day7 .future.optative, .day7 .future.infinitive, .day7 #ptccase, .day7 #ptcgender {
+.unit5 .middle,.unit5 .imperative,.unit5 .participle, .unit5 .future.optative, .unit5 .future.infinitive, .unit5 #ptccase, .unit5 #ptcgender {
 	display:none;
 }
-.day9 .imperative,.day9 .participle, .day9 .future.optative, .day9 .future.infinitive, .day9 #ptccase, .day9 #ptcgender {
+.unit7 .imperative,.unit7 .participle, .unit7 .future.optative, .unit7 .future.infinitive, .unit7 #ptccase, .unit7 #ptcgender {
 	display:none;
 }
-.day11 .imperative, .day11 .future.optative, .day11 .future.infinitive {
+.unit8 .imperative, .unit8 .future.optative, .unit8 .future.infinitive {
 	display:none;
 }
-.day14 .future.optative, .day14 .future.infinitive {
+.unit11 .future.optative, .unit11 .future.infinitive {
 	display:none;
 }
-.day22 { }
+.unit16 { }
 
 #namecell { display:none;}
 #submitcell { display:none; }
@@ -386,7 +393,7 @@ padding: 3px;
 
 .verbparam { font-size:14pt; }
 
-#dayfilter {
+#unitfilter {
 	position: absolute;
 	right: 20px;
 	top: 20px;
@@ -434,13 +441,13 @@ padding: 3px;
 		<tr>
 			<td align="left" colspan="4">
 				<table cellpadding=0 cellspacing=0>
-					<tr><td width="50%"><select tabindex="-1" id="dayfilter" onchange="setday()">
-						<option value="4">Day 4</option>
-						<option value="7">Day 7</option>
-						<option value="9">Day 9</option>
-						<option value="11">Day 11</option>
-						<option value="14">Day 14</option>
-						<option value="22">Day 22</option>
+					<tr><td width="50%"><select tabindex="-1" id="unitfilter" onchange="setunit()">
+						<option value="2">Unit 2</option>
+						<option value="5">Unit 5</option>
+						<option value="7">Unit 7</option>
+						<option value="8">Unit 8</option>
+						<option value="11">Unit 11</option>
+						<option value="16">Unit 16</option>
 					</select></td><td align="right" id="namecell">
 						Name: <input type="text" id="sname" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
 Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
@@ -458,6 +465,17 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 							<option value="sing">Singular</option>
 							<option value="pl">Plural</option>
 						</select>
+						<select id="ptcgender" class="verbparam">
+							<option value=""></option>
+							<option value="masc">Masculine</option>
+							<option value="fem">Feminine</option>
+							<option value="neut">Neuter</option>
+						</select>
+						<!--<select id="ptcnumber" class="verbparam">
+							<option value=""></option>
+							<option value="ptcsing">Singular</option>
+							<option value="ptcpl">Plural</option>
+						</select>-->
 						<select id="ptccase" class="verbparam">
 							<option value=""></option>
 							<option value="nom">Nominative</option>
@@ -465,12 +483,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 							<option value="dat">Dative</option>
 							<option value="acc">Accusative</option>
 						</select>
-						<select id="ptcgender" class="verbparam">
-							<option value=""></option>
-							<option value="masc">Masculine</option>
-							<option value="fem">Feminine</option>
-							<option value="neut">Neuter</option>
-						</select>	
+							
 					</h3></td><td align="right" colspan="2" id="submitcell"><button id="submitbutton">Submit</button></td></tr>
 		</table>
 		</td>

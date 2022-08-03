@@ -130,7 +130,7 @@ pub struct DefRequest {
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SynopsisSaverRequest {
     pub advisor: String,
-    pub day: String,
+    pub unit: String,
     pub sname: String,
     pub number: String,
     pub person: String,
@@ -596,7 +596,7 @@ mod tests {
 
     #[test]
     async fn json_test() {
-        let s = r#"{"pp":"ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην","day":22,"verb":"αα","person":"2nd","number":"sing","ptccase":"dat","ptcgender":"fem","ptcnumber":"","sname":"name","advisor":"advisor","r":["ββ","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","γγ"]}"#;
+        let s = r#"{"pp":"ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην","unit":22,"verb":"αα","person":"2nd","number":"sing","ptccase":"dat","ptcgender":"fem","ptcnumber":"","sname":"name","advisor":"advisor","r":["ββ","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","γγ"]}"#;
         let r: SynopsisSaverRequest = serde_json::from_str(&s).unwrap();
         assert_eq!(r.verb, "αα".to_string());
         assert_eq!(r.r[62], "γγ".to_string());

@@ -28,6 +28,9 @@ use regex::Regex;
 use actix_files as fs;
 use actix_web::{middleware, web, App, Error as AWError, HttpResponse, HttpRequest, HttpServer, Result};
 use sqlx::SqlitePool;
+use sqlx::AnyPool;
+use sqlx::Any;
+use sqlx::Pool;
 
 use actix_files::NamedFile;
 use std::path::PathBuf;
@@ -50,7 +53,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 //https://stackoverflow.com/questions/64348528/how-can-i-pass-multi-variable-by-actix-web-appdata
 //https://doc.rust-lang.org/rust-by-example/generics/new_types.html
 #[derive(Clone)]
-struct SqliteUpdatePool (SqlitePool);
+struct AnyUpdatePool (AnyPool);
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct QueryResponse {
@@ -151,7 +154,7 @@ pub struct SynopsisResultRequest {
 
 #[allow(clippy::eval_order_dependence)]
 async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<SqlitePool>().unwrap();
+    let db = req.app_data::<AnyPool>().unwrap();
 
     let query_params: WordQuery = serde_json::from_str(&info.query)?;
     
@@ -224,8 +227,8 @@ fn get_user_agent(req: &HttpRequest) -> Option<&str> {
 
 #[allow(clippy::eval_order_dependence)]
 async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
-    let db = req.app_data::<SqlitePool>().unwrap();
-    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+    let db = req.app_data::<AnyPool>().unwrap();
+    let db2 = req.app_data::<AnyUpdatePool>().unwrap();
     
     let table = match info.lexicon.as_str() {
         "ls" => "ZLATIN",
@@ -399,6 +402,64 @@ async fn hc(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 //     }
 // }
 
+pub enum DatabaseDriver {
+    Sqlite,
+    Postgres,
+    Mysql,
+}
+
+#[derive(Deserialize, Debug, Clone)]
+pub struct DatabaseConfig {
+    pub(crate) driver: String,
+    pub(crate) user: String,
+    pub(crate) password: String,
+    pub(crate) host: String,
+    pub(crate) port: u16,
+    pub(crate) database: String,
+    pub(crate) socket: Option<String>,
+    pub(crate) pool_size: u32,
+}
+
+#[derive(Debug)]
+pub enum DatabaseError {
+    InitError(String),
+}
+
+pub async fn new_db_pool(conf: &DatabaseConfig) -> Result<Pool<Any>, DatabaseError> {
+    let driver = match conf.driver.to_lowercase().as_str() {
+        "sqlite" | "sqlite3" => { Ok(DatabaseDriver::Sqlite) }
+        "mysql" | "mariadb" => { Ok(DatabaseDriver::Mysql) }
+        "postgres" | "postgresql" => { Ok(DatabaseDriver::Postgres) }
+        _ => Err(DatabaseError::InitError(format!("Unknown database driver: {}", conf.driver)))
+    };
+    let driver = driver?;
+    // unimplemented!();
+    // TODO: Support multiple drivers
+    let db_url = match driver {
+        DatabaseDriver::Sqlite => {
+            format!("sqlite{}", conf.database)
+        }
+        DatabaseDriver::Mysql => {
+            format!("mysql://{}:{}@{}:{}/{}", conf.user, conf.password, conf.host, conf.port, conf.database)
+        }
+        DatabaseDriver::Postgres => {
+            format!("postgres://{}:{}@{}:{}/{}", conf.user, conf.password, conf.host, conf.port, conf.database)
+        }
+    };
+    let pool = AnyPool::connect(&db_url).await;
+    let pool = match pool {
+        Ok(pool) => {
+            println!("Connected to database {}", db_url);
+            pool
+        }
+        Err(e) => {
+            println!("{:?}", e);
+            return Err(DatabaseError::InitError(format!("Failed to connect to database")));
+        }
+    };
+    Ok(pool)
+}
+
 #[actix_web::main]
 async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "actix_web=info");
@@ -408,7 +469,7 @@ async fn main() -> io::Result<()> {
     //e.g. export PHILOLOGUS_LOG_DB_PATH=sqlite://updatedb.sqlite?mode=rwc
     let db_path = std::env::var("PHILOLOGUS_DB_PATH")
                    .unwrap_or_else(|_| panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH."));
-    let db_pool = SqlitePool::connect(&db_path).await.expect("Could not connect to db.");
+    //let db_pool = SqlitePool::connect(&db_path).await.expect("Could not connect to db.");
 
     let db_log_path = std::env::var("PHILOLOGUS_LOG_DB_PATH")
                     .unwrap_or_else(|_| panic!("Environment variable for sqlite log path not set: PHILOLOGUS_LOG_DB_PATH."));
@@ -419,9 +480,32 @@ async fn main() -> io::Result<()> {
         sqlx::Sqlite::create_database(&db_log_path).await?;
     }
     */
-    let db_log_pool = SqliteUpdatePool(SqlitePool::connect(&db_log_path).await.expect("Could not connect to update db."));
-    let query = "CREATE TABLE IF NOT EXISTS log (id integer primary key autoincrement, accessed integer, lexicon integer, word integer, ip text, agent text);";
-    let _ = sqlx::query(query).execute(&db_log_pool.0).await;
+    // let db_log_pool = SqliteUpdatePool(SqlitePool::connect(&db_log_path).await.expect("Could not connect to update db."));
+    // let query = "CREATE TABLE IF NOT EXISTS log (id integer primary key autoincrement, accessed integer, lexicon integer, word integer, ip text, agent text);";
+    // let _ = sqlx::query(query).execute(&db_log_pool.0).await;
+
+    let conf = DatabaseConfig {
+        driver: "sqlite".to_string(),
+        user: "".to_string(),
+        password: "".to_string(),
+        host: "".to_string(),
+        port: 0,
+        database: db_path,
+        socket: None,
+        pool_size: 0,
+    };
+    let db_pool = new_db_pool(&conf).await.unwrap();
+    let conf2 = DatabaseConfig {
+        driver: "sqlite".to_string(),
+        user: "".to_string(),
+        password: "".to_string(),
+        host: "".to_string(),
+        port: 0,
+        database: db_log_path,
+        socket: None,
+        pool_size: 0,
+    };
+    let db_log_pool = new_db_pool(&conf2).await.unwrap();
 
     /*
     https://github.com/SergioBenitez/Rocket/discussions/1989

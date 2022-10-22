@@ -129,7 +129,7 @@ pub async fn get_def_by_seq(pool: &AnyPool, table:&str, id:i32) -> Result<DefRow
 
 pub async fn get_seq_by_prefix(pool: &AnyPool, table:&str, prefix:&str) -> Result<i32, sqlx::Error> {
     let query = format!("SELECT seq,word,def,sortword FROM {} WHERE sortword >= ? ORDER BY sortword LIMIT 1;", table);
-    //println!("query {:?}", query);
+
     let rec = sqlx::query(&query)
     .bind(prefix)
     .map(|rec: AnyRow| {

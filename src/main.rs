@@ -27,10 +27,7 @@ use std::io;
 use regex::Regex;
 use actix_files as fs;
 use actix_web::{middleware, web, App, Error as AWError, HttpResponse, HttpRequest, HttpServer, Result};
-use sqlx::SqlitePool;
 use sqlx::AnyPool;
-use sqlx::Any;
-use sqlx::Pool;
 
 use actix_files::NamedFile;
 use std::path::PathBuf;
@@ -152,7 +149,6 @@ pub struct SynopsisResultRequest {
 
 //http://127.0.0.1:8088/philwords?n=101&idprefix=test1&x=0.1627681205837177&requestTime=1635643672625&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22wordid%22:%22%CE%B1%CE%B1%CF%84%CE%BF%CF%832%22,%22w%22:%22%22}
 
-#[allow(clippy::eval_order_dependence)]
 async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<AnyPool>().unwrap();
 
@@ -225,7 +221,6 @@ fn get_user_agent(req: &HttpRequest) -> Option<&str> {
 //http://127.0.0.1:8088/wordservjson.php?id=110628&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002
 //{"principalParts":"","def":"...","defName":"","word":"γεοῦχος","unaccentedWord":"γεουχοσ","lemma":"γεοῦχος","requestTime":0,"status":"0","lexicon":"lsj","word_id":"22045","wordid":"γεουχοσ","method":"setWord"}
 
-#[allow(clippy::eval_order_dependence)]
 async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<AnyPool>().unwrap();
     let db2 = req.app_data::<AnyUpdatePool>().unwrap();
@@ -292,7 +287,6 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     Ok(HttpResponse::Ok().finish()) //send 200 with empty body
 }
 
-#[allow(clippy::eval_order_dependence)]
 async fn synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<AnyUpdatePool>().unwrap();
 
@@ -318,7 +312,6 @@ async fn synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
             .body(res))
 }
 
-#[allow(clippy::eval_order_dependence)]
 async fn synopsis_result((info, req):(web::Query<SynopsisResultRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<AnyUpdatePool>().unwrap();
 
@@ -344,7 +337,6 @@ async fn synopsis_result((info, req):(web::Query<SynopsisResultRequest>, HttpReq
             .body(res))
 }
 
-#[allow(clippy::eval_order_dependence)]
 async fn synopsis_saver((info, req): (web::Json<SynopsisSaverRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<AnyUpdatePool>().unwrap();
 
@@ -361,7 +353,6 @@ async fn synopsis_saver((info, req): (web::Json<SynopsisSaverRequest>, HttpReque
     Ok(HttpResponse::Ok().json(1))
 }
 
-#[allow(clippy::eval_order_dependence)]
 async fn synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     let mut template = include_str!("synopsis.html").to_string();
 
@@ -456,7 +447,7 @@ pub async fn new_db_pool(conf: &DatabaseConfig) -> Result<AnyPool, DatabaseError
         }
         Err(e) => {
             println!("{:?}", e);
-            return Err(DatabaseError::InitError(format!("Failed to connect to database")));
+            return Err(DatabaseError::InitError("Failed to connect to database".to_string()));
         }
     };
     Ok(pool)
@@ -507,7 +498,7 @@ async fn main() -> io::Result<()> {
         socket: None,
         pool_size: 0,
     };
-    let db_log_pool = new_db_pool(&conf2).await.unwrap();
+    let db_log_pool = AnyUpdatePool(new_db_pool(&conf2).await.unwrap());
 
     /*
     https://github.com/SergioBenitez/Rocket/discussions/1989
@@ -682,7 +673,7 @@ mod tests {
 
     #[test]
     async fn json_test() {
-        let s = r#"{"pp":"ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην","unit":22,"verb":"αα","person":"2nd","number":"sing","ptccase":"dat","ptcgender":"fem","ptcnumber":"","sname":"name","advisor":"advisor","r":["ββ","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","γγ"]}"#;
+        let s = r#"{"pp":"ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην","unit":"22","verb":"αα","person":"2nd","number":"sing","ptccase":"dat","ptcgender":"fem","ptcnumber":"","sname":"name","advisor":"advisor","r":["ββ","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","γγ"]}"#;
         let r: SynopsisSaverRequest = serde_json::from_str(&s).unwrap();
         assert_eq!(r.verb, "αα".to_string());
         assert_eq!(r.r[62], "γγ".to_string());
@@ -706,8 +697,33 @@ mod tests {
         let db_path = std::env::var("PHILOLOGUS_DB_PATH")
                    .unwrap_or_else(|_| panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH."));
 
-        let db_pool = SqlitePool::connect(&db_path).await.expect("Could not connect to db.");
-        let db_pool2 = SqliteUpdatePool(SqlitePool::connect("sqlite://updatedb.sqlite").await.expect("Could not connect to update db."));
+        let db_log_path = std::env::var("PHILOLOGUS_LOG_DB_PATH")
+                   .unwrap_or_else(|_| panic!("Environment variable for sqlite log path not set: PHILOLOGUS_LOG_DB_PATH."));
+
+        let conf = DatabaseConfig {
+            driver: "sqlite".to_string(),
+            user: "".to_string(),
+            password: "".to_string(),
+            host: "".to_string(),
+            port: 0,
+            database: db_path,
+            socket: None,
+            pool_size: 0,
+        };
+        let db_pool = new_db_pool(&conf).await.unwrap();
+        let conf2 = DatabaseConfig {
+            driver: "sqlite".to_string(),
+            user: "".to_string(),
+            password: "".to_string(),
+            host: "".to_string(),
+            port: 0,
+            database: db_log_path,
+            socket: None,
+            pool_size: 0,
+        };
+        let db_pool2 = AnyUpdatePool(new_db_pool(&conf2).await.unwrap());
+        //let db_pool = SqlitePool::connect(&db_path).await.expect("Could not connect to db.");
+        //let db_pool2 = SqliteUpdatePool(SqlitePool::connect("sqlite://updatedb.sqlite").await.expect("Could not connect to update db."));
 
         let mut app = test::init_service(
             App::new()

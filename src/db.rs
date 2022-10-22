@@ -38,7 +38,7 @@ pub struct DefRow {
 
 pub async fn get_synopsis_list(pool: &AnyPool) -> Result<Vec<(i64,i64,String,String,String)>, sqlx::Error> {
     let query = "SELECT id,updated,sname,advisor,selectedverb FROM synopsisresults ORDER BY updated DESC;";
-    let res: Vec<(i64,i64,String,String,String)> = sqlx::query(&query)
+    let res: Vec<(i64,i64,String,String,String)> = sqlx::query(query)
     .map(|rec: AnyRow| {
         (
             rec.get("id"),

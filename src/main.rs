@@ -58,22 +58,22 @@ struct AnyUpdatePool (AnyPool);
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct QueryResponse {
     #[serde(rename(serialize = "selectId"), rename(deserialize = "selectId"))]
-    select_id: u32,
+    select_id: i32,
     error: String,
     wtprefix: String,
-    nocache: u8,
+    nocache: i8,
     container: String,
     #[serde(rename(serialize = "requestTime"), rename(deserialize = "requestTime"))]
-    request_time: u64,
+    request_time: i64,
     page: i32, //can be negative for pages before
     #[serde(rename(serialize = "lastPage"), rename(deserialize = "lastPage"))]
-    last_page: u8,
+    last_page: i8,
     #[serde(rename(serialize = "lastPageUp"), rename(deserialize = "lastPageUp"))]
-    lastpage_up: u8,
+    lastpage_up: i8,
     scroll: String,
     query: String,
     #[serde(rename(serialize = "arrOptions"), rename(deserialize = "arrOptions"))]
-    arr_options: Vec<(String,u32)>
+    arr_options: Vec<(String,i32)>
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -91,17 +91,17 @@ struct DefResponse {
     request_time: u64,
     status: String,
     lexicon: String,
-    word_id: u32,
+    word_id: i32,
     method: String,
 }
 
 #[derive(Deserialize)]
 pub struct QueryRequest {
-    pub n: u32,
+    pub n: i32,
     pub idprefix: String,
     pub x: String,
     #[serde(rename(deserialize = "requestTime"))]
-    pub request_time: u64,
+    pub request_time: i64,
     pub page: i32, //can be negative for pages before
     pub mode: String,
     pub query: String,//WordQuery,
@@ -122,11 +122,11 @@ pub struct WordQuery {
 
 #[derive(Deserialize)]
 pub struct DefRequest {
-    pub id: Option<u32>,
+    pub id: Option<i32>,
     pub wordid: Option<String>,
     pub lexicon: String,
-    pub skipcache: u32,
-    pub addwordlinks: u32,
+    pub skipcache: i32,
+    pub addwordlinks: i32,
     pub lex: Option<String>,
 }
 
@@ -147,7 +147,7 @@ pub struct SynopsisSaverRequest {
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SynopsisResultRequest {
-    pub id:u32,
+    pub id:i32,
 }
 
 //http://127.0.0.1:8088/philwords?n=101&idprefix=test1&x=0.1627681205837177&requestTime=1635643672625&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22wordid%22:%22%CE%B1%CE%B1%CF%84%CE%BF%CF%832%22,%22w%22:%22%22}
@@ -157,25 +157,25 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
     let db = req.app_data::<AnyPool>().unwrap();
 
     let query_params: WordQuery = serde_json::from_str(&info.query)?;
-    
+    //println!("query {}", info.query);
     let table = match query_params.lexicon.as_str() {
         "ls" => "ZLATIN",
         "slater" => "ZSLATER",
         _ => "ZGREEK"
     };
-    
+
     let seq = if query_params.wordid.is_none() {
         //remove any diacritics and make lowercase
         //println!("1: {}",query_params.w);
         let q = query_params.w.nfd().filter(|x| !unicode_normalization::char::is_combining_mark(*x) && *x != '´' && *x != '`' && *x != '῀').collect::<String>().to_lowercase();
-        //println!("2: {}",q);
+
         get_seq_by_prefix(db, table, &q).await.map_err(map_sqlx_error)?
     }
     else {
         let decoded_word = percent_decode_str(query_params.wordid.as_ref().unwrap()).decode_utf8().map_err(map_utf8_error)?;
         get_seq_by_word(db, table, &decoded_word).await.map_err(map_sqlx_error)?
     };
-
+    
     let mut before_rows = vec![];
     let mut after_rows = vec![];
     if info.page <= 0 {
@@ -294,7 +294,7 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 
 #[allow(clippy::eval_order_dependence)]
 async fn synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
-    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+    let db2 = req.app_data::<AnyUpdatePool>().unwrap();
 
     let list = get_synopsis_list(&db2.0).await.map_err(map_sqlx_error)?;
 
@@ -320,7 +320,7 @@ async fn synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
 
 #[allow(clippy::eval_order_dependence)]
 async fn synopsis_result((info, req):(web::Query<SynopsisResultRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
-    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+    let db2 = req.app_data::<AnyUpdatePool>().unwrap();
 
     let list = get_synopsis_result(&db2.0, info.id).await.map_err(map_sqlx_error)?;
 
@@ -346,7 +346,7 @@ async fn synopsis_result((info, req):(web::Query<SynopsisResultRequest>, HttpReq
 
 #[allow(clippy::eval_order_dependence)]
 async fn synopsis_saver((info, req): (web::Json<SynopsisSaverRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
-    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+    let db2 = req.app_data::<AnyUpdatePool>().unwrap();
 
     let time_stamp = SystemTime::now().duration_since(UNIX_EPOCH);
     let time_stamp_ms = if time_stamp.is_ok() { time_stamp.unwrap().as_millis() } else { 0 };
@@ -417,7 +417,7 @@ pub struct DatabaseConfig {
     pub(crate) port: u16,
     pub(crate) database: String,
     pub(crate) socket: Option<String>,
-    pub(crate) pool_size: u32,
+    pub(crate) pool_size: i32,
 }
 
 #[derive(Debug)]
@@ -425,13 +425,14 @@ pub enum DatabaseError {
     InitError(String),
 }
 
-pub async fn new_db_pool(conf: &DatabaseConfig) -> Result<Pool<Any>, DatabaseError> {
+pub async fn new_db_pool(conf: &DatabaseConfig) -> Result<AnyPool, DatabaseError> {
     let driver = match conf.driver.to_lowercase().as_str() {
         "sqlite" | "sqlite3" => { Ok(DatabaseDriver::Sqlite) }
         "mysql" | "mariadb" => { Ok(DatabaseDriver::Mysql) }
         "postgres" | "postgresql" => { Ok(DatabaseDriver::Postgres) }
         _ => Err(DatabaseError::InitError(format!("Unknown database driver: {}", conf.driver)))
     };
+    
     let driver = driver?;
     // unimplemented!();
     // TODO: Support multiple drivers
@@ -446,6 +447,7 @@ pub async fn new_db_pool(conf: &DatabaseConfig) -> Result<Pool<Any>, DatabaseErr
             format!("postgres://{}:{}@{}:{}/{}", conf.user, conf.password, conf.host, conf.port, conf.database)
         }
     };
+
     let pool = AnyPool::connect(&db_url).await;
     let pool = match pool {
         Ok(pool) => {
@@ -586,9 +588,9 @@ async fn main() -> io::Result<()> {
 
 #[derive(Error, Debug)]
 pub struct PhilologusError {
-       code: StatusCode,
-       name: String,
-       error: String,
+    code: StatusCode,
+    name: String,
+    error: String,
 }
 
 impl std::fmt::Display for PhilologusError {

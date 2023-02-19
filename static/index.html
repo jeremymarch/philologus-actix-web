@@ -40,7 +40,7 @@
   }
 
   :root {
-      --author-color: red;
+      --author-color: rgb(230, 18, 18);
       --bib-color: green;
       --ref-color: orange;
       --gloss-color: black;
@@ -65,7 +65,8 @@
 .fo {color:blue; color: var(--foreign-color,blue);}
 .qu {color:blue; color: var(--quote-color,blue);}
 .tr {font-weight:bold;}
-.au {color:red; color: var(--author-color,red);}
+.au {color:darkred; color: var(--author-color,darkred);}
+.dark .au {color:red; color: var(--author-color,red);}
 .bi {color:green; color: var(--bib-color,green);}
 .ti {color:orange; color: var(--ref-color,orange);}
 .biblLink {color:green; color: var(--bib-color,green);}
@@ -119,7 +120,11 @@
       cursor:pointer;text-align:center;background-color:white;color:black;padding:3px 0px;font-size:8pt;font-family:helvetica,arial,sans-serif;
     }
     .lexselected {
-      background-color:gray;color:white;
+      background-color:#444;color:white;
+    }
+    .dark .lexselected {
+      background-color:#444;color:white;
+      border:1px solid white;
     }
     .menulink:link {
       color:black;
@@ -271,7 +276,7 @@
         top: 0px;
     }
     .selectedRowClass {
-        background-color: #8899EE;
+        background-color: #31408e;
         color: white;
     }
     .WordContainer {
@@ -491,7 +496,8 @@ height: 22px;
     color: white;
   }
   .dark .nodestyle.selectedRowClass {
-    background-color: grey;
+    background-color: #444;
+    border:1px solid white;
     color: white;
   }
 
@@ -1163,7 +1169,7 @@ height: 22px;
       s.id = "settingsdiv";
       s.classList.add("settings");
       s.style.display = "block";
-      s.innerHTML = "Settings<br><ul><li><div tabindex='0' onclick='contact()' class='menulink'>about</div></li><li><div tabindex='0' onclick='showiPhone()' class='menulink'>iOS/Android app</div></li><!--<li><div tabindex='0' onclick='config()' class='menulink'>configure</div></li>--><li><div tabindex='0' onclick='toggleHistoryChooser()' class='menulink'>show/hide history</div></li><li><div tabindex='0' style='height:70px;'>dark mode: <div style='text-align:right;float:right;padding:0px;border:none;'>system <input id='darkModeSystem' type='radio' name='darkmode' onclick='darkModeClick(this);' value='system'/><br>dark <input id='darkModeDark' type='radio' name='darkmode' onclick='darkModeClick(this);' value='dark'/><br>light<input id='darkModeLight' type='radio' name='darkmode' onclick='darkModeClick(this);' value='light'/></div></div></li></ul>";
+      s.innerHTML = "Settings<br><ul><li><div tabindex='0' onclick='contact()' class='menulink'>about</div></li><li><div tabindex='0' onclick='showiPhone()' class='menulink'>iOS/Android app</div></li><!--<li><div tabindex='0' onclick='config()' class='menulink'>configure</div></li>--><li><div tabindex='0' onclick='toggleHistoryChooser()' class='menulink'>show/hide history</div></li><li><div tabindex='0' style='height:70px;'>dark mode: <div style='text-align:right;float:right;padding:0px;border:none;'><label for='darkModeSystem'>system</label> <input id='darkModeSystem' type='radio' name='darkmode' onclick='darkModeClick(this);' value='system'/><br><label for='darkModeDark'>dark</label> <input id='darkModeDark' type='radio' name='darkmode' onclick='darkModeClick(this);' value='dark'/><br><label for='darkModeLight'>light</label><input id='darkModeLight' type='radio' name='darkmode' onclick='darkModeClick(this);' value='light'/></div></div></li></ul>";
       var c = document.createElement("div");
       c.id="backdrop";
       c.onclick = function() {

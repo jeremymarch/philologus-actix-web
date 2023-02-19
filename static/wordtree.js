@@ -164,6 +164,7 @@ function wordtree (idPrefix, width, height)
     this.div.appendChild(ti);
 
 	var input = document.createElement("input");
+    input.ariaLabel = "Enter prefix for word";
 	input.style.width = this.width - 76 + "px";
     input.style.position = "absolute";
     input.style.top = "42px";

@@ -43,6 +43,12 @@ use serde::{Deserialize, Serialize};
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
+
+use tantivy::collector::TopDocs;
+use tantivy::query::QueryParser;
+use tantivy::schema::*;
+use tantivy::{Index, ReloadPolicy};
+
 /*
 {"error":"","wtprefix":"test1","nocache":"1","container":"test1Container","requestTime":"1635643672625","selectId":"32","page":"0","lastPage":"0","lastPageUp":"1","scroll":"32","query":"","arrOptions":[{"i":1,"r":["Α α",1,0]},{"i":2,"r":["ἀ-",2,0]},{"i":3,"r":["ἀ-",3,0]},{"i":4,"r":["ἆ",4,0]}...
 */
@@ -90,6 +96,11 @@ struct DefResponse {
     lexicon: String,
     word_id: u32,
     method: String,
+}
+
+#[derive(Deserialize)]
+pub struct FullTextQueryRequest {
+    pub q: String,
 }
 
 #[derive(Deserialize)]
@@ -148,6 +159,45 @@ pub struct SynopsisResultRequest {
 }
 
 //http://127.0.0.1:8088/philwords?n=101&idprefix=test1&x=0.1627681205837177&requestTime=1635643672625&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22wordid%22:%22%CE%B1%CE%B1%CF%84%CE%BF%CF%832%22,%22w%22:%22%22}
+
+#[allow(clippy::eval_order_dependence)]
+async fn ft((info, req,): (web::Query<FullTextQueryRequest>, HttpRequest,)) -> Result<HttpResponse, AWError> {
+    let index = req.app_data::<tantivy::Index>().unwrap();
+
+    let word_id_field = index.schema().get_field("word_id").unwrap();
+    let lemma_field = index.schema().get_field("lemma").unwrap();
+    let lexicon_field = index.schema().get_field("lexicon").unwrap();
+    let definition_field = index.schema().get_field("definition").unwrap();
+
+    let reader = index
+        .reader_builder()
+        .reload_policy(ReloadPolicy::OnCommit)
+        .try_into().unwrap();
+
+    let searcher = reader.searcher();
+    let query_parser = QueryParser::for_index(
+        &index,
+        //this vector contains default fields used if field is not specified in query
+        vec![lexicon_field, definition_field],
+    );
+
+    let mut res = vec![];
+
+    match query_parser.parse_query(&info.q) { //"carry AND (lexicon:slater OR lexicon:lewisshort)") {
+        Ok(query) => {
+            let top_docs = searcher.search(&query, &TopDocs::with_limit(100)).unwrap();
+            for (_score, doc_address) in top_docs {
+                let retrieved_doc = searcher.doc(doc_address).unwrap();
+                //println!("{}", index.schema().to_json(&retrieved_doc));
+                res.push(retrieved_doc);
+            }
+        }
+        Err(q) => {
+            println!("Query parsing error: {:?}", q);
+        }
+    }
+    Ok(HttpResponse::Ok().json(res))
+}
 
 #[allow(clippy::eval_order_dependence)]
 async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) -> Result<HttpResponse, AWError> {
@@ -437,8 +487,11 @@ async fn main() -> io::Result<()> {
             .handler(http::StatusCode::BAD_REQUEST, api::bad_request)
             .handler(http::StatusCode::NOT_FOUND, api::not_found);
 */
+    let tantivy_index = Index::open_in_dir("/Users/jeremy/Documents/code/tantivy-test/tantivy-data").unwrap();
+
     HttpServer::new(move || {
         App::new()
+            .app_data(tantivy_index.clone())    
             .app_data(db_pool.clone())
             .app_data(db_log_pool.clone())
             .wrap(middleware::Logger::default())
@@ -492,6 +545,10 @@ async fn main() -> io::Result<()> {
             .service(
                 web::resource("/hc.php")
                     .route(web::get().to(hc)),
+            )
+            .service(
+                web::resource("/ft")
+                    .route(web::get().to(ft)),
             )
             .service(fs::Files::new("/", "./static").prefer_utf8(true).index_file("index.html"))
     })

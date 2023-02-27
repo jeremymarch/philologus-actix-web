@@ -179,7 +179,7 @@ pub struct SynopsisResultRequest {
 
 //http://127.0.0.1:8088/philwords?n=101&idprefix=test1&x=0.1627681205837177&requestTime=1635643672625&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22wordid%22:%22%CE%B1%CE%B1%CF%84%CE%BF%CF%832%22,%22w%22:%22%22}
 
-async fn ft(
+async fn full_text_query(
     (info, req): (web::Query<FullTextQueryRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
@@ -203,8 +203,6 @@ async fn ft(
         vec![lexicon_field, definition_field],
     );
 
-    //let mut res = vec![];
-
     let mut res = FullTextResponse {
         ftresults: vec![],
         error: String::from(""),
@@ -212,45 +210,63 @@ async fn ft(
 
     match query_parser.parse_query(&info.q) {
         //"carry AND (lexicon:slater OR lexicon:lewisshort)") {
-        Ok(query) => {
-            let top_docs = searcher.search(&query, &TopDocs::with_limit(100)).unwrap();
-            for (_score, doc_address) in top_docs {
-                let retrieved_doc = searcher.doc(doc_address).unwrap();
-                //println!("{}", index.schema().to_json(&retrieved_doc));
+        Ok(query) => match searcher.search(&query, &TopDocs::with_limit(100)) {
+            Ok(top_docs) => {
+                for (_score, doc_address) in top_docs {
+                    match searcher.doc(doc_address) {
+                        Ok(retrieved_doc) => {
+                            let mut word_id_value: u32 = 0;
+                            let mut lexicon_value: String = String::from("");
 
-                // let table = match retrieved_doc.field_values()[2].value.as_text().unwrap() {
-                //     "ls" => "ZLATIN",
-                //     "slater" => "ZSLATER",
-                //     _ => "ZGREEK",
-                // };
+                            for (field, field_values) in retrieved_doc.get_sorted_field_values() {
+                                match index.schema().get_field_name(field) {
+                                    "lexicon" => {
+                                        lexicon_value =
+                                            field_values[0].as_text().unwrap_or("").to_string()
+                                    }
+                                    "word_id" => {
+                                        word_id_value = field_values[0]
+                                            .as_u64()
+                                            .unwrap_or(0)
+                                            .try_into()
+                                            .unwrap_or(0)
+                                    }
+                                    _ => continue,
+                                }
+                            }
 
-                let d = get_def_by_seq(
-                    db,
-                    retrieved_doc.field_values()[0]
-                        .value
-                        .as_u64()
-                        .unwrap()
-                        .try_into()
-                        .unwrap(),
-                )
-                .await
-                .map_err(map_sqlx_error)?;
-                let e = LexEntry {
-                    id: d.seq as u64,
-                    lemma: d.word,
-                    lex: retrieved_doc.field_values()[2]
-                        .value
-                        .as_text()
-                        .unwrap()
-                        .to_string(),
-                    def: d.def,
-                };
+                            if word_id_value == 0 || lexicon_value.is_empty() {
+                                continue;
+                            }
 
-                res.ftresults.push(e);
+                            let d = get_def_by_seq(db, word_id_value)
+                                .await
+                                .map_err(map_sqlx_error)?;
+
+                            let entry = LexEntry {
+                                id: d.seq as u64,
+                                lemma: d.word,
+                                lex: lexicon_value,
+                                def: d.def,
+                            };
+
+                            res.ftresults.push(entry);
+                        }
+                        Err(e) => {
+                            println!("Full-text error retrieving document: {:?}", e);
+                            res.error = format!("Full-text error retrieving document: {:?}", e);
+                        }
+                    }
+                }
             }
-        }
-        Err(q) => {
-            println!("Query parsing error: {:?}", q);
+            Err(e) => {
+                println!("Full-text error searching document: {:?}", e);
+                res.error = format!("Full-text error searching document: {:?}", e);
+            }
+        },
+        Err(e) => {
+            println!("Error parsing full-text query: {:?}", e);
+            res.error = format!("Error parsing full-text query: {:?}", e);
         }
     }
     Ok(HttpResponse::Ok().json(res))
@@ -669,9 +685,9 @@ async fn main() -> io::Result<()> {
             //.wrap(error_handlers)
             .service(web::resource("/{lex}/query").route(web::get().to(philologus_words)))
             .service(web::resource("/{lex}/item").route(web::get().to(philologus_defs)))
-            .service(web::resource("/{lex}/ft/").route(web::get().to(ft)))
+            .service(web::resource("/{lex}/ft/").route(web::get().to(full_text_query)))
             .service(web::resource("/{lex}/{word}").route(web::get().to(index))) //requesting page from a word link, order of services matters
-            .service(web::resource("/ft").route(web::get().to(ft)))
+            .service(web::resource("/ft").route(web::get().to(full_text_query)))
             .service(web::resource("/item").route(web::get().to(philologus_defs)))
             .service(web::resource("/query").route(web::get().to(philologus_words)))
             .service(web::resource("/healthzzz").route(web::get().to(health_check)))

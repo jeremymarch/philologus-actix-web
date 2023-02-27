@@ -82,7 +82,7 @@ function setWord(json, status) {
       return; //data = eval("(" + json + ")");
     }
   } catch (e) {
-    if (debug) console.log(e.message + "\n" + json);
+    //if (debug) console.log(e.message + "\n" + json);
     return;
   };
 
@@ -150,7 +150,9 @@ function setWord(json, status) {
 	    var ee = window.location.pathname;
       
       //add lexicon and word to path
-      history.pushState([id, lexicon], wordid, getPathBeforeLexicon(ee) + lexicon + '/' + wordid);
+      if (setURLToWordId) {
+        history.pushState([id, lexicon], wordid, getPathBeforeLexicon(ee) + lexicon + '/' + wordid);
+      }
     }
   }
 }

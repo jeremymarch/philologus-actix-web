@@ -71,10 +71,10 @@ pub async fn insert_log(pool: &SqlitePool, accessed: u128, lex:u8, wordid:u32, i
 }
 
 pub async fn get_def_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<DefRow, sqlx::Error> {
-    let query = format!("SELECT word,sortword,def,seq FROM {} WHERE word = ? LIMIT 1;", table);
-
+    let query = "SELECT word,sortword,def,seq FROM words WHERE word = $1 AND lexicon = $2 LIMIT 1;";
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .bind(word)
+    .bind(table)
     .fetch_one(pool)
     .await?;
 
@@ -82,7 +82,7 @@ pub async fn get_def_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result
 }
 
 pub async fn get_def_by_seq(pool: &SqlitePool, table:&str, id:u32) -> Result<DefRow, sqlx::Error> {
-    let query = format!("SELECT word,sortword,def,seq FROM {} WHERE seq = ? LIMIT 1;", table);
+    let query = "SELECT word, sortword, def, seq FROM words WHERE seq = $1 LIMIT 1;";
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .bind(id)
@@ -93,18 +93,20 @@ pub async fn get_def_by_seq(pool: &SqlitePool, table:&str, id:u32) -> Result<Def
 }
 
 pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, prefix:&str) -> Result<u32, sqlx::Error> {
-    let query = format!("SELECT seq,word,def,sortword FROM {} WHERE sortword >= ? ORDER BY sortword LIMIT 1;", table);
+    let query = "SELECT seq, word, def, sortword FROM words WHERE sortword >= $1 AND lexicon = $2 ORDER BY sortword LIMIT 1;";
     
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .bind(prefix)
+    .bind(table)
     .fetch_one(pool)
     .await;
 
     match rec {
         Ok(r) => Ok(r.seq),
         Err(sqlx::Error::RowNotFound) => { //not found, return seq of last word
-            let max_query = format!("SELECT MAX(seq) as seq,word,def,sortword FROM {} LIMIT 1;", table);
+            let max_query = "SELECT MAX(seq) as seq, word, def, sortword FROM words WHERE lexicon = $1 LIMIT 1;";
             let max_rec = sqlx::query_as::<_, DefRow>(&max_query)  //fake it by loading it into DefRow for now
+            .bind(table)
             .fetch_one(pool)
             .await?;
         
@@ -115,10 +117,11 @@ pub async fn get_seq_by_prefix(pool: &SqlitePool, table:&str, prefix:&str) -> Re
 }
 
 pub async fn get_seq_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result<u32, sqlx::Error> {
-    let query = format!("SELECT seq,word,def,sortword FROM {} WHERE word = ? LIMIT 1;", table);
+    let query = "SELECT seq, word, def, sortword FROM words WHERE word = $1 AND lexicon = $2 LIMIT 1;";
 
     let rec = sqlx::query_as::<_, DefRow>(&query)
     .bind(word)
+    .bind(table)
     .fetch_one(pool)
     .await?;
 
@@ -126,9 +129,10 @@ pub async fn get_seq_by_word(pool: &SqlitePool, table:&str, word:&str) -> Result
 }
 
 pub async fn get_before(pool: &SqlitePool, table:&str, seq: u32, page: i32, limit: u32) -> Result<Vec<(String,u32)>, sqlx::Error> {
-    let query = format!("SELECT seq,word FROM {} WHERE seq < ? ORDER BY seq DESC LIMIT ?,?;", table);
+    let query = "SELECT seq, word FROM words WHERE seq < $1 AND lexicon = $2 ORDER BY seq DESC LIMIT $3, $4;";
     let res: Result<Vec<(String,u32)>, sqlx::Error> = sqlx::query(&query)
     .bind(seq)
+    .bind(table)
     .bind(-page * limit as i32)
     .bind(limit)
     .map(|rec: SqliteRow| (rec.get("word"),rec.get("seq")) )
@@ -139,9 +143,10 @@ pub async fn get_before(pool: &SqlitePool, table:&str, seq: u32, page: i32, limi
 }
 
 pub async fn get_equal_and_after(pool: &SqlitePool, table:&str, seq: u32, page: i32, limit: u32) -> Result<Vec<(String,u32)>, sqlx::Error> {
-    let query = format!("SELECT seq,word FROM {} WHERE seq >= ? ORDER BY seq LIMIT ?,?;", table);
+    let query = "SELECT seq, word FROM words WHERE seq >= $1 AND lexicon = $2 ORDER BY seq LIMIT $3, $4;";
     let res: Result<Vec<(String,u32)>, sqlx::Error> = sqlx::query(&query)
     .bind(seq)
+    .bind(table)
     .bind(page * limit as i32)
     .bind(limit)
     .map(|rec: SqliteRow| (rec.get("word"),rec.get("seq")) )

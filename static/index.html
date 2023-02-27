@@ -17,6 +17,7 @@
   <meta name="description" content="Philologus is a fast, streamlined interface to the online Greek and Latin lexica hosted by the Perseus Project." />
   <meta name="keywords" content="Liddell Scott and Jones, Lewis and Short, Slater's Lexicon to Pindar, Perseus Project, Greek, Classical Greek, Ancient Greek, Latin, lexica, lexicon, dictionary, dendrea.org" />
   <script>
+    var setURLToWordId = false;
     function setTheme() {
       var mode = localStorage.getItem("mode"); //use mode to override system dark mode
       if ((window.matchMedia( "(prefers-color-scheme: dark)" ).matches || mode == "dark") && mode != "light") {
@@ -34,13 +35,29 @@
       src: url('/newathu5_8.woff') format('woff'),
       url('/newathu5_8.ttf') format('ttf');
     }
+
+    #test1Entry { z-index:999; }
+    #hamburger { z-index:999; position:relative; }
+
+  .ftrow {
+    border: 1px solid black;
+    margin-bottom: 10px;
+    padding: 10px;
+    border-radius: 8px;
+    max-height: 200px;
+    overflow: auto;
+  }
+  .dark .ftrow {
+    border: 1px solid white;
+  }
+
   .wordtree input {
     font-family:helvetica, arial;/*WebNewAthenaUnicode;*/
     font-size:11pt;
   }
 
   :root {
-      --author-color: rgb(230, 18, 18);
+      --author-color: red;
       --bib-color: green;
       --ref-color: orange;
       --gloss-color: black;
@@ -58,6 +75,13 @@
       --foreign-weight: normal;
       --quote-weight: normal;
   }
+
+  .ftrowheaderlink {color:blue;}
+  .dark .ftrowheaderlink {color:#03a5fc;}
+  .ftrowhead {
+  padding: 0px;
+  margin: 5px 0px;
+}
 /* document.documentElement.style.setProperty("--author-color", "green"); */
 
 .dark .fo {color:blue; color: var(--foreign-color-dark,blue);}
@@ -65,8 +89,7 @@
 .fo {color:blue; color: var(--foreign-color,blue);}
 .qu {color:blue; color: var(--quote-color,blue);}
 .tr {font-weight:bold;}
-.au {color:darkred; color: var(--author-color,darkred);}
-.dark .au {color:red; color: var(--author-color,red);}
+.au {color:red; color: var(--author-color,red);}
 .bi {color:green; color: var(--bib-color,green);}
 .ti {color:orange; color: var(--ref-color,orange);}
 .biblLink {color:green; color: var(--bib-color,green);}
@@ -258,6 +281,7 @@
 
     #logo {
       color: black;
+      z-index:999;
     }
 
     .nodestyle {
@@ -356,8 +380,8 @@ height: 22px;
   color: official;
   display: inline-block;
   position: relative;
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 .lds-spinner div {
   transform-origin: 40px 40px;
@@ -531,6 +555,19 @@ height: 22px;
 .dark #leftlist {
   background-color: #202124;
 }
+#defbody { transition: .75s; border-radius:14px;position:relative;z-index:1;top:50px;margin-left:280px;margin-right:10px;overflow:hidden;height:calc(100% - 80px);text-align:left; }
+#lsjdef { transition: .75s; position:relative;z-index:2;margin:0px;padding:10px;overflow:auto;height: calc(100% - 20px); }
+.fulltext #defbody { transition: .75s; margin-left: 10px; top:-10px;height: calc(100% - 18px); }
+.fulltext #lsjdef { transition: .75s; top: 62px;height: calc(100% - 100px); }
+#test1Entry {transition: .75s; width:184px;}  
+#test1Loading { transition: .75s;right:35px; }
+.fulltext #test1Loading { transition: .75s;right:-51px; }
+.fulltext #test1Entry {transition: .75s; width:256px;}  
+#test1FTCheck {z-index:999;}
+
+LABEL {color:black;}
+.dark LABEL {color:white;}
+
   </style>
 </head>
 <body onload="start();" class="philbody">
@@ -558,8 +595,8 @@ height: 22px;
     </div>
   </div>
 
-  <div id="defbody" class="defbody" style="border-radius:14px;position:relative;z-index:1;top:50px;margin-left:280px;margin-right:10px;overflow:hidden;height:calc(100% - 80px);text-align:left;">
-    <div id="lsjdef" ontouchstart="onTouch(event)" style="position:relative;z-index:2;margin:0px;padding:10px;overflow:auto;height:0px;"></div>
+  <div id="defbody" class="defbody">
+    <div id="lsjdef" ontouchstart="onTouch(event)"></div>
   </div>
 
   <div style="position:absolute;top:0px;right:0px;height:48px;border:0px solid green;text-align:center;letter-spacing:normal;display:flex;">
@@ -590,9 +627,26 @@ height: 22px;
     } catch(err) {}
     */
   </script>
-    <script type="text/javascript" src="/wordtree.js?v25"></script>
-    <script type="text/javascript" src="/defjson.js?v25"></script>
+    <script type="text/javascript" src="/wordtree.js"></script>
+    <script type="text/javascript" src="/defjson.js"></script>
     <script type="text/javascript">
+      var full_text = false;
+
+      function ftclicked() {
+        document.getElementById("lsjdef").innerHTML = "";
+        var wt = lookupWT("test1");
+        wt.entry.value = "";
+
+        if (document.querySelector("#test1FTCheck").checked ) {
+          document.querySelector("HTML").classList.add("fulltext");
+          full_text = true;
+        }
+        else {
+          document.querySelector("HTML").classList.remove("fulltext");
+          full_text = false;
+          wt.refresh();
+        }
+      }
 
        //https://github.com/le717/microajax
        function microAjax(options) {
@@ -679,6 +733,82 @@ height: 22px;
   
         hist.close();
         document.getElementById("test1Entry").focus();
+      }
+
+      function full_text_request(query) {
+        console.log("full text request");
+        var ft_url = "ft/?q=" + query;
+        microAjax({
+          url: ft_url,
+          method: "GET",
+          success: procFTResponse,
+          warning: procFTResponseError,
+          error: null
+        });
+      }
+
+      function procFTResponse(str, status) {
+        var wt = lookupWT("test1");
+        wt.loading.style.display = "none";
+        try
+        {
+            if (typeof JSON != "undefined")
+            {
+                returnObj = JSON.parse(str);
+            }
+            else
+            {
+                //console.log("browser does not support json decode");
+                return;//returnObj = eval("(" + str + ")");
+            }
+        }
+        catch(e) { if (debug) console.log(e.message + "\n" + str); return; };
+        
+        if (!returnObj) {
+            return;
+        }
+
+        //console.log("found " + returnObj.num + " items, returned " + returnObj.ftresults.length + " items");
+
+        var rows = "";
+        for (var i = 0; i < returnObj.ftresults.length; i++) {
+          var lex = "";
+          if (returnObj.ftresults[i].lex == "greatscott") {
+            lex = "LSJ";
+          }
+          else if (returnObj.ftresults[i].lex == "latindico") {
+            lex = "LS";
+          }
+          else if (returnObj.ftresults[i].lex == "pindar_dico") {
+            lex = "Slater";
+          }
+          else {
+            lex = returnObj.ftresults[i].lex;
+          }
+          //getDef(cols[1], lexicon, "", false, true);
+          rows += "<div class='ftrow'><p class='ftrowhead'><a class='ftrowheaderlink' href='javascript:getDef(" + returnObj.ftresults[i].id + ", \"" + lex.toLowerCase() + "\", false, true)'>" + lex + ": " + returnObj.ftresults[i].lemma + "</a></p>" + returnObj.ftresults[i].def + "</div>";
+        }
+
+        var con = document.getElementById("lsjdef");
+        // if (data.errorMesg) {
+        //   con.innerHTML = "<div id='lsj222' style='padding:40px 18px;text-align:center;'>" + data.errorMesg + "</div>";
+        //   return;
+        // }
+        con.innerHTML = "<div id='lsj222' style='padding:10px 18px;'><div style='font-size:14pt;margin-top:6px;margin-bottom:4px;'>Full-text search results: </div><div style='margin-bottom:24px;'></div>" + rows + "</div>"; //the firstChild is the CDATA node
+        con.scrollTo(0,0);
+      }
+      
+      function procFTResponseError(str) {
+        var wt = lookupWT("test1");
+        wt.loading.style.display = "none";
+        // if (typeof JSON != "undefined")
+        // {
+        //     var returnObj = JSON.parse(str);
+        //     if (typeof(returnObj.error) != "undefined") {
+        //         console.log("response error: " + returnObj.error);
+                
+        //     }
+        // }
       }
   
       function toggleHistoryChooser() {
@@ -852,11 +982,13 @@ height: 22px;
   
       function start() {
         var isTouchDevice = (navigator.maxTouchPoints && navigator.maxTouchPoints > 1);
-        console.log("is touch: " + isTouchDevice + ": " + navigator.maxTouchPoints + ", " + navigator.maxTouchPoints);
+        //console.log("is touch: " + isTouchDevice + ": " + navigator.maxTouchPoints + ", " + navigator.maxTouchPoints);
         var ee = window.location.pathname;
         var m = ee.match(/\/(lsj|ls|slater)\/?([^\/]*)\/?$/);
+        var startLex = "lsj";
+        var startWord = "";
   
-        if (m) {
+        if (m && setURLToWordId) {
             var startLex = m[1];
             if (m[2]) {
               var startWord = m[2];
@@ -969,11 +1101,11 @@ height: 22px;
         if (typeof w2 != "undefined" && w2)
           w2.setHeight(h - 70);
   
-        var defbody = document.getElementById("defbody");
-        defbody.style.height = h - 80 + "px";
+        // var defbody = document.getElementById("defbody");
+        // defbody.style.height = h - 80 + "px";
   
-        var lsjdef = document.getElementById("lsjdef");
-        lsjdef.style.height = (h - 110) + "px";
+        // var lsjdef = document.getElementById("lsjdef");
+        // lsjdef.style.height = (h - 110) + "px";
   
         var rl = document.getElementById("rightlist");
         if (rl) {
@@ -1067,7 +1199,7 @@ height: 22px;
       //console.log("val: " + val);
       var charCode = typeof(evt.which) == "number" ? evt.which : evt.keyCode;
   
-      if (charCode && charCode > 64 && charCode < 123) //letter
+      if (charCode && charCode > 64 && charCode < 123 && !full_text) //letter
       {
           var start = source.selectionStart;
           var end = source.selectionEnd;
@@ -1136,7 +1268,7 @@ height: 22px;
   {
     if (typeof(localStorage) != "undefined") {
       var value = localStorage.getItem(name);
-      console.log("localstorage: " + name + ": " + value);
+      //console.log("localstorage: " + name + ": " + value);
       return value;
     }
     /*

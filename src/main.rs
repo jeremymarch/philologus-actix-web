@@ -103,6 +103,20 @@ pub struct FullTextQueryRequest {
     pub q: String,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct LexEntry {
+    id: u64,
+    lemma: String,
+    lex: String,
+    def: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct FullTextResponse {
+    ftresults: Vec<LexEntry>,
+    error: String,
+}
+
 #[derive(Deserialize)]
 pub struct QueryRequest {
     pub n: u32,
@@ -162,6 +176,7 @@ pub struct SynopsisResultRequest {
 
 #[allow(clippy::eval_order_dependence)]
 async fn ft((info, req,): (web::Query<FullTextQueryRequest>, HttpRequest,)) -> Result<HttpResponse, AWError> {
+    let db = req.app_data::<SqlitePool>().unwrap();
     let index = req.app_data::<tantivy::Index>().unwrap();
 
     let word_id_field = index.schema().get_field("word_id").unwrap();
@@ -181,7 +196,12 @@ async fn ft((info, req,): (web::Query<FullTextQueryRequest>, HttpRequest,)) -> R
         vec![lexicon_field, definition_field],
     );
 
-    let mut res = vec![];
+    //let mut res = vec![];
+
+    let mut res = FullTextResponse {
+        ftresults: vec![],
+        error: String::from(""),
+    };
 
     match query_parser.parse_query(&info.q) { //"carry AND (lexicon:slater OR lexicon:lewisshort)") {
         Ok(query) => {
@@ -189,7 +209,22 @@ async fn ft((info, req,): (web::Query<FullTextQueryRequest>, HttpRequest,)) -> R
             for (_score, doc_address) in top_docs {
                 let retrieved_doc = searcher.doc(doc_address).unwrap();
                 //println!("{}", index.schema().to_json(&retrieved_doc));
-                res.push(retrieved_doc);
+
+                // let table = match retrieved_doc.field_values()[2].value.as_text().unwrap() {
+                //     "ls" => "ZLATIN",
+                //     "slater" => "ZSLATER",
+                //     _ => "ZGREEK",
+                // };
+
+                let d = get_def_by_seq(db, "words", retrieved_doc.field_values()[0].value.as_u64().unwrap().try_into().unwrap() ).await.map_err(map_sqlx_error)?;
+                let e = LexEntry {
+                    id: d.seq as u64,
+                    lemma: d.word,
+                    lex: retrieved_doc.field_values()[2].value.as_text().unwrap().to_string(),
+                    def: d.def,
+                };
+                
+                res.ftresults.push(e);
             }
         }
         Err(q) => {
@@ -206,9 +241,9 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
     let query_params: WordQuery = serde_json::from_str(&info.query)?;
     
     let table = match query_params.lexicon.as_str() {
-        "ls" => "ZLATIN",
-        "slater" => "ZSLATER",
-        _ => "ZGREEK"
+        "ls" => "lewisshort",
+        "slater" => "slater",
+        _ => "lsj"
     };
     
     let seq = if query_params.wordid.is_none() {
@@ -216,24 +251,24 @@ async fn philologus_words((info, req): (web::Query<QueryRequest>, HttpRequest)) 
         //println!("1: {}",query_params.w);
         let q = query_params.w.nfd().filter(|x| !unicode_normalization::char::is_combining_mark(*x) && *x != '´' && *x != '`' && *x != '῀').collect::<String>().to_lowercase();
         //println!("2: {}",q);
-        get_seq_by_prefix(db, table, &q).await.map_err(map_sqlx_error)?
+        get_seq_by_prefix(db, table, &q).await.unwrap()
     }
     else {
         let decoded_word = percent_decode_str(query_params.wordid.as_ref().unwrap()).decode_utf8().map_err(map_utf8_error)?;
-        get_seq_by_word(db, table, &decoded_word).await.map_err(map_sqlx_error)?
+        get_seq_by_word(db, table, &decoded_word).await.unwrap()
     };
 
     let mut before_rows = vec![];
     let mut after_rows = vec![];
     if info.page <= 0 {
         
-        before_rows = get_before(db, table, seq, info.page, info.n).await.map_err(map_sqlx_error)?;
+        before_rows = get_before(db, table, seq, info.page, info.n).await.unwrap();
         if info.page == 0 { //only reverse if page 0. if < 0, each row is inserted under top of container one-by-one in order
             before_rows.reverse();
         }
     }
     if info.page >= 0 {
-        after_rows = get_equal_and_after(db, table, seq, info.page, info.n).await.map_err(map_sqlx_error)?;
+        after_rows = get_equal_and_after(db, table, seq, info.page, info.n).await.unwrap();
     }
 
     //only check page 0 or page less than 0
@@ -278,9 +313,9 @@ async fn philologus_defs((info, req): (web::Query<DefRequest>, HttpRequest)) -> 
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
     
     let table = match info.lexicon.as_str() {
-        "ls" => "ZLATIN",
-        "slater" => "ZSLATER",
-        _ => "ZGREEK"
+        "ls" => "lewisshort",
+        "slater" => "slater",
+        _ => "lsj"
     };
 
     let def_row = if info.wordid.is_some() {
@@ -512,8 +547,17 @@ async fn main() -> io::Result<()> {
                     .route(web::get().to(philologus_defs)),
             )
             .service(
+                web::resource("/{lex}/ft/")
+                    .route(web::get().to(ft)),
+            )
+            .service(
                 web::resource("/{lex}/{word}")
                     .route(web::get().to(index))) //requesting page from a word link, order of services matters
+ 
+            .service(
+                web::resource("/ft")
+                    .route(web::get().to(ft)),
+            )
             .service(
                 web::resource("/item")
                     .route(web::get().to(philologus_defs)),
@@ -545,10 +589,6 @@ async fn main() -> io::Result<()> {
             .service(
                 web::resource("/hc.php")
                     .route(web::get().to(hc)),
-            )
-            .service(
-                web::resource("/ft")
-                    .route(web::get().to(ft)),
             )
             .service(fs::Files::new("/", "./static").prefer_utf8(true).index_file("index.html"))
     })

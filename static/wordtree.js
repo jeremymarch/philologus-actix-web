@@ -176,17 +176,36 @@ function wordtree (idPrefix, width, height)
     //input.setAttribute("lang", "gr");
     input.id = idPrefix + "Entry";
     this.entry = input;
-    
+
+    var ftcheck = document.createElement("input");
+    ftcheck.type = "checkbox";
+    ftcheck.ariaLabel = "full-text toggle";
+    ftcheck.style.position = "absolute";
+    ftcheck.style.top = "42px";
+    ftcheck.style.left = "231px";
+    ftcheck.id = idPrefix + "FTCheck";
+    ftcheck.onclick = ftclicked;
+    this.ft = ftcheck;
+
+    var ftlabel = document.createElement("label");
+    ftlabel.setAttribute("for", idPrefix + "FTCheck");
+    ftlabel.style.position = "absolute";
+    ftlabel.style.top = "46px";
+    ftlabel.style.left = "213px";
+    ftlabel.innerHTML = "FT";
+    ftlabel.style.fontFamily = "helvetica, arial, sans-serif";
+    ftlabel.style.zIndex = 999;
+
     var loading = document.createElement("div");
     loading.id = this.idPrefix + "Loading";
     //loading.src = "images/loading2.gif";
     loading.style.position = "absolute";
     loading.style.top = "15px";
-    loading.style.right = "44px";
+    loading.style.right = "90px";
     loading.style.display = "none";
-    loading.style.height = "20px";
-    loading.style.width = "20px";
-    loading.style.zIndex = 10;
+    loading.style.height = "18px";
+    loading.style.width = "18px";
+    loading.style.zIndex = 999;
     //var loading = document.createElement("div");
     //loading.innerHTML = '<svg class="spinner" viewBox="0 0 50 50"><circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="10"></circle></svg>';
     loading.innerHTML = '<div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>';
@@ -227,6 +246,9 @@ function wordtree (idPrefix, width, height)
 	{
 		this.div.appendChild(morph);
 	}
+    
+    this.div.appendChild(ftcheck);
+    this.div.appendChild(ftlabel);
 	this.div.appendChild(input);
     this.div.appendChild(loading);
 
@@ -362,12 +384,16 @@ function wordtree (idPrefix, width, height)
         	this.params.w = this.entry.value;
         var query = makeQueryString(this.params);
         query = encodeURIComponent(query);
-        
-        // encodeURI... only required for IE--Mozilla did it automatically
-        var url = this.url + '?n=' + (this.maxWords + 1) + "&idprefix=" + this.idPrefix + '&x=' + Math.random() + '&requestTime=' + requestTime + '&page=' + 0 + '&mode=' + this.mode + "&query=" + query;
-		//alert(url);
 
-        requestRows(url);
+        if (full_text) {
+            full_text_request(this.entry.value);
+        }
+        else {       
+            // encodeURI... only required for IE--Mozilla did it automatically
+            var url = this.url + '?n=' + (this.maxWords + 1) + "&idprefix=" + this.idPrefix + '&x=' + Math.random() + '&requestTime=' + requestTime + '&page=' + 0 + '&mode=' + this.mode + "&query=" + query;
+            //console.log(url);
+            requestRows(url);
+        }
     }
     
     function requestNextPage()
@@ -965,7 +991,7 @@ eventually lexicon, query, and tag_id will be put into a single field for reques
             }
             else
             {
-                console.log("browser does not support json decode");
+                //console.log("browser does not support json decode");
                 return;//returnObj = eval("(" + str + ")");
             }
         }
@@ -1028,9 +1054,9 @@ eventually lexicon, query, and tag_id will be put into a single field for reques
         //block result sets which come out of sequence
         if (wt.lastRequestTime > parseInt(returnObj.requestTime))
         {
-            if (debug) {
-                console.log("out of seq!");
-            }
+            // if (debug) {
+            //     console.log("out of seq!");
+            // }
             wt.blockScroll = false;
             return;
         }
@@ -1045,18 +1071,18 @@ eventually lexicon, query, and tag_id will be put into a single field for reques
         //block pages which are repeats or out of order
         if (returnedPage < 0 && returnedPage >= wt.pageUp)
         {
-            if (debug) {
-                console.log("wt.pageUp: " + wt.pageUp + "; returnObj.page: " + returnObj.page);
-            }
+            // if (debug) {
+            //     console.log("wt.pageUp: " + wt.pageUp + "; returnObj.page: " + returnObj.page);
+            // }
                 
             wt.blockScroll = false;
             return;
         }
         else if (returnedPage > 0 && returnedPage <= wt.pageUp)
         {
-            if (debug) {
-                console.log("wt.pageDown: " + wt.page + "; returnObj.pageDown: " + returnObj.page);
-            }
+            // if (debug) {
+            //     console.log("wt.pageDown: " + wt.page + "; returnObj.pageDown: " + returnObj.page);
+            // }
                 
             wt.blockScroll = false;
             return;

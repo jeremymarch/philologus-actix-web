@@ -1565,7 +1565,7 @@ eventually lexicon, query, and tag_id will be put into a single field for reques
     		return false;
     		
         if (wt.entry.value == "")
-            var queryKey = wt.params.lexicon + "a" + wt.params.tag_id; //because wtgreekserv changes "" to "a"
+            var queryKey = wt.params.lexicon + "" + wt.params.tag_id;
         else
             var queryKey = wt.params.lexicon + wt.entry.value + wt.params.tag_id;
             
@@ -1593,9 +1593,6 @@ eventually lexicon, query, and tag_id will be put into a single field for reques
     function wtAddResultToCache(wt, queryKey, str)
     {
         //the queryKey is the lexicon + the query word
-        //wtgreekserv changes an empty query to be "a", so an empty query has a key of "a" not ""
-        if (queryKey == "")
-        	queryKey = "a";
         	
         queryKey = wt.params.lexicon + queryKey + wt.params.tag_id;
 		//alert("add: " + queryKey + "\n\n" + str);

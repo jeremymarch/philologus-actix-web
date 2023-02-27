@@ -16,27 +16,23 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-extern crate unicode_normalization;
-use unicode_normalization::UnicodeNormalization;
-
-use actix_web::{http::StatusCode, ResponseError};
-use percent_encoding::percent_decode_str;
-use thiserror::Error;
 
 use actix_files as fs;
+use actix_files::NamedFile;
 use actix_web::{
-    middleware, web, App, Error as AWError, HttpRequest, HttpResponse, HttpServer, Result,
+    http::StatusCode, middleware, web, App, Error as AWError, HttpRequest, HttpResponse,
+    HttpServer, ResponseError, Result,
 };
+
+use chrono::prelude::*;
+use percent_encoding::percent_decode_str;
 use regex::Regex;
 use sqlx::SqlitePool;
 use std::io;
-
-use actix_files::NamedFile;
 use std::path::PathBuf;
-
-extern crate chrono;
-use chrono::prelude::*;
 use std::time::Duration;
+use thiserror::Error;
+use unicode_normalization::UnicodeNormalization;
 
 mod db;
 use crate::db::*;
@@ -208,7 +204,11 @@ async fn full_text_query(
         error: String::from(""),
     };
 
-    match query_parser.parse_query(&info.q) {
+    // full-text index should be all lowercase, but use uppercase for AND and OR
+    let mut ft_query = info.q.to_lowercase();
+    ft_query = ft_query.replace(" and ", " AND ").replace(" or ", " OR ");
+
+    match query_parser.parse_query(&ft_query) {
         //"carry AND (lexicon:slater OR lexicon:lewisshort)") {
         Ok(query) => match searcher.search(&query, &TopDocs::with_limit(100)) {
             Ok(top_docs) => {
@@ -235,6 +235,8 @@ async fn full_text_query(
                                 }
                             }
 
+                            // skip entry if these values aren't found
+                            // this shouldn't happen
                             if word_id_value == 0 || lexicon_value.is_empty() {
                                 continue;
                             }
@@ -298,7 +300,8 @@ async fn philologus_words(
                     && *x != '῀'
             })
             .collect::<String>()
-            .to_lowercase();
+            .to_lowercase()
+            .replace('ς', "σ");
         //println!("2: {}",q);
         get_seq_by_prefix(db, table, &q).await.unwrap()
     } else {
@@ -358,7 +361,7 @@ async fn philologus_words(
         page: info.page,
         last_page: vlast_page,
         lastpage_up: vlast_page_up,
-        scroll: if query_params.w.is_empty() && info.page == 0 && seq == 1 {
+        scroll: if query_params.w.is_empty() && info.page == 0 {
             "top".to_string()
         } else {
             "".to_string()
@@ -876,7 +879,7 @@ mod tests {
 
     #[test]
     async fn json_test() {
-        let s = r#"{"pp":"ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην","unit":22,"verb":"αα","person":"2nd","number":"sing","ptccase":"dat","ptcgender":"fem","ptcnumber":"","sname":"name","advisor":"advisor","r":["ββ","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","γγ"]}"#;
+        let s = r#"{"pp":"ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην","unit":"22","verb":"αα","person":"2nd","number":"sing","ptccase":"dat","ptcgender":"fem","ptcnumber":"","sname":"name","advisor":"advisor","r":["ββ","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","γγ"]}"#;
         let r: SynopsisSaverRequest = serde_json::from_str(&s).unwrap();
         assert_eq!(r.verb, "αα".to_string());
         assert_eq!(r.r[62], "γγ".to_string());

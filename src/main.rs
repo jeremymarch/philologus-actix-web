@@ -16,6 +16,10 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+use tracing_subscriber::fmt::writer::MakeWriterExt;
+//use tracing_appender::rolling::{RollingFileAppender, Rotation};
+use tracing_actix_web::TracingLogger;
+//use tracing::info;
 
 use actix_files as fs;
 use actix_files::NamedFile;
@@ -40,7 +44,7 @@ use serde::{Deserialize, Serialize};
 
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use tantivy::collector::TopDocs;
+use tantivy::collector::{Count, TopDocs};
 use tantivy::query::QueryParser;
 use tantivy::{Index, ReloadPolicy};
 
@@ -116,6 +120,7 @@ struct LexEntry {
 struct FullTextResponse {
     ftresults: Vec<LexEntry>,
     error: String,
+    count: usize,
 }
 
 #[derive(Deserialize)]
@@ -202,16 +207,18 @@ async fn full_text_query(
     let mut res = FullTextResponse {
         ftresults: vec![],
         error: String::from(""),
+        count: 0,
     };
 
     // full-text index should be all lowercase, but use uppercase for AND and OR
     let mut ft_query = info.q.to_lowercase();
     ft_query = ft_query.replace(" and ", " AND ").replace(" or ", " OR ");
 
+    let my_collector = (Count, TopDocs::with_limit(10));
     match query_parser.parse_query(&ft_query) {
         //"carry AND (lexicon:slater OR lexicon:lewisshort)") {
-        Ok(query) => match searcher.search(&query, &TopDocs::with_limit(100)) {
-            Ok(top_docs) => {
+        Ok(query) => match searcher.search(&query, &my_collector) {
+            Ok((count, top_docs)) => {
                 for (_score, doc_address) in top_docs {
                     match searcher.doc(doc_address) {
                         Ok(retrieved_doc) => {
@@ -260,6 +267,7 @@ async fn full_text_query(
                         }
                     }
                 }
+                res.count = count;
             }
             Err(e) => {
                 println!("Full-text error searching document: {:?}", e);
@@ -281,11 +289,7 @@ async fn philologus_words(
 
     let query_params: WordQuery = serde_json::from_str(&info.query)?;
 
-    let table = match query_params.lexicon.as_str() {
-        "ls" => "lewisshort",
-        "slater" => "slater",
-        _ => "lsj",
-    };
+    let table = get_long_lex(query_params.lexicon.as_str());
 
     let seq = if query_params.wordid.is_none() {
         //remove any diacritics and make lowercase
@@ -377,6 +381,14 @@ fn get_user_agent(req: &HttpRequest) -> Option<&str> {
     req.headers().get("user-agent")?.to_str().ok()
 }
 
+fn get_long_lex(lex: &str) -> &str {
+    match lex {
+        "ls" => "lewisshort",
+        "slater" => "slater",
+        _ => "lsj",
+    }
+}
+
 //http://127.0.0.1:8088/wordservjson.php?id=110628&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002
 //{"principalParts":"","def":"...","defName":"","word":"γεοῦχος","unaccentedWord":"γεουχοσ","lemma":"γεοῦχος","requestTime":0,"status":"0","lexicon":"lsj","word_id":"22045","wordid":"γεουχοσ","method":"setWord"}
 
@@ -386,11 +398,7 @@ async fn philologus_defs(
     let db = req.app_data::<SqlitePool>().unwrap();
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
 
-    let table = match info.lexicon.as_str() {
-        "ls" => "lewisshort",
-        "slater" => "slater",
-        _ => "lsj",
-    };
+    let table = get_long_lex(info.lexicon.as_str());
 
     let def_row = if info.wordid.is_some() {
         let decoded_word = percent_decode_str(info.wordid.as_ref().unwrap())
@@ -625,8 +633,18 @@ async fn hc(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
-    std::env::set_var("RUST_LOG", "actix_web=info");
-    env_logger::init();
+    // std::env::set_var("RUST_LOG", "actix_web=info");
+    // env_logger::init();
+
+    // Log all events to a rolling log file.
+    let logfile = tracing_appender::rolling::never("logs", "myapp-logs");
+    // Log `INFO` and above to stdout.
+    let stdout = std::io::stdout.with_max_level(tracing::Level::INFO);
+    tracing_subscriber::fmt()
+        // Combine the stdout and log file `MakeWriter`s into one
+        // `MakeWriter` that writes to both
+        .with_writer(stdout.and(logfile))
+        .init();
 
     //e.g. export PHILOLOGUS_DB_PATH=sqlite://philolog_us_local.sqlite?mode=ro
     //e.g. export PHILOLOGUS_LOG_DB_PATH=sqlite://log.sqlite?mode=rwc
@@ -677,7 +695,8 @@ async fn main() -> io::Result<()> {
             .app_data(tantivy_index.clone())
             .app_data(db_pool.clone())
             .app_data(db_log_pool.clone())
-            .wrap(middleware::Logger::default())
+            //.wrap(middleware::Logger::default())
+            .wrap(TracingLogger::default())
             .wrap(middleware::Compress::default())
             // .app_data(
             //     web::JsonConfig::default()

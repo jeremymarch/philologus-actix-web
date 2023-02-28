@@ -638,12 +638,13 @@ async fn main() -> io::Result<()> {
 
     // Log all events to a rolling log file.
     let logfile = tracing_appender::rolling::never("logs", "myapp-logs");
+    let (non_blocking, _guard) = tracing_appender::non_blocking(logfile);
     // Log `INFO` and above to stdout.
     let stdout = std::io::stdout.with_max_level(tracing::Level::INFO);
     tracing_subscriber::fmt()
         // Combine the stdout and log file `MakeWriter`s into one
         // `MakeWriter` that writes to both
-        .with_writer(stdout.and(logfile))
+        .with_writer(stdout.and(non_blocking))
         .init();
 
     //e.g. export PHILOLOGUS_DB_PATH=sqlite://philolog_us_local.sqlite?mode=ro

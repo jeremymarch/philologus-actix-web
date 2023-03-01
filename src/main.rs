@@ -993,6 +993,7 @@ mod tests {
         assert_eq!(result.last_page, 0);
         assert_eq!(result.page, 0);
         assert_eq!(result.select_id, 1);
+        assert_eq!(result.scroll, "top".to_string());
 
         //query α
         let query = r#"{"regex":"0","lexicon":"lsj","tag_id":"0","root_id":"0","w":"α"}"#;
@@ -1021,6 +1022,7 @@ mod tests {
         assert_eq!(result.last_page, 0);
         assert_eq!(result.page, 0);
         assert_eq!(result.select_id, 1);
+        assert_eq!(result.scroll, "".to_string());
 
         //query γ
         let query = r#"{"regex":"0","lexicon":"lsj","tag_id":"0","root_id":"0","w":"γ"}"#;
@@ -1049,6 +1051,7 @@ mod tests {
         assert_eq!(result.last_page, 1);
         assert_eq!(result.page, 0);
         assert_eq!(result.select_id, 3);
+        assert_eq!(result.scroll, "".to_string());
 
         //query ω
         let query = r#"{"regex":"0","lexicon":"lsj","tag_id":"0","root_id":"0","w":"ω"}"#;
@@ -1077,253 +1080,22 @@ mod tests {
         assert_eq!(result.last_page, 1);
         assert_eq!(result.page, 0);
         assert_eq!(result.select_id, 5);
-    }
-    /*
-    #[actix_web::test]
-    async fn test_query_paging() {
-        let db_path = std::env::var("PHILOLOGUS_DB_PATH").unwrap_or_else(|_| {
-            panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH.")
-        });
-
-        let db_pool = SqlitePool::connect(&db_path)
-            .await
-            .expect("Could not connect to db.");
-        let db_pool2 = SqliteUpdatePool(
-            SqlitePool::connect("sqlite://updatedb.sqlite")
-                .await
-                .expect("Could not connect to update db."),
-        );
-
-        let mut app = test::init_service(
-            App::new()
-                .app_data(db_pool.clone())
-                .app_data(db_pool2.clone())
-                .service(web::resource("/{lex}/query").route(web::get().to(philologus_words)))
-                .service(web::resource("/healthzzz").route(web::get().to(health_check)))
-                .service(web::resource("/hc.php").route(web::get().to(hc)))
-                .service(web::resource("/{lex}/item").route(web::get().to(philologus_defs))),
-        )
-        .await;
-
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CF%86%CE%B1%22}"#)
-            .send_request(&mut app).await;
-
-        assert!(&resp.status().is_success());
-        //println!("resp: {:?}", resp);
-        let result: QueryResponse = test::read_body_json(resp).await;
-        //println!("res: {:?}", result);
-        assert_eq!(result.arr_options.len(), 202);
-
-        //empty query returns seq 1 for first row
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%22}"#)
-            .send_request(&mut app).await;
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 1);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 101);
-        assert_eq!(result.lastpage_up, 1);
-        assert_eq!(result.last_page, 0);
-        assert_eq!(result.page, 0);
-
-        //page 1
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=1&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%22}"#)
-            .send_request(&mut app).await;
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 102);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 202);
-        assert_eq!(result.lastpage_up, 0);
-        assert_eq!(result.last_page, 0);
-        assert_eq!(result.page, 1);
-        //page 2
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=2&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%22}"#)
-            .send_request(&mut app).await;
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 203);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 303);
-        assert_eq!(result.lastpage_up, 0);
-        assert_eq!(result.last_page, 0);
-        assert_eq!(result.page, 2);
-
-        //alpha query returns seq 1 for first row (exactly like empty query)
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CE%B1%22}"#)
-            .send_request(&mut app).await;
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 1);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 101);
-        assert_eq!(result.lastpage_up, 1);
-        assert_eq!(result.last_page, 0);
-        assert_eq!(result.page, 0);
-
-        //last page
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CF%89%CF%89%22}"#)
-            .send_request(&mut app).await;
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 116494);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 116596);
-        assert_eq!(result.lastpage_up, 0);
-        assert_eq!(result.last_page, 1);
-        assert_eq!(result.page, 0);
-
-        //last page - 1 (remember these pages are delivered in reverse order when page < 0)
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=-1&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CF%89%CF%89%22}"#)
-            .send_request(&mut app).await;
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 116493);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 116393);
-        assert!(result.arr_options[result.arr_options.len() - 1].1 < result.arr_options[0].1);
-        assert_eq!(result.lastpage_up, 0);
-        assert_eq!(result.last_page, 0);
-        assert_eq!(result.page, -1);
-
-        //last page - 2 (remember these pages are delivered in reverse order when page < 0)
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=-2&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CF%89%CF%89%22}"#)
-            .send_request(&mut app).await;
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 116392);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 116292);
-        assert_eq!(result.lastpage_up, 0);
-        assert_eq!(result.last_page, 0);
-        assert_eq!(result.page, -2);
-
-        //beyond last page (almost the same as last page: 1 fewer rows since all from before and none from equal and after)
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CF%89%CF%89%CF%89%22}"#)
-            .send_request(&mut app).await;
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 116495);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 116596);
-        assert_eq!(result.lastpage_up, 0);
-        assert_eq!(result.last_page, 1);
-        assert_eq!(result.page, 0);
-
-        //query μ
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CE%BC%22}"#)
-            .send_request(&mut app).await;
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 64416);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 64617);
-        assert_eq!(result.lastpage_up, 0);
-        assert_eq!(result.last_page, 0);
-        assert_eq!(result.page, 0);
-
-        //query μ page -1
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=-1&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CE%BC%22}"#)
-            .send_request(&mut app).await;
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 64415);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 64315);
-        assert_eq!(result.lastpage_up, 0);
-        assert_eq!(result.last_page, 0);
-        assert_eq!(result.page, -1);
-
-        //query μ page 1
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=1&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CE%BC%22}"#)
-            .send_request(&mut app).await;
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 64618);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 64718);
-        assert_eq!(result.lastpage_up, 0);
-        assert_eq!(result.last_page, 0);
-        assert_eq!(result.page, 1);
-
-        //query αβ: near beginning so we get lastpage_up == 1
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CE%B1%CE%B2%22}"#)
-            .send_request(&mut app).await;
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 1);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 135);
-        assert_eq!(result.lastpage_up, 1);
-        assert_eq!(result.last_page, 0);
-        assert_eq!(result.page, 0);
-
-        //query ωσσ: near end so we get lastpage == 1
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=0&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CF%89%CF%83%CF%83%22}"#)
-            .send_request(&mut app).await;
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 116411);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 116596);
-        assert_eq!(result.lastpage_up, 0);
-        assert_eq!(result.last_page, 1);
-        assert_eq!(result.page, 0);
-
-        //query ως: page 1 passing end
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=1&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CF%89%CF%82%22}"#)
-            .send_request(&mut app).await;
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 116593);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 116596);
-        assert_eq!(result.lastpage_up, 0);
-        assert_eq!(result.last_page, 1);
-        assert_eq!(result.page, 1);
-
-        //query αβλε: page -1 passing beginning
-        let resp = test::TestRequest::get()
-            .uri(r#"/lsj/query?n=101&idprefix=test1&x=0.795795025371805&requestTime=1637859894040&page=-1&mode=context&query={%22regex%22:%220%22,%22lexicon%22:%22lsj%22,%22tag_id%22:%220%22,%22root_id%22:%220%22,%22w%22:%22%CE%B1%CE%B2%CE%BB%CE%B5%22}"#)
-            .send_request(&mut app).await;
-
-        let result: QueryResponse = test::read_body_json(resp).await;
-
-        assert_eq!(result.arr_options[0].1, 8);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 1);
-        assert_eq!(result.lastpage_up, 1);
-        assert_eq!(result.last_page, 0);
-        assert_eq!(result.page, -1);
-
-        //health check
-        let resp = test::TestRequest::get()
-            .uri(r#"/healthzzz"#)
-            .send_request(&mut app)
-            .await;
-        assert!(&resp.status().is_success());
-
-        //hoplite challenge
-        let resp = test::TestRequest::get()
-            .uri(r#"/hc.php"#)
-            .send_request(&mut app)
-            .await;
-        assert!(&resp.status().is_success());
+        assert_eq!(result.scroll, "".to_string());
 
         //DefResponse
         let resp = test::TestRequest::get()
-            .uri(r#"/lsj/item?id=110628&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002"#)
-            .send_request(&mut app).await;
+            .uri(r#"/lsj/item?id=1&lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002"#)
+            .send_request(&app)
+            .await;
         let result: DefResponse = test::read_body_json(resp).await;
 
-        assert_eq!(result.word_id, 110628);
+        assert_eq!(result.word_id, 1);
 
         //DefResponse: both word and id are empty
         let resp = test::TestRequest::get()
             .uri(r#"/lsj/item?lexicon=lsj&skipcache=0&addwordlinks=0&x=0.7049151126608002"#)
-            .send_request(&mut app)
+            .send_request(&app)
             .await;
         assert_eq!(resp.status(), 500);
     }
-    */
 }

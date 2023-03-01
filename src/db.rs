@@ -16,6 +16,7 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
+use tracing::info;
 
 use crate::SynopsisSaverRequest;
 use serde::{Deserialize, Serialize};
@@ -95,6 +96,8 @@ pub async fn get_def_by_word(
     table: &str,
     word: &str,
 ) -> Result<DefRow, sqlx::Error> {
+    info!(table, word, "get_def_by_word()");
+
     let query =
         "SELECT word, sortword, def, seq FROM words WHERE word = $1 AND lexicon = $2 LIMIT 1;";
     let rec = sqlx::query_as::<_, DefRow>(query)
@@ -107,6 +110,8 @@ pub async fn get_def_by_word(
 }
 
 pub async fn get_def_by_seq(pool: &SqlitePool, id: u32) -> Result<DefRow, sqlx::Error> {
+    info!(id, "get_def_by_seq()");
+
     let query = "SELECT word, sortword, def, seq FROM words WHERE seq = $1 LIMIT 1;";
 
     let rec = sqlx::query_as::<_, DefRow>(query)
@@ -122,6 +127,8 @@ pub async fn get_seq_by_prefix(
     table: &str,
     prefix: &str,
 ) -> Result<u32, sqlx::Error> {
+    info!(table, prefix, "get_seq_by_prefix()");
+
     let query = "SELECT seq, word, def, sortword FROM words WHERE sortword >= $1 AND lexicon = $2 ORDER BY sortword LIMIT 1;";
 
     let rec = sqlx::query_as::<_, DefRow>(query)
@@ -151,6 +158,8 @@ pub async fn get_seq_by_word(
     table: &str,
     word: &str,
 ) -> Result<u32, sqlx::Error> {
+    info!(table, word, "get_seq_by_word()");
+
     let query =
         "SELECT seq, word, def, sortword FROM words WHERE word = $1 AND lexicon = $2 LIMIT 1;";
 
@@ -170,6 +179,8 @@ pub async fn get_before(
     page: i32,
     limit: u32,
 ) -> Result<Vec<(String, u32)>, sqlx::Error> {
+    info!(seq, table, page, limit, "get_before()");
+
     let query = "SELECT seq, word FROM words WHERE seq < $1 AND lexicon = $2 ORDER BY seq DESC LIMIT $3, $4;";
     let res: Result<Vec<(String, u32)>, sqlx::Error> = sqlx::query(query)
         .bind(seq)
@@ -190,6 +201,8 @@ pub async fn get_equal_and_after(
     page: i32,
     limit: u32,
 ) -> Result<Vec<(String, u32)>, sqlx::Error> {
+    info!(seq, table, page, limit, "get_after()");
+
     let query =
         "SELECT seq, word FROM words WHERE seq >= $1 AND lexicon = $2 ORDER BY seq LIMIT $3, $4;";
     let res: Result<Vec<(String, u32)>, sqlx::Error> = sqlx::query(query)

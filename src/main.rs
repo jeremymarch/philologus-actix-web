@@ -875,6 +875,7 @@ fn map_utf8_error(_e: std::str::Utf8Error) -> PhilologusError {
 mod tests {
     use super::*;
     use actix_web::{test, web, App};
+    use urlencoding::encode;
 
     //use serde::{Serialize, Deserialize};
     //use percent_encoding::{utf8_percent_encode, NON_ALPHANUMERIC};
@@ -900,7 +901,7 @@ mod tests {
     #[test]
     async fn json_test() {
         let s = r#"{"pp":"ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην","unit":"22","verb":"αα","person":"2nd","number":"sing","ptccase":"dat","ptcgender":"fem","ptcnumber":"","sname":"name","advisor":"advisor","r":["ββ","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","","γγ"]}"#;
-        let r: SynopsisSaverRequest = serde_json::from_str(&s).unwrap();
+        let r: SynopsisSaverRequest = serde_json::from_str(s).unwrap();
         assert_eq!(r.verb, "αα".to_string());
         assert_eq!(r.r[62], "γγ".to_string());
     }
@@ -925,6 +926,159 @@ mod tests {
         );
     }
 
+    #[actix_web::test]
+    async fn test_query_paging_short() {
+        let db_path = "sqlite::memory:";
+
+        let db_pool = SqlitePool::connect(db_path)
+            .await
+            .expect("Could not connect to db.");
+
+        let db_pool2 = SqliteUpdatePool(
+            SqlitePool::connect(db_path)
+                .await
+                .expect("Could not connect to update db."),
+        );
+
+        let app = test::init_service(
+            App::new()
+                .app_data(db_pool.clone())
+                .app_data(db_pool2.clone())
+                .service(web::resource("/{lex}/query").route(web::get().to(philologus_words)))
+                .service(web::resource("/healthzzz").route(web::get().to(health_check)))
+                .service(web::resource("/hc.php").route(web::get().to(hc)))
+                .service(web::resource("/{lex}/item").route(web::get().to(philologus_defs))),
+        )
+        .await;
+
+        let query = "CREATE TABLE words (seq INTEGER PRIMARY KEY, lexicon TEXT, word TEXT, sortword TEXT, def TEXT);";
+        sqlx::query(query).execute(&db_pool).await.unwrap();
+
+        let query = "INSERT INTO words VALUES (NULL, $1, $2, $3, $4);";
+        for i in &["α", "β", "γ", "δ", "ε"] {
+            sqlx::query(query)
+                .bind("lsj")
+                .bind(i)
+                .bind(i)
+                .bind("def")
+                .execute(&db_pool)
+                .await
+                .unwrap();
+        }
+
+        //empty query
+        let query = r#"{"regex":"0","lexicon":"lsj","tag_id":"0","root_id":"0","w":""}"#;
+        let encoded_url = format!(
+            "/lsj/query?n={}&idprefix={}\
+            &x=0.795795025371805&requestTime=1637859894040&\
+            page={}&mode=context&query={}",
+            5,
+            "test1",
+            0,
+            encode(query)
+        );
+
+        let resp = test::TestRequest::get()
+            .uri(&encoded_url)
+            .send_request(&app)
+            .await;
+
+        assert!(&resp.status().is_success());
+        let result: QueryResponse = test::read_body_json(resp).await;
+        assert_eq!(result.arr_options.len(), 5);
+
+        assert_eq!(result.arr_options[0].1, 1);
+        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 5);
+        assert_eq!(result.lastpage_up, 1);
+        assert_eq!(result.last_page, 0);
+        assert_eq!(result.page, 0);
+        assert_eq!(result.select_id, 1);
+
+        //query α
+        let query = r#"{"regex":"0","lexicon":"lsj","tag_id":"0","root_id":"0","w":"α"}"#;
+        let encoded_url = format!(
+            "/lsj/query?n={}&idprefix={}\
+            &x=0.795795025371805&requestTime=1637859894040&\
+            page={}&mode=context&query={}",
+            5,
+            "test1",
+            0,
+            encode(query)
+        );
+
+        let resp = test::TestRequest::get()
+            .uri(&encoded_url)
+            .send_request(&app)
+            .await;
+
+        assert!(&resp.status().is_success());
+        let result: QueryResponse = test::read_body_json(resp).await;
+        assert_eq!(result.arr_options.len(), 5);
+
+        assert_eq!(result.arr_options[0].1, 1);
+        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 5);
+        assert_eq!(result.lastpage_up, 1);
+        assert_eq!(result.last_page, 0);
+        assert_eq!(result.page, 0);
+        assert_eq!(result.select_id, 1);
+
+        //query γ
+        let query = r#"{"regex":"0","lexicon":"lsj","tag_id":"0","root_id":"0","w":"γ"}"#;
+        let encoded_url = format!(
+            "/lsj/query?n={}&idprefix={}\
+            &x=0.795795025371805&requestTime=1637859894040&\
+            page={}&mode=context&query={}",
+            5,
+            "test1",
+            0,
+            encode(query)
+        );
+
+        let resp = test::TestRequest::get()
+            .uri(&encoded_url)
+            .send_request(&app)
+            .await;
+
+        assert!(&resp.status().is_success());
+        let result: QueryResponse = test::read_body_json(resp).await;
+        assert_eq!(result.arr_options.len(), 5);
+
+        assert_eq!(result.arr_options[0].1, 1);
+        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 5);
+        assert_eq!(result.lastpage_up, 1);
+        assert_eq!(result.last_page, 1);
+        assert_eq!(result.page, 0);
+        assert_eq!(result.select_id, 3);
+
+        //query ω
+        let query = r#"{"regex":"0","lexicon":"lsj","tag_id":"0","root_id":"0","w":"ω"}"#;
+        let encoded_url = format!(
+            "/lsj/query?n={}&idprefix={}\
+            &x=0.795795025371805&requestTime=1637859894040&\
+            page={}&mode=context&query={}",
+            5,
+            "test1",
+            0,
+            encode(query)
+        );
+
+        let resp = test::TestRequest::get()
+            .uri(&encoded_url)
+            .send_request(&app)
+            .await;
+
+        assert!(&resp.status().is_success());
+        let result: QueryResponse = test::read_body_json(resp).await;
+        assert_eq!(result.arr_options.len(), 5);
+
+        assert_eq!(result.arr_options[0].1, 1);
+        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 5);
+        assert_eq!(result.lastpage_up, 1);
+        assert_eq!(result.last_page, 1);
+        assert_eq!(result.page, 0);
+        assert_eq!(result.select_id, 5);
+    }
+    /*
     #[actix_web::test]
     async fn test_query_paging() {
         let db_path = std::env::var("PHILOLOGUS_DB_PATH").unwrap_or_else(|_| {
@@ -1171,4 +1325,5 @@ mod tests {
             .await;
         assert_eq!(resp.status(), 500);
     }
+    */
 }

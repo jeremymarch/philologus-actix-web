@@ -636,20 +636,10 @@ async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "trace");
     // env_logger::init();
 
-    // Log all events to a rolling log file.
-    let logfile = tracing_appender::rolling::never("logs", "myapp-logs");
-    let (non_blocking, _guard) = tracing_appender::non_blocking(logfile);
-    // Log `INFO` and above to stdout.
-    let stdout = std::io::stdout.with_max_level(tracing::Level::INFO);
-    tracing_subscriber::fmt()
-        // Combine the stdout and log file `MakeWriter`s into one
-        // `MakeWriter` that writes to both
-        .with_writer(stdout.and(non_blocking))
-        .init();
-
     //e.g. export PHILOLOGUS_DB_PATH=sqlite://philolog_us_local.sqlite?mode=ro
     //e.g. export PHILOLOGUS_LOG_DB_PATH=sqlite://log.sqlite?mode=rwc
     //e.g. export TANTIVY_INDEX_PATH=/Users/jeremy/Documents/code/tantivy-test/tantivy-data
+    //e.g. export TRACING_LOG_PATH=/Users/jeremy/Documents/code/phlogs
     let db_path = std::env::var("PHILOLOGUS_DB_PATH").unwrap_or_else(|_| {
         panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH.")
     });
@@ -659,6 +649,20 @@ async fn main() -> io::Result<()> {
     let tantivy_index_path = std::env::var("TANTIVY_INDEX_PATH").unwrap_or_else(|_| {
         panic!("Environment variable for tantivy index path not set: TANTIVY_INDEX_PATH.")
     });
+    let tracing_log_path = std::env::var("TRACING_LOG_PATH").unwrap_or_else(|_| {
+        panic!("Environment variable for tracing log path not set: TRACING_LOG_PATH.")
+    });
+
+    // Log all events to a rolling log file.
+    let logfile = tracing_appender::rolling::never(tracing_log_path, "philo-logs");
+    let (non_blocking, _guard) = tracing_appender::non_blocking(logfile);
+    // Log `INFO` and above to stdout.
+    let stdout = std::io::stdout.with_max_level(tracing::Level::INFO);
+    tracing_subscriber::fmt()
+        // Combine the stdout and log file `MakeWriter`s into one
+        // `MakeWriter` that writes to both
+        .with_writer(stdout.and(non_blocking))
+        .init();
 
     let db_pool = SqlitePool::connect(&db_path)
         .await

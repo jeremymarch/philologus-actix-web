@@ -633,7 +633,7 @@ async fn hc(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
-    // std::env::set_var("RUST_LOG", "actix_web=info");
+    std::env::set_var("RUST_LOG", "trace");
     // env_logger::init();
 
     // Log all events to a rolling log file.

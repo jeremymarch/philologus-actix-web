@@ -30,6 +30,8 @@
     setTheme();
   </script>
   <style>
+    BUTTON { border-style:none; }
+    
     @font-face {
       font-family: 'WebNewAthenaUnicode';
       src: url('/newathu5_8.woff') format('woff'),
@@ -142,10 +144,10 @@
     .lexitem {
       cursor:pointer;text-align:center;background-color:white;color:black;padding:3px 0px;font-size:8pt;font-family:helvetica,arial,sans-serif;
     }
-    .lexselected {
+    .lexselected, .searchselected {
       background-color:#444;color:white;
     }
-    .dark .lexselected {
+    .dark .lexselected, .dark .searchselected {
       background-color:#444;color:white;
       border:1px solid white;
     }
@@ -559,7 +561,7 @@ height: 22px;
 #lsjdef { transition: .75s; position:relative;z-index:2;margin:0px;padding:10px;overflow:auto;height: calc(100% - 20px); }
 .fulltext #defbody { transition: .75s; margin-left: 10px; top:-10px;height: calc(100% - 18px); }
 .fulltext #lsjdef { transition: .75s; top: 62px;height: calc(100% - 100px); }
-#test1Entry {transition: .75s; width:184px;}  
+#test1Entry {transition: .75s; width:193px;}  
 #test1Loading { transition: .75s;right:35px; }
 .fulltext #test1Loading { transition: .75s;right:-51px; }
 .fulltext #test1Entry {transition: .75s; width:256px;}  
@@ -630,23 +632,6 @@ LABEL {color:black;}
     <script type="text/javascript" src="/wordtree.js"></script>
     <script type="text/javascript" src="/defjson.js"></script>
     <script type="text/javascript">
-      var full_text = false;
-
-      function ftclicked() {
-        document.getElementById("lsjdef").innerHTML = "";
-        var wt = lookupWT("test1");
-        wt.entry.value = "";
-
-        if (document.querySelector("#test1FTCheck").checked ) {
-          document.querySelector("HTML").classList.add("fulltext");
-          full_text = true;
-        }
-        else {
-          document.querySelector("HTML").classList.remove("fulltext");
-          full_text = false;
-          wt.refresh();
-        }
-      }
 
        //https://github.com/le717/microajax
        function microAjax(options) {
@@ -1039,12 +1024,25 @@ LABEL {color:black;}
         if (startWord) {
           w.params.wordid = startWord;
         }
+
+        w.conTopOffset = 98;
+        w.con.style.top = w.conTopOffset + "px";
   
         document.getElementById("test1Entry").focus();
   
-        var title = '<div style="margin-left:4px;width:' + (w.width - 18) +
-          'px;display:flex;"><div id="lexlabel0" class="lexitem" style="width:31%;" onclick="switchLex(0)">LSJ</div><div id="lexlabel1" class="lexitem" style="width:33%;" onclick="switchLex(1)">Slater</div><div id="lexlabel2" class="lexitem" style="width:36%;" onclick="switchLex(2)">Lewis &amp; Short</div></div>';
+        var title = '<div style="margin-left:4px;width:' + (w.width - 18) + 'px;display:flex;">\
+          <BUTTON id="lexlabel0" class="lexitem" style="width:31%;" onclick="switchLex(0)">LSJ</BUTTON>\
+          <BUTTON id="lexlabel1" class="lexitem" style="width:33%;" onclick="switchLex(1)">Slater</BUTTON>\
+          <BUTTON id="lexlabel2" class="lexitem" style="width:36%;" onclick="switchLex(2)">Lewis &amp; Short</BUTTON></div>\
+          <div style="margin-left:4px;width:' + (w.width - 18) + 'px;display:flex;">\
+          <BUTTON id="searchlabel0" class="lexitem" style="width:50%;" onclick="switchSearch(0)">Lemma</BUTTON>\
+          <BUTTON id="searchlabel1" class="lexitem" style="width:50%;" onclick="switchSearch(1)">Full-text</BUTTON></div>';
   
+    // var title = '<div style="margin-left:4px;width:' + (w.width - 18) + 'px;display:flex;">\
+    // <input id="lexlabel0" onclick="switchLex(0)" aria-label="LSJ" class="lexitem" type="radio" name="lex_radio" value="lsj" checked>LSJ</input>\
+    // <input id="lexlabel1" onclick="switchLex(1)" aria-label="Slater" class="lexitem" type="radio" name="lex_radio" value="slater">Slater</input>\
+    // <input id="lexlabel2" onclick="switchLex(2)" aria-label="Lewis & Short" class="lexitem" type="radio" name="lex_radio" value="ls">Lewis &amp; Short</input></div>';
+
         w.title.innerHTML = title;
         w.mode = "context";
   
@@ -1077,6 +1075,7 @@ LABEL {color:black;}
             break;
           }
         }
+        switchSearch(0);
   
         //reset after querying
         w.params.wordid = "";
@@ -1116,7 +1115,34 @@ LABEL {color:black;}
           historyList.setHeight(((h - 54)) - (browser == "ie" ? 20 : 20));
         }
       }
+
+      var full_text = false;
   
+      function switchSearch(num) {
+        //ftclicked();
+        document.getElementById("lsjdef").innerHTML = "";
+        var wt = lookupWT("test1");
+        wt.entry.value = "";
+
+        var a = document.querySelector(".searchselected");
+        if (a) {
+          a.classList.remove("searchselected");
+        }
+
+        if (num == 0) {
+          full_text = false;
+          wt.refresh();
+        }
+        else {
+          full_text = true;
+        }
+
+        var b = document.getElementById("searchlabel" + num);
+        if (b) {
+          b.classList.add("searchselected");
+        }
+      }
+
       function switchLex(num) {
         var wt = lookupWT("test1");
         var wt2 = lookupWT("test2");

@@ -649,23 +649,21 @@ async fn main() -> io::Result<()> {
 
     //e.g. export PHILOLOGUS_DB_PATH=sqlite://philolog_us_local.sqlite?mode=ro
     //e.g. export PHILOLOGUS_LOG_DB_PATH=sqlite://log.sqlite?mode=rwc
+    //e.g. export TANTIVY_INDEX_PATH=/Users/jeremy/Documents/code/tantivy-test/tantivy-data
     let db_path = std::env::var("PHILOLOGUS_DB_PATH").unwrap_or_else(|_| {
         panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH.")
     });
+    let db_log_path = std::env::var("PHILOLOGUS_LOG_DB_PATH").unwrap_or_else(|_| {
+        panic!("Environment variable for sqlite log path not set: PHILOLOGUS_LOG_DB_PATH.")
+    });
+    let tantivy_index_path = std::env::var("TANTIVY_INDEX_PATH").unwrap_or_else(|_| {
+        panic!("Environment variable for tantivy index path not set: TANTIVY_INDEX_PATH.")
+    });
+
     let db_pool = SqlitePool::connect(&db_path)
         .await
         .expect("Could not connect to db.");
 
-    let db_log_path = std::env::var("PHILOLOGUS_LOG_DB_PATH").unwrap_or_else(|_| {
-        panic!("Environment variable for sqlite log path not set: PHILOLOGUS_LOG_DB_PATH.")
-    });
-
-    //https://gitanswer.com/sqlx-how-to-create-the-sqlite-database-on-application-startup-if-it-does-not-already-exist-rust-833366308
-    /*
-    if !sqlx::Sqlite::database_exists(&db_log_path).await? {
-        sqlx::Sqlite::create_database(&db_log_path).await?;
-    }
-    */
     let db_log_pool = SqliteUpdatePool(
         SqlitePool::connect(&db_log_path)
             .await
@@ -688,8 +686,8 @@ async fn main() -> io::Result<()> {
                 .handler(http::StatusCode::BAD_REQUEST, api::bad_request)
                 .handler(http::StatusCode::NOT_FOUND, api::not_found);
     */
-    let tantivy_index =
-        Index::open_in_dir("/Users/jeremy/Documents/code/tantivy-test/tantivy-data").unwrap();
+
+    let tantivy_index = Index::open_in_dir(tantivy_index_path).unwrap();
 
     HttpServer::new(move || {
         App::new()

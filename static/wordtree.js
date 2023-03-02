@@ -165,9 +165,9 @@ function wordtree (idPrefix, width, height)
 
 	var input = document.createElement("input");
     input.ariaLabel = "Enter prefix for word";
-	input.style.width = this.width - 76 + "px";
+	input.style.width = this.width - 67 + "px";
     input.style.position = "absolute";
-    input.style.top = "42px";
+    input.style.top = "66px";
     input.style.left = "12px";
 	input.setAttribute("autocomplete", "off");
 	input.setAttribute("autocorrect", "off");
@@ -183,8 +183,9 @@ function wordtree (idPrefix, width, height)
     ftcheck.style.position = "absolute";
     ftcheck.style.top = "42px";
     ftcheck.style.left = "231px";
+    ftcheck.style.display = "none";
     ftcheck.id = idPrefix + "FTCheck";
-    ftcheck.onclick = ftclicked;
+    //ftcheck.onclick = ftclicked;
     this.ft = ftcheck;
 
     var ftlabel = document.createElement("label");
@@ -193,6 +194,7 @@ function wordtree (idPrefix, width, height)
     ftlabel.style.top = "46px";
     ftlabel.style.left = "213px";
     ftlabel.innerHTML = "FT";
+    ftlabel.style.display = "none";
     ftlabel.style.fontFamily = "helvetica, arial, sans-serif";
     ftlabel.style.zIndex = 999;
 
@@ -200,8 +202,8 @@ function wordtree (idPrefix, width, height)
     loading.id = this.idPrefix + "Loading";
     //loading.src = "images/loading2.gif";
     loading.style.position = "absolute";
-    loading.style.top = "15px";
-    loading.style.right = "90px";
+    loading.style.top = "39px";
+    loading.style.right = "44px";
     loading.style.display = "none";
     loading.style.height = "18px";
     loading.style.width = "18px";
@@ -362,7 +364,7 @@ function wordtree (idPrefix, width, height)
         this.width = width;
         this.con.style.width = (width - 20) + "px";
         if (this.entry)
-			this.entry.style.width = (width - 76) + "px";
+			this.entry.style.width = (width - 67) + "px";
 		this.div.style.width = width - 1 + "px";
     }
     

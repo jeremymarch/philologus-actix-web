@@ -890,20 +890,14 @@
         function procFTResponse (str, status) {
           const wt = lookupWT('test1');
           wt.loading.style.display = 'none';
-          let returnObj = {};
+          let returnObj = null;
           try {
-            if (typeof JSON !== 'undefined') {
-              returnObj = JSON.parse(str);
-            } else {
-              return;
-            }
+            returnObj = JSON.parse(str);
           } catch (e) { if (debug) console.log(e.message + '\n' + str); return; };
 
           if (!returnObj) {
             return;
           }
-
-          // console.log("found " + returnObj.num + " items, returned " + returnObj.ftresults.length + " items");
 
           let rows = '';
           let i = 0;
@@ -918,7 +912,7 @@
             } else {
               lex = returnObj.ftresults[i].lex;
             }
-            // getDef(cols[1], lexicon, "", false, true);
+
             rows += "<div class='ftrow'><p class='ftrowhead'><a class='ftrowheaderlink' href='javascript:getDef(" + returnObj.ftresults[i].id + ', "' + lex.toLowerCase() + "\", false, true)'>" + lex + ': ' + returnObj.ftresults[i].lemma + '</a></p>' + returnObj.ftresults[i].def + '</div>';
           }
 
@@ -938,13 +932,11 @@
 
         function toggleHistoryChooser () {
           if (historyOpen) {
-            // document.getElementById("openHistory").style.display = "block";
             closeHistoryChooser();
             document.getElementById('defbody').style.marginRight = '10px';
 
             setLocalStorageKey('historylist', '0');
           } else {
-            // document.getElementById("openHistory").style.display = "none";
             historyChooser();
             document.getElementById('defbody').style.marginRight = '280px';
 
@@ -1056,50 +1048,37 @@
         document.onkeydown = globalKeyDown;
         document.onkeyup = globalKeyUp;
 
-        // eslint-disable-next-line no-unused-vars
-        function start () {
-          const matches = window.location.pathname.match(/\/(lsj|ls|slater)\/?([^/]*)\/?$/);
+        function getLexAndWordFromURL (url) {
+          const matches = url.match(/\/(lsj|ls|slater)\/?([^/]*)\/?$/);
           let startLex = 'lsj';
           let startWord = '';
 
-          if (matches && setURLToWordId) {
+          if (matches && matches.length === 3 && setURLToWordId) {
             startLex = matches[1];
-            if (matches[2]) {
-              startWord = matches[2];
-              getDefFromWordid(startWord, startLex, '', true, true);
-            }
+            startWord = matches[2];
+            return { lex: startLex, word: startWord };
           }
+          return null;
+        }
 
+        // eslint-disable-next-line no-unused-vars
+        function start () {
+          const winHeight = getViewportHeight(window);
           if (!getLocalStorageKey('filter')) {
             setLocalStorageKey('filter', 'red:bold:blue:blue:green:orange');
           }
 
-          let oldlex = getLocalStorageKey('lex');
-          oldlex = oldlex || lex[0];
-          if (startLex) {
-            oldlex = startLex;
-          }
-          const winHeight = getViewportHeight(window);
-
           const w = new Wordtree('test1', 260, winHeight - 36);
           w.show(document.getElementById('leftlist'));
-
-          const showHist = getLocalStorageKey('historylist');
-          if (supportsHTML5Storage() && showHist && showHist === 1) {
-            toggleHistoryChooser();
-            document.getElementById('defbody').style.marginRight = '280px';
-          } else {
-            document.getElementById('defbody').style.marginRight = '10px';
-          }
 
           w.cache = [];
           w.params.regex = 0;
           w.params.lexicon = lex[0];
           w.params.tag_id = 0;
           w.params.root_id = 0;
-          if (startWord) {
-            w.params.wordid = startWord;
-          }
+          // if (urlLexDef) {
+          //   w.params.wordid = urlLexDef.word;
+          // }
 
           w.conTopOffset = 98;
           w.con.style.top = w.conTopOffset + 'px';
@@ -1120,21 +1099,38 @@
           w.onEnterActivate = null;// addWordToList;
           w.onClickActivate = onClickRow;
           w.onSelectionChanged = onClickRow;
-
-          let lexNum = 0;
-          for (; lexNum < lex.length; lexNum++) {
-            if (oldlex === lex[lexNum]) {
-              switchLex(lexNum);
-              break;
-            }
-          }
+        
           switchSearch(0);
 
-          // reset after querying
-          w.params.wordid = '';
-          delete w.params.wordid;
-          window.onresize = onResize; // $(window).resize(onResize);
+          const urlLexDef = getLexAndWordFromURL(window.location.pathname);
+          if (urlLexDef !== null) {
+            getDefFromWordid(urlLexDef.word, urlLexDef.lex, '', true, true);
+            const lexNum = urlLexDef.lex === 'ls' ? 2 : urlLexDef.lex === 'slater' ? 1 : 0;
+            highlightLex(lexNum);
+          } else {
+            let oldlex = getLocalStorageKey('lex');
+            oldlex = oldlex || lex[0];
+            if (urlLexDef) {
+              oldlex = urlLexDef.lex;
+            }
+            let lexNum = 0;
+            for (; lexNum < lex.length; lexNum++) {
+              if (oldlex === lex[lexNum]) {
+                switchLex(lexNum); // switchLex calls refresh() on wordtree
+                break;
+              }
+            }
+          }
 
+          const showHist = getLocalStorageKey('historylist');
+          if (showHist && showHist === 1) {
+            toggleHistoryChooser();
+            document.getElementById('defbody').style.marginRight = '280px';
+          } else {
+            document.getElementById('defbody').style.marginRight = '10px';
+          }
+
+          window.onresize = onResize; // $(window).resize(onResize);
           onResize();
         }
 
@@ -1193,21 +1189,23 @@
             wt.params.lexicon = lex[num];
             wt.refresh();
 
-            const a = document.querySelector('.lexselected');
-            if (a) {
-              a.classList.remove('lexselected');
-            }
-
-            const b = document.getElementById('lexlabel' + num);
-            if (b) {
-              b.classList.add('lexselected');
-            }
-
             if (wt.entry) {
               wt.entry.focus();
             }
-            setLocalStorageKey('lex', lex[num] ? lex[num] : lex[0]);
+            highlightLex(num);
           }
+        }
+
+        function highlightLex (num) {
+          const a = document.querySelector('.lexselected');
+          if (a) {
+            a.classList.remove('lexselected');
+          }
+          const b = document.getElementById('lexlabel' + num);
+          if (b) {
+            b.classList.add('lexselected');
+          }
+          setLocalStorageKey('lex', lex[num] ? lex[num] : lex[0]);
         }
 
         // eslint-disable-next-line no-unused-vars
@@ -1971,13 +1969,6 @@
               wt.scrollTimerTimeout = false;
               wt.scrollTimerKeyDown = false;
             }
-            /*
-            //temp for testing paging without actually paging
-            if (key == 78) {
-              wt.prevPageRequestPending = true;
-              wt.requestPrevPage();
-            }
-            */
 
             if (key === 40 || key === 38) {
               if (typeof wt.onSelectionChanged === 'function' && wt.selectedRow) {
@@ -1990,24 +1981,6 @@
 
               if (wt.lastKeyTimeout) { clearTimeout(wt.lastKeyTimeout); }
               wt.lastKeyTimeout = setTimeout(function () { lookupWT(wt.idPrefix).refresh(); }, keyDelay);
-            } else if (key === 27) { // esc
-              /*
-                    if (wt.entry.value == "")
-            {
-                alert("a: " + wt.entry.value);
-                        wt.params.tag_id = 0;
-                    }
-                    */
-              /*
-        wt.entry.value = "";
-        wt.page = 0;
-        wt.selectedRow = null;
-
-        //block fast typers from making requests for every keystroke
-        if (wt.lastKeyTimeout)
-            clearTimeout(wt.lastKeyTimeout);
-        wt.lastKeyTimeout = setTimeout("let a = lookupWT('" + wt.idPrefix + "'); a.refresh(); if (a.entry && a.autofocus) a.entry.focus()", keyDelay);
-            */
             }
           }
 
@@ -2110,12 +2083,9 @@
                   ev.preventDefault();
                   return false;
                 case 13: // enter
-                  // alert(wt.asYouType);
                   if (!wt.asYouType) {
-                    // alert(wt.url);
                     wt.refresh();
                   } else if (typeof wt.onEnterActivate === 'function' && wt.selectedRow) {
-                    // alert("a" + wt.url);
                     wt.onEnterActivate(wt.params.lexicon, getColumnValues(wt.selectedRow));
                   }
                   break;
@@ -2295,23 +2265,10 @@
           // let resp2 = '{"error":"","wtprefix":"test1","nocache":"0","container":"test1Container","requestTime":"1631672832851","selectId":"0","page":"0","lastPage":"0","lastPageUp":"1","scroll":"top","query":"","arrOptions":[{"i":0,"r":["Α α",0,0]},{"i":1,"r":["ἀ-",1,0]},{"i":2,"r":["ἀ-",2,0]},{"i":3,"r":["ἆ",3,0]},{"i":4,"r":["ἃ ἃ",4,0]},{"i":5,"r":["ἄα",5,0]},{"i":6,"r":["ἀάατος",6,0]},{"i":7,"r":["ἀάβακτοι",7,0]},{"i":8,"r":["ἀαγής",8,0]},{"i":9,"r":["ἄαδα",9,0]},{"i":10,"r":["ἀάζω",10,0]},{"i":11,"r":["ἄαθι",11,0]},{"i":12,"r":["ἀάκατος",12,0]},{"i":13,"r":["ἀακίδωτος",13,0]},{"i":14,"r":["ἀάλιον",14,0]},{"i":15,"r":["ἀανές",15,0]},{"i":16,"r":["ἄανθα",16,0]},{"i":17,"r":["ἀάπλετος",17,0]},{"i":18,"r":["ἄαπτος",18,0]},{"i":19,"r":["ἄας",19,0]},{"i":20,"r":["ἀασιφόρος",20,0]},{"i":21,"r":["ἀασιφρονία",21,0]},{"i":22,"r":["ἀασιφροσύνη",22,0]},{"i":23,"r":["ἀάσκει",23,0]},{"i":24,"r":["ἀασμός",24,0]},{"i":25,"r":["ἀάσπετος",25,0]},{"i":26,"r":["ἀάστονα",26,0]},{"i":27,"r":["ἀατήρ",27,0]},{"i":28,"r":["ἄατος",28,0]},{"i":29,"r":["ἄατος",29,0]},{"i":30,"r":["ἀάτυλον",30,0]},{"i":31,"r":["ἀάω",31,0]},{"i":32,"r":["ἄβα",32,0]},{"i":33,"r":["ἄβαγνα",33,0]},{"i":34,"r":["ἀβαθής",34,0]},{"i":35,"r":["ἄβαθρος",35,0]},{"i":36,"r":["ἀβαίνω",36,0]},{"i":37,"r":["ἀβακέω",37,0]},{"i":38,"r":["ἀβακηνούς",38,0]},{"i":39,"r":["ἀβακής",39,0]},{"i":40,"r":["ἀβάκητον",40,0]},{"i":41,"r":["ἀβακίζομαι",41,0]},{"i":42,"r":["ἀβάκιον",42,0]},{"i":43,"r":["ἀβακίσκος",43,0]},{"i":44,"r":["ἀβακλή",44,0]},{"i":45,"r":["ἀβακοειδής",45,0]},{"i":46,"r":["ἄβακτον",46,0]},{"i":47,"r":["ἀβάκχευτος",47,0]},{"i":48,"r":["ἀβακχίωτος",48,0]},{"i":49,"r":["ἄβαλε",49,0]},{"i":50,"r":["ἀβαμβάκευτος",50,0]},{"i":51,"r":["ἄβαξ",51,0]},{"i":52,"r":["ἀβάπτιστος",52,0]},{"i":53,"r":["ἄβαπτος",53,0]},{"i":54,"r":["ἀβαρβάριστος",54,0]},{"i":55,"r":["ἀβαρής",55,0]},{"i":56,"r":["ἄβαρις",56,0]},{"i":57,"r":["ἀβασάνιστος",57,0]},{"i":58,"r":["ἀβασίλευτος",58,0]},{"i":59,"r":["ἀβασκάνιστος",59,0]},{"i":60,"r":["ἀβάσκανος",60,0]},{"i":61,"r":["ἀβάσκαντος",61,0]},{"i":62,"r":["ἀβάστακτος",62,0]},{"i":63,"r":["ἄβαστον",63,0]},{"i":64,"r":["ἀβατόομαι",64,0]},{"i":65,"r":["ἄβατος",65,0]},{"i":66,"r":["ἀβαφής",66,0]},{"i":67,"r":["ἄβδελον",67,0]},{"i":68,"r":["ἀβδέλυκτος",68,0]},{"i":69,"r":["Ἀβδηρίτης",69,0]},{"i":70,"r":["ἄβδης",70,0]},{"i":71,"r":["ἀβέβαιος",71,0]},{"i":72,"r":["ἀβεβαιότης",72,0]},{"i":73,"r":["ἀβέβηλος",73,0]},{"i":74,"r":["ἄβεις",74,0]},{"i":75,"r":["ἄβελλον",75,0]},{"i":76,"r":["ἀβελτέρειος",76,0]},{"i":77,"r":["ἀβελτερεύομαι",77,0]},{"i":78,"r":["ἀβελτερία",78,0]},{"i":79,"r":["ἀβελτεροκόκκυξ",79,0]},{"i":80,"r":["ἀβέλτερος",80,0]},{"i":81,"r":["ἀβέρβηλον",81,0]},{"i":82,"r":["ἀβηδών",82,0]},{"i":83,"r":["ἀβήρελ",83,0]},{"i":84,"r":["ἀβηροῦσιν",84,0]},{"i":85,"r":["ἀβίαστος",85,0]},{"i":86,"r":["ἀβίβαστος",86,0]},{"i":87,"r":["ἀβίβλης",87,0]},{"i":88,"r":["ἄβιδα",88,0]},{"i":89,"r":["ἄβιν",89,0]},{"i":90,"r":["ἄβιος",90,0]},{"i":91,"r":["ἄβιος",91,0]},{"i":92,"r":["ἀβίοτος",92,0]},{"i":93,"r":["ἀβίυκτον",93,0]},{"i":94,"r":["ἀβιωτοποιός",94,0]},{"i":95,"r":["ἀβίωτος",95,0]},{"i":96,"r":["ἀβλάβεια",96,0]},{"i":97,"r":["ἀβλαβής",97,0]},{"i":98,"r":["ἀβλαβία",98,0]},{"i":99,"r":["ἀβλαβύνιον",99,0]},{"i":100,"r":["ἄβλαπτος",100,0]}]}';
 
           function procResponse (str, status) {
-            // let start = Date.now();
+            let returnObj = null;
 
-            // if (status != "success")
-            // return;
-
-            let returnObj;
-            // str = resp2;
-            // console.log("Proc Response: " + str);
-            // if (str.indexOf("test4") > -1)
-            // alert(str);
             try {
-              if (typeof JSON !== 'undefined') {
-                returnObj = JSON.parse(str);
-              } else {
-                // console.log("browser does not support json decode");
-                return;// returnObj = eval("(" + str + ")");
-              }
+              returnObj = JSON.parse(str);
             } catch (e) { if (debug) alert(e.message + '\n' + str); return; };
 
             if (!returnObj) {
@@ -2323,19 +2280,13 @@
               return;
             }
 
+            // a toast style message
             if (returnObj.mesgCode) {
-              // alert(returnObj.mesg);
               const z = document.getElementById('mesg');
               if (z) {
                 if (returnObj.mesgCode === 1) {
-                  z.style.backgroundColor = 'green';
-                  z.style.paddingTop = '12px';
-                  z.style.color = 'white';
                   z.innerHTML = returnObj.mesg;
                 } else {
-                  z.style.backgroundColor = 'red';
-                  z.style.paddingTop = '12px';
-                  z.style.color = 'white';
                   z.innerHTML = returnObj.mesg;
                 }
                 z.style.display = 'block';
@@ -2358,7 +2309,7 @@
               return;
             }
 
-            // save original height here, for use if we're paging up.    See below.
+            // save original height here, for use if we're paging up. See below.
             const saveHeight = wt.con.scrollHeight;
 
             // block result sets which come out of sequence
@@ -2377,17 +2328,9 @@
 
             // block pages which are repeats or out of order
             if (returnedPage < 0 && returnedPage >= wt.pageUp) {
-              // if (debug) {
-              //         console.log("wt.pageUp: " + wt.pageUp + "; returnObj.page: " + returnObj.page);
-              // }
-
               wt.blockScroll = false;
               return;
             } else if (returnedPage > 0 && returnedPage <= wt.pageUp) {
-              // if (debug) {
-              //         console.log("wt.pageDown: " + wt.page + "; returnObj.pageDown: " + returnObj.page);
-              // }
-
               wt.blockScroll = false;
               return;
             }
@@ -2409,7 +2352,7 @@
               wt.nextPageRequestPending = false;
             }
 
-            if (returnObj.parentid) { // && returnObj.treeOptions.length > 0)
+            if (returnObj.parentid) {
               let i = 0;
               for (; i < len; i++) {
                 // insertBefore, roots, and selectedId are both false because this function is only for inserting
@@ -2442,17 +2385,6 @@
                 wt.clearWordTree();
               }
 
-              // if (debug) {
-              //   const node = document.createElement('div');
-              //   const text = document.createTextNode('Start Page ' + returnObj.page);
-              //   node.appendChild(text);
-              //   node.style.border = '1px solid white';
-              //   node.id = '10blahWord';
-              //   node.style.whiteSpace = 'nowrap';
-              //   node.style.color = 'red';
-              //   node.style.fontWeight = 'bold';
-              //   if (returnObj.page < 0 && before) { con.insertBefore(node, before); } else { con.appendChild(node); }
-              // }
               let i = 0;
               for (; i < len; i++) {
                 let insertBefore = false;
@@ -2461,7 +2393,6 @@
                 }
 
                 printTree(wt, con, arrOptions[i], 0, insertBefore, returnObj.roots, returnObj.selectId);
-                // printRow(wt, con, arrOptions[i], 0, insertBefore, returnObj.roots, returnObj.selectId);
               }
 
               if (wt && returnObj.selectId === 0) {
@@ -2487,19 +2418,6 @@
                 }
               }
 
-              // if (debug) {
-              //   const node = document.createElement('div');
-              //   const text = document.createTextNode('End Page ' + returnObj.page);
-              //   node.appendChild(text);
-              //   node.id = '10blahWord';
-              //   node.style.border = '1px solid white';
-              //   // node.setAttribute('class','treerow');
-              //   node.style.whiteSpace = 'nowrap';
-              //   node.style.color = 'red';
-              //   node.style.fontWeight = 'bold';
-              //   if (returnedPage < 0 && before) { con.insertBefore(node, before); } else { con.appendChild(node); }
-              // }
-
               if (returnedPage < 0) {
                 // to keep scrollTop in same place as before when paging up.
                 wt.con.scrollTop += (wt.con.scrollHeight - saveHeight);
@@ -2507,7 +2425,9 @@
               wt.blockScroll = false; // fixes bug in webkit where next page was requested in middle of this function
 
               // request def
-              if (wt.selectedRow && returnedPage === 0 && typeof wt.onSelectionChanged === 'function') { wt.onSelectionChanged(wt.params.lexicon, getColumnValues(wt.selectedRow)); }
+              if (wt.selectedRow && returnedPage === 0 && typeof wt.onSelectionChanged === 'function') {
+                wt.onSelectionChanged(wt.params.lexicon, getColumnValues(wt.selectedRow));
+              }
             }
 
             // topLevelTreeRow tells us to indent rows with no children the width of the plus sign,

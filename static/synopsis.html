@@ -8,10 +8,11 @@
 integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
 crossorigin="anonymous"></script>
 <script>
-	//https://wasmbyexample.dev/examples/strings/strings.c.en-us.html
-//emcc -std=gnu99 -s STANDALONE_WASM -s EXPORTED_FUNCTIONS="['_accentSyllable2']" -Wl,--no-entry "utilities.c" "accent.c" -o "accent.wasm"
-//https://stackoverflow.com/questions/3923089/can-i-conditionally-change-the-character-entered-into-an-input-on-keypress/3923320#3923320
-//https://gist.github.com/kripken/59c67556dc03bb6d57052fedef1e61ab
+/* global $ */
+// https://wasmbyexample.dev/examples/strings/strings.c.en-us.html
+// emcc -std=gnu99 -s STANDALONE_WASM -s EXPORTED_FUNCTIONS="['_accentSyllable2']" -Wl,--no-entry "utilities.c" "accent.c" -o "accent.wasm"
+// https://stackoverflow.com/questions/3923089/can-i-conditionally-change-the-character-entered-into-an-input-on-keypress/3923320#3923320
+// https://gist.github.com/kripken/59c67556dc03bb6d57052fedef1e61ab
 
 // Check for wasm support.
 if (!('WebAssembly' in window)) {
@@ -20,249 +21,247 @@ if (!('WebAssembly' in window)) {
 
 // Loads a WebAssembly dynamic library, returns a promise.
 // imports is an optional imports object
-function loadWebAssembly(filename, imports) {
+function loadWebAssembly (filename, imports) {
   return fetch(filename)
     .then(response => response.arrayBuffer())
     .then(buffer => WebAssembly.compile(buffer))
-    .then(module => { 
+    .then(module => {
       return WebAssembly.instantiate(module, imports);
     });
 }
 
-var wasmBuffer;
-var accentSyllableWASM;
+let wasmBuffer;
+let accentSyllableWASM;
 loadWebAssembly('hoplitekb.wasm')
   .then(instance => {
-    var exports = instance.exports;
+    const exports = instance.exports;
     accentSyllableWASM = exports.accentSyllable2;
-    var memory = exports.memory;
+    const memory = exports.memory;
 
     wasmBuffer = new Uint16Array(memory.buffer, 0, 1024);
   }
-);
+  );
 
-var la = ["a","b","c","d","e","f","g","h","i","j","k","l","m","n","o","p","q","r","s","t","u","v","w","x","y","z","A","B","C","D","E","F","G","H","I","J","K","L","M","N","O","P","Q","R","S","T","U","V","W","X","Y","Z"];
-var gr = ["α","β","ψ","δ","ε","φ","γ","η","ι","ξ","κ","λ","μ","ν","ο","π","","ρ","σ","τ","θ","ω","ς","χ","υ","ζ","Α","Β","Ψ","Δ","Ε","Φ","Γ","Η","Ι","Ξ","Κ","Λ","Μ","Ν","Ο","Π","","Ρ","Σ","Τ","Θ","Ω","Σ","Χ","Υ","Ζ"];
-var forceLowercase = true;
-function transliterate(char)
-{
-	var theChar = (forceLowercase) ? char.toLowerCase() : char;
-	var idx = la.indexOf(theChar);
-	if (idx > -1) {
-		return gr[idx];
-	}
-	else {
-		return char;
-	}
+const la = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
+const gr = ['α', 'β', 'ψ', 'δ', 'ε', 'φ', 'γ', 'η', 'ι', 'ξ', 'κ', 'λ', 'μ', 'ν', 'ο', 'π', '', 'ρ', 'σ', 'τ', 'θ', 'ω', 'ς', 'χ', 'υ', 'ζ', 'Α', 'Β', 'Ψ', 'Δ', 'Ε', 'Φ', 'Γ', 'Η', 'Ι', 'Ξ', 'Κ', 'Λ', 'Μ', 'Ν', 'Ο', 'Π', '', 'Ρ', 'Σ', 'Τ', 'Θ', 'Ω', 'Σ', 'Χ', 'Υ', 'Ζ'];
+const forceLowercase = true;
+function transliterate (char) {
+  const theChar = (forceLowercase) ? char.toLowerCase() : char;
+  const idx = la.indexOf(theChar);
+  if (idx > -1) {
+    return gr[idx];
+  } else {
+    return char;
+  }
 }
 
-function accentSyllable(origChars, key) {
-	var len = origChars.length;
-	//add letter and any combining diacritics to the buffer as code points
-	for (var i = 0; i < len; i++) {
-		wasmBuffer[i] = origChars.codePointAt(i);
-	}
+function accentSyllable (origChars, key) {
+  let len = origChars.length;
+  // add letter and any combining diacritics to the buffer as code points
+  let i = 0;
+  for (; i < len; i++) {
+    wasmBuffer[i] = origChars.codePointAt(i);
+  }
 
-    len = accentSyllableWASM(wasmBuffer.byteOffset, len, key, 1, 1);
+  len = accentSyllableWASM(wasmBuffer.byteOffset, len, key, 1, 1);
 
-    //transform the returned code points back to a string
-	var newLetter = "";
-	for (var i = 0; i < len; i++) {
-		newLetter += String.fromCodePoint(wasmBuffer[i]);
-	}
-    return [len, newLetter];
+  // transform the returned code points back to a string
+  let newLetter = '';
+  let j = 0;
+  for (; j < len; j++) {
+    newLetter += String.fromCodePoint(wasmBuffer[j]);
+  }
+  return [len, newLetter];
 }
 
-function handleKey(evt) {
-    var val = this.value;
-    evt = evt || window.event;
+function handleKey (evt) {
+  const val = this.value;
+  evt = evt || window.event;
 
-    var charCode = typeof(evt.which) == "number" ? evt.which : evt.keyCode;
+  const charCode = typeof (evt.which) === 'number' ? evt.which : evt.keyCode;
 
-    if (charCode && charCode > 64 && charCode < 123) //letter
-    {
-	    var start = this.selectionStart;
-        var end = this.selectionEnd;
-    	var key = String.fromCharCode(charCode);
+  if (charCode && charCode > 64 && charCode < 123) { // letter
+    const start = this.selectionStart;
+    const end = this.selectionEnd;
+    const key = String.fromCharCode(charCode);
 
-    	var mappedChar = transliterate(key);
-    	var charsToReplace = 0;
-	    this.value = val.slice(0, start - charsToReplace) + mappedChar + val.slice(end);
-        // Move the caret
-        this.selectionStart = this.selectionEnd = start + 1 - charsToReplace;
-        return false;
+    const mappedChar = transliterate(key);
+    const charsToReplace = 0;
+    this.value = val.slice(0, start - charsToReplace) + mappedChar + val.slice(end);
+    // Move the caret
+    this.selectionStart = this.selectionEnd = start + 1 - charsToReplace;
+    return false;
+  } else if (charCode && charCode > 48 && charCode < 58) { // number: 0-9 are 48-57
+    const key = String.fromCharCode(charCode);
+    let hckey = 0;
+    switch (parseInt(key)) {
+      case 1:
+        hckey = 5; // rough
+        break;
+      case 2:
+        hckey = 6; // smooth
+        break;
+      case 3:
+        hckey = 1; // acute
+        break;
+      case 4:
+        hckey = 3; // grave
+        break;
+      case 5:
+        hckey = 2; // circumflex
+        break;
+      case 6:
+        hckey = 4; // macron
+        break;
+      case 7:
+        hckey = 10; // breve
+        break;
+      case 8:
+        hckey = 7; // iota subscript
+        break;
+      case 9:
+        hckey = 9; // diaeresis
+        break;
     }
-    else if (charCode && charCode > 48 && charCode < 58) { //number: 0-9 are 48-57
-        var key = String.fromCharCode(charCode);
-        var hckey = 0;
-        switch( parseInt(key) ) {
-            case 1:
-                hckey = 5; //rough
-                break;
-            case 2:
-                hckey = 6; //smooth
-                break;
-            case 3:
-                hckey = 1; //acute
-                break;
-            case 4:
-                hckey = 3; //grave
-                break;
-            case 5:
-                hckey = 2; //circumflex
-                break;
-            case 6:
-                hckey = 4; //macron
-                break;
-            case 7:
-                hckey = 10; //breve
-                break;
-            case 8:
-                hckey = 7; //iota subscript
-                break;
-            case 9:
-                hckey = 9; //diaeresis
-                break;
+    let start, end;
+    if (typeof (this.selectionStart) === 'number' && typeof (this.selectionEnd) === 'number') {
+      // Non-IE browsers and IE 9+
+      start = this.selectionStart;
+      end = this.selectionEnd;
+
+      const combining = [0x0300, 0x0301, 0x0304, 0x0306, 0x0308, 0x0313, 0x0314, 0x0323, 0x0342, 0x0345];
+      let off = 1;
+      let i = start;
+      for (; i > -1; i--) {
+        if (combining.indexOf(val.codePointAt(i - 1)) > -1) {
+          off++;
+        } else {
+          break;
         }
-        var start, end;
-        if (typeof(this.selectionStart) == "number" && typeof(this.selectionEnd) == "number") {
-            // Non-IE browsers and IE 9+
-            start = this.selectionStart;
-            end = this.selectionEnd;
+      }
+      const ret = accentSyllable(val.slice(start - off, start), hckey.toString());
+      const newLetter = ret[1];
+      const charsToReplace = start - (start - off);
 
-            var combining = [0x0300, 0x0301, 0x0304, 0x0306, 0x0308, 0x0313, 0x0314, 0x0323, 0x0342, 0x0345];
-            var off = 1;
-            for (var i = start; i > -1; i--)
-            {
-            	if (combining.indexOf(val.codePointAt(i - 1)) > -1) {
-            		off++;
-            	}
-            	else {
-            		break;
-            	}
-            }
-	        var ret = accentSyllable(val.slice(start - off, start), hckey.toString());
-	        var newLetter = ret[1];
-	        var charsToReplace = start - (start - off);
- 
-            if (ret[0] > 0 && newLetter != "") {
-            	//update the input/textarea
-	            this.value = val.slice(0, start - charsToReplace) + newLetter + val.slice(end);
-	            // Move the caret
-	            this.selectionStart = this.selectionEnd = (start - charsToReplace) + ret[0];
-        	}
-        } 
-        return false;
+      if (ret[0] > 0 && newLetter !== '') {
+        // update the input/textarea
+        this.value = val.slice(0, start - charsToReplace) + newLetter + val.slice(end);
+        // Move the caret
+        this.selectionStart = this.selectionEnd = (start - charsToReplace) + ret[0];
+      }
     }
-    return true;
+    return false;
+  }
+  return true;
 }
 
-function submitSynopsis() {
-	var json = new Object();
-	json.pp = $("#pppppp0").val().trim();
-	json.unit = $("#unitfilter").val().trim();
-	json.verb = $("#selectedverb").val().trim();
-	json.person = $("#person").val().trim();
-	json.number = $("#number").val().trim();
-	json.ptccase = $("#ptccase").val().trim();
-	json.ptcgender = $("#ptcgender").val().trim();
-	json.ptcnumber = "";
-	json.sname = $("#sname").val().trim();;
-	json.advisor = $("#sadvisor").val().trim();
+function submitSynopsis () {
+  const json = {};
+  json.pp = $('#pppppp0').val().trim();
+  json.unit = $('#unitfilter').val().trim();
+  json.verb = $('#selectedverb').val().trim();
+  json.person = $('#person').val().trim();
+  json.number = $('#number').val().trim();
+  json.ptccase = $('#ptccase').val().trim();
+  json.ptcgender = $('#ptcgender').val().trim();
+  json.ptcnumber = '';
+  json.sname = $('#sname').val().trim(); ;
+  json.advisor = $('#sadvisor').val().trim();
 
-	json.r = new Array();
-	$(".formcellinput").each(function(){	
-		json.r[ parseInt(this.id.substring(6)) ] = this.value.trim();
-	});
+  json.r = [];
+  $('.formcellinput').each(function () {
+    json.r[parseInt(this.id.substring(6))] = this.value.trim();
+  });
 
-	//console.log(json);
-    $.ajax({
-		url: "synopsissaver",
-		type: "POST",
-		data: JSON.stringify(json),
-        contentType: "application/json",
-        dataType: "json",
-		success: function (data, textStatus, jqXHR){ 
-			//procResponse(data, textStatus); 
-			//showToast("success: " + data);
-			//alert(data);
-		},
-		error: function(response) {
-			//getwords(url); //redo request on error
-			//showToast("error");
-			//alert(response);
-		}
-    });
-	//alert(JSON.stringify(json));
+  // console.log(json);
+  $.ajax({
+    url: 'synopsissaver',
+    type: 'POST',
+    data: JSON.stringify(json),
+    contentType: 'application/json',
+    dataType: 'json',
+    success: function (data, textStatus, jqXHR) {
+      // procResponse(data, textStatus);
+      // showToast("success: " + data);
+      // alert(data);
+    },
+    error: function (response) {
+      // getwords(url); //redo request on error
+      // showToast("error");
+      // alert(response);
+    }
+  });
+  // alert(JSON.stringify(json));
 }
 
-function start() {
-	var unit = getCookie("unit");
-	if (unit) {
-		document.getElementById("unitfilter").value = unit;
-		document.body.classList = "unit" + unit;
-	}
-	else {
-		document.getElementById("unitfilter").value = 16;
-		document.body.classList = "unit" + 16;
-	}
-	var legend = getCookie("legend");
-	if (legend && legend == "hidden") {
-		document.querySelector(".tophelp").style.display = "none";
-	}
-	$(".gkinput").keypress(handleKey);
-	$(".gkinput").blur(savefields);
-	$("#submitbutton").click(submitSynopsis);
+// eslint-disable-next-line no-unused-vars
+function start () {
+  const unit = getCookie('unit');
+  if (unit) {
+    document.getElementById('unitfilter').value = unit;
+    document.body.classList = 'unit' + unit;
+  } else {
+    document.getElementById('unitfilter').value = 16;
+    document.body.classList = 'unit' + 16;
+  }
+  const legend = getCookie('legend');
+  if (legend && legend === 'hidden') {
+    document.querySelector('.tophelp').style.display = 'none';
+  }
+  $('.gkinput').keypress(handleKey);
+  $('.gkinput').blur(savefields);
+  $('#submitbutton').click(submitSynopsis);
 
-	retrievefields();
+  retrievefields();
 }
 
-function savefields() {
-	if (!lsTest()) return;
-	console.log("save fields");
-	$(".gkinput").each(function () {
-		console.log("save: " + this.id + ": " + this.value);
-		setCookie(this.id, this.value, 365);
-	});
-	setCookie("person", $("#person").val(), 365);
-	setCookie("number", $("#number").val(), 365);
-	setCookie("ptccase", $("#ptccase").val(), 365);
-	setCookie("ptcgender", $("#ptcgender").val(), 365);
+function savefields () {
+  if (!lsTest()) return;
+  console.log('save fields');
+  $('.gkinput').each(function () {
+    console.log('save: ' + this.id + ': ' + this.value);
+    setCookie(this.id, this.value, 365);
+  });
+  setCookie('person', $('#person').val(), 365);
+  setCookie('number', $('#number').val(), 365);
+  setCookie('ptccase', $('#ptccase').val(), 365);
+  setCookie('ptcgender', $('#ptcgender').val(), 365);
 }
 
-function retrievefields() {
-	if (!lsTest()) return;
-	for (var i = 0; i < localStorage.length; i++) {
-		var id = localStorage.key(i);
-		var val = localStorage.getItem(localStorage.key(i));
-		console.log("set:" + id + ": " + val);
-    	$( "#" + id ).val( val );
-	}
-	$("#person").val( localStorage.getItem("person") );
-	$("#number").val(localStorage.getItem("number"));
-	$("#ptccase").val(localStorage.getItem("ptccase"));
-	$("#ptcgender").val(localStorage.getItem("ptcgender"));
+function retrievefields () {
+  if (!lsTest()) return;
+  for (let i = 0; i < localStorage.length; i++) {
+    const id = localStorage.key(i);
+    const val = localStorage.getItem(localStorage.key(i));
+    console.log('set:' + id + ': ' + val);
+    $('#' + id).val(val);
+  }
+  $('#person').val(localStorage.getItem('person'));
+  $('#number').val(localStorage.getItem('number'));
+  $('#ptccase').val(localStorage.getItem('ptccase'));
+  $('#ptcgender').val(localStorage.getItem('ptcgender'));
 }
 
-function clearForm() {
-	$(".gkinput").val("");
-	if (!lsTest()) return;
-	$(".gkinput").each(function () {
-		localStorage.removeItem( this.id );
-	});
-	$("#person").val("");
-	$("#number").val("");
-	$("#ptccase").val("");
-	$("#ptcgender").val("");
-	setCookie("person", "", 365);
-	setCookie("number", "", 365);
-	setCookie("ptccase", "", 365);
-	setCookie("ptcgender", "", 365);
-	//localStorage.clear();
+// eslint-disable-next-line no-unused-vars
+function clearForm () {
+  $('.gkinput').val('');
+  if (!lsTest()) return;
+  $('.gkinput').each(function () {
+    localStorage.removeItem(this.id);
+  });
+  $('#person').val('');
+  $('#number').val('');
+  $('#ptccase').val('');
+  $('#ptcgender').val('');
+  setCookie('person', '', 365);
+  setCookie('number', '', 365);
+  setCookie('ptccase', '', 365);
+  setCookie('ptcgender', '', 365);
+  // localStorage.clear();
 }
 
-function lsTest() {
-  var test = 'test';
+function lsTest () {
+  const test = 'test';
   try {
     localStorage.setItem(test, test);
     localStorage.removeItem(test);
@@ -272,44 +271,44 @@ function lsTest() {
   }
 }
 
-function setunit() {
-	var unit = document.getElementById("unitfilter").value;
-	document.body.classList = "unit" + unit;
-	setCookie("unit", unit, 365);
+// eslint-disable-next-line no-unused-vars
+function setunit () {
+  const unit = document.getElementById('unitfilter').value;
+  document.body.classList = 'unit' + unit;
+  setCookie('unit', unit, 365);
 }
 
-function setCookie(name, value, days) {
-	if (typeof(localStorage) != "undefined") {
-		localStorage.setItem(name, value);
-	}
+function setCookie (name, value, days) {
+  if (typeof (localStorage) !== 'undefined') {
+    localStorage.setItem(name, value);
+  }
 }
 
-function getCookie(name) {
-	if (typeof(localStorage) != "undefined") {
-		var value = localStorage.getItem(name);
-		console.log("localstorage: " + name + ": " + value);
-		return value;
-	}
-	return null;
-}
-  
-function eraseCookie(name) 
-{
-	setCookie(name, "", -1);
+function getCookie (name) {
+  if (typeof (localStorage) !== 'undefined') {
+    const value = localStorage.getItem(name);
+    console.log('localstorage: ' + name + ': ' + value);
+    return value;
+  }
+  return null;
 }
 
-function togglelegend() {
-	var a = document.querySelector(".tophelp");
-	if (a.style.display == "none") {
-		a.style.display = "";
-		setCookie("legend", "displayed", 365);
-	}
-	else {
-		a.style.display = "none";
-		setCookie("legend", "hidden", 365);
-	}
+// eslint-disable-next-line no-unused-vars
+function eraseCookie (name) {
+  setCookie(name, '', -1);
 }
 
+// eslint-disable-next-line no-unused-vars
+function togglelegend () {
+  const a = document.querySelector('.tophelp');
+  if (a.style.display === 'none') {
+    a.style.display = '';
+    setCookie('legend', 'displayed', 365);
+  } else {
+    a.style.display = 'none';
+    setCookie('legend', 'hidden', 365);
+  }
+}
 </script>
 <style>
 @font-face {
@@ -318,41 +317,41 @@ function togglelegend() {
 }  
 
 .rotate { 
-	transform: rotate(-42deg);
-	width: 10%;
-	height: 62px;
-	text-align: left;
-	white-space: nowrap;
-	position: relative;
+    transform: rotate(-42deg);
+    width: 10%;
+    height: 62px;
+    text-align: left;
+    white-space: nowrap;
+    position: relative;
 }
 .dnum { 
-	border-collapse: collapse;
-	text-align:center;
-	border:1px solid white;
-	height:30px;
+    border-collapse: collapse;
+    text-align:center;
+    border:1px solid white;
+    height:30px;
 }
 
 .gkinput {
-	width: 100%;
-	height: 40px;
-	font-size: 20pt;
-	border-radius: 6px;
-	margin: 5px;
-	padding:0px;
-	padding-left: 6px;
-	border: 0px solid #666;
-	font-family: NewAthenaUnicode, WebNewAthenaUnicode,helvetica,arial;
+    width: 100%;
+    height: 40px;
+    font-size: 20pt;
+    border-radius: 6px;
+    margin: 5px;
+    padding:0px;
+    padding-left: 6px;
+    border: 0px solid #666;
+    font-family: NewAthenaUnicode, WebNewAthenaUnicode,helvetica,arial;
 }
 .colheader {
-	text-align:center;
-	padding-top:25px;
+    text-align:center;
+    padding-top:25px;
 }
 BODY {
-	font-family:helvetica,arial;
-	background-color:#ddd;
-	max-width:1024px;
-	width:90%;
-	margin:10px auto;
+    font-family:helvetica,arial;
+    background-color:#ddd;
+    max-width:1024px;
+    width:90%;
+    margin:10px auto;
 }
 .formcell { margin:0px;padding:0px 8px; }
 .formcellInner { height:100%;width:100%; }
@@ -370,21 +369,21 @@ day14	u11
 day22	u16
 */
 .unit2 .passive,.unit2 .middle,.unit2 .imperative,.unit2 .participle, .unit2 .future.optative, .unit2 .future.infinitive, .unit2 #ptccase, .unit2 #ptcgender {
-	display:none;
+    display:none;
 }
 .unit5 .middle,.unit5 .imperative,.unit5 .participle, .unit5 .future.optative, .unit5 .future.infinitive, .unit5 #ptccase, .unit5 #ptcgender {
-	display:none;
+    display:none;
 }
 .unit7 .imperative,.unit7 .participle, .unit7 .future.optative, .unit7 .future.infinitive, .unit7 #ptccase, .unit7 #ptcgender {
-	display:none;
+    display:none;
 }
 .unit8 .imperative, .unit8 .future.optative, .unit8 .future.infinitive {
-	display:none;
+    display:none;
 }
 .unit11 .future.optative, .unit11 .future.infinitive {
-	display:none;
+    display:none;
 }
-.unit16 { }
+/* .unit16 { } */
 
 #namecell { display:none;}
 #submitcell { display:none; }
@@ -394,107 +393,107 @@ day22	u16
 .verbparam { font-size:14pt; }
 
 #unitfilter {
-	position: absolute;
-	right: 20px;
-	top: 20px;
+    position: absolute;
+    right: 20px;
+    top: 20px;
 }
 #legendlink {
-	position:absolute;
-	right:20px;
-	top:78px;
+    position:absolute;
+    right:20px;
+    top:78px;
 }
 
 #clearbutton {
-	position:absolute;
-	right:20px;
-	top:50px;
+    position:absolute;
+    right:20px;
+    top:50px;
 }
 
 </style>
 </head>
 <body onload="start()">
-	<!--<div class="tophelp">
-		<table style="width:100%;" cellspacing="0" cellpadding="0">
-			<tbody><tr><td class="rotate" style="left: 20px;">rough</td><td class="rotate" style="left: 28px;">smooth</td><td class="rotate" style="left: 33px;">acute</td><td class="rotate" style="left: 45px;">grave</td><td class="rotate" style="left: 55px;top: -4px;">circumflex</td><td class="rotate" style="left: 45px;">macron</td><td class="rotate" style="left: 50px;">breve</td><td class="rotate" style="left: 55px;top: -13px;">iota subscript</td><td class="rotate" style="left: 24px;">diaeresis</td><td class="rotate" style="left: 20px;">underdot</td></tr>
-		</tbody></table>	
-		<table cellpadding=0 cellspacing=0 style="width:100%;">
-			<tr><td class="dnum">1</td><td class="dnum">2</td><td class="dnum">3</td><td class="dnum">4</td><td class="dnum">5</td><td class="dnum">6</td><td class="dnum">7</td><td class="dnum">8</td><td class="dnum">9</td><td class="dnum">0</td></tr>
-		</table>
-	</div>-->
-	<div id="legendlink"><a tabindex="-1" href="javascript:togglelegend()">keys</a></div>
-	<button id="clearbutton" tabindex="-1" onclick="clearForm()">Clear</button>
-	<table cellpadding=0 cellspacing=0 style="width:100%;margin:0px auto;">
-		<tr>
-			<td colspan="4">
+    <!--<div class="tophelp">
+        <table style="width:100%;" cellspacing="0" cellpadding="0">
+            <tbody><tr><td class="rotate" style="left: 20px;">rough</td><td class="rotate" style="left: 28px;">smooth</td><td class="rotate" style="left: 33px;">acute</td><td class="rotate" style="left: 45px;">grave</td><td class="rotate" style="left: 55px;top: -4px;">circumflex</td><td class="rotate" style="left: 45px;">macron</td><td class="rotate" style="left: 50px;">breve</td><td class="rotate" style="left: 55px;top: -13px;">iota subscript</td><td class="rotate" style="left: 24px;">diaeresis</td><td class="rotate" style="left: 20px;">underdot</td></tr>
+        </tbody></table>	
+        <table cellpadding=0 cellspacing=0 style="width:100%;">
+            <tr><td class="dnum">1</td><td class="dnum">2</td><td class="dnum">3</td><td class="dnum">4</td><td class="dnum">5</td><td class="dnum">6</td><td class="dnum">7</td><td class="dnum">8</td><td class="dnum">9</td><td class="dnum">0</td></tr>
+        </table>
+    </div>-->
+    <div id="legendlink"><a tabindex="-1" href="javascript:togglelegend()">keys</a></div>
+    <button id="clearbutton" tabindex="-1" onclick="clearForm()">Clear</button>
+    <table cellpadding=0 cellspacing=0 style="width:100%;margin:0px auto;">
+        <tr>
+            <td colspan="4">
 <table class="tophelp" cellpadding=0 cellspacing=0 style="border:1px solid #666;width:100%;color:#666;">
-	<tr>
-		<td colspan="9" style="text-align:left;">Diacritic Keys</td>
-	</tr>
-	<tr>
-		<td>rough breathing</td><td>smooth breathing</td><td>acute</td><td>grave</td><td>circumflex</td><td>macron</td><td>breve</td><td>iota subscript</td><td>diaeresis</td>
-	</tr>
-	<tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td>
-	</tr>
+    <tr>
+        <td colspan="9" style="text-align:left;">Diacritic Keys</td>
+    </tr>
+    <tr>
+        <td>rough breathing</td><td>smooth breathing</td><td>acute</td><td>grave</td><td>circumflex</td><td>macron</td><td>breve</td><td>iota subscript</td><td>diaeresis</td>
+    </tr>
+    <tr><td>1</td><td>2</td><td>3</td><td>4</td><td>5</td><td>6</td><td>7</td><td>8</td><td>9</td>
+    </tr>
 </table>
-			</td>
-		</tr>
-		<tr>
-			<td align="left" colspan="4">
-				<table cellpadding=0 cellspacing=0>
-					<tr><td width="50%"><select tabindex="-1" id="unitfilter" onchange="setunit()">
-						<option value="2">Unit 2</option>
-						<option value="5">Unit 5</option>
-						<option value="7">Unit 7</option>
-						<option value="8">Unit 8</option>
-						<option value="11">Unit 11</option>
-						<option value="16">Unit 16</option>
-					</select></td><td align="right" id="namecell">
-						Name: <input type="text" id="sname" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
+            </td>
+        </tr>
+        <tr>
+            <td align="left" colspan="4">
+                <table cellpadding=0 cellspacing=0>
+                    <tr><td width="50%"><select tabindex="-1" id="unitfilter" onchange="setunit()">
+                        <option value="2">Unit 2</option>
+                        <option value="5">Unit 5</option>
+                        <option value="7">Unit 7</option>
+                        <option value="8">Unit 8</option>
+                        <option value="11">Unit 11</option>
+                        <option value="16">Unit 16</option>
+                    </select></td><td align="right" id="namecell">
+                        Name: <input type="text" id="sname" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
 Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
-					</td></tr>
-					<tr><td width="50%"><h3>Synopsis of: 
-						<input type="text" id="selectedverb" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
-						<select id="person" class="verbparam">
-							<option value=""></option>
-							<option value="1st">First Person</option>
-							<option value="2nd">Second Person</option>
-							<option value="3rd">Third Person</option>
-						</select>
-						<select id="number" class="verbparam">
-							<option value=""></option>
-							<option value="sing">Singular</option>
-							<option value="pl">Plural</option>
-						</select>
-						<select id="ptcgender" class="verbparam">
-							<option value=""></option>
-							<option value="masc">Masculine</option>
-							<option value="fem">Feminine</option>
-							<option value="neut">Neuter</option>
-						</select>
-						<!--<select id="ptcnumber" class="verbparam">
-							<option value=""></option>
-							<option value="ptcsing">Singular</option>
-							<option value="ptcpl">Plural</option>
-						</select>-->
-						<select id="ptccase" class="verbparam">
-							<option value=""></option>
-							<option value="nom">Nominative</option>
-							<option value="gen">Genitive</option>
-							<option value="dat">Dative</option>
-							<option value="acc">Accusative</option>
-						</select>
-							
-					</h3></td><td align="right" colspan="2" id="submitcell"><button id="submitbutton">Submit</button></td></tr>
-		</table>
-		</td>
-		</tr>
-		<tr>
-			<td>Principal Parts</td>
-			<td colspan=3  class="formcell">
-				<input type="text" id="pppppp0" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
-			</td>
-		</tr>
-		<tr><td></td><td class="colheader active">Active</td><td class="colheader middle">Middle</td><td class="colheader passive">Passive</td></tr>
+                    </td></tr>
+                    <tr><td width="50%"><h3>Synopsis of: 
+                        <input type="text" id="selectedverb" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
+                        <select id="person" class="verbparam">
+                            <option value=""></option>
+                            <option value="1st">First Person</option>
+                            <option value="2nd">Second Person</option>
+                            <option value="3rd">Third Person</option>
+                        </select>
+                        <select id="number" class="verbparam">
+                            <option value=""></option>
+                            <option value="sing">Singular</option>
+                            <option value="pl">Plural</option>
+                        </select>
+                        <select id="ptcgender" class="verbparam">
+                            <option value=""></option>
+                            <option value="masc">Masculine</option>
+                            <option value="fem">Feminine</option>
+                            <option value="neut">Neuter</option>
+                        </select>
+                        <!--<select id="ptcnumber" class="verbparam">
+                            <option value=""></option>
+                            <option value="ptcsing">Singular</option>
+                            <option value="ptcpl">Plural</option>
+                        </select>-->
+                        <select id="ptccase" class="verbparam">
+                            <option value=""></option>
+                            <option value="nom">Nominative</option>
+                            <option value="gen">Genitive</option>
+                            <option value="dat">Dative</option>
+                            <option value="acc">Accusative</option>
+                        </select>
+                            
+                    </h3></td><td align="right" colspan="2" id="submitcell"><button id="submitbutton">Submit</button></td></tr>
+        </table>
+        </td>
+        </tr>
+        <tr>
+            <td>Principal Parts</td>
+            <td colspan=3  class="formcell">
+                <input type="text" id="pppppp0" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
+            </td>
+        </tr>
+        <tr><td></td><td class="colheader active">Active</td><td class="colheader middle">Middle</td><td class="colheader passive">Passive</td></tr>
 %rows%
 </table>
 </body>

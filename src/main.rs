@@ -72,7 +72,6 @@ struct QueryResponse {
     last_page: u8,
     #[serde(rename(serialize = "lastPageUp"), rename(deserialize = "lastPageUp"))]
     lastpage_up: u8,
-    scroll: String,
     query: String,
     #[serde(rename(serialize = "arrOptions"), rename(deserialize = "arrOptions"))]
     arr_options: Vec<(String, u32)>,
@@ -356,7 +355,11 @@ async fn philologus_words(
         .collect();
 
     let res = QueryResponse {
-        select_id: seq,
+        select_id: if query_params.w.is_empty() && info.page == 0 && query_params.wordid.is_none() {
+            0
+        } else {
+            seq
+        },
         error: "".to_owned(),
         wtprefix: info.idprefix.clone(),
         nocache: if query_params.wordid.is_none() { 0 } else { 1 }, //prevents caching when queried by wordid in url
@@ -365,11 +368,6 @@ async fn philologus_words(
         page: info.page,
         last_page: vlast_page,
         lastpage_up: vlast_page_up,
-        scroll: if query_params.w.is_empty() && info.page == 0 && query_params.wordid.is_none() {
-            "top".to_string()
-        } else {
-            "".to_string()
-        },
         query: query_params.w.to_owned(),
         arr_options: result_rows_stripped,
     };
@@ -995,8 +993,7 @@ mod tests {
         assert_eq!(result.lastpage_up, 1);
         assert_eq!(result.last_page, 0);
         assert_eq!(result.page, 0);
-        assert_eq!(result.select_id, 1);
-        assert_eq!(result.scroll, "top".to_string());
+        assert_eq!(result.select_id, 0);
 
         //query α
         let query = r#"{"regex":0,"lexicon":"lsj","tag_id":0,"root_id":0,"w":"α"}"#;
@@ -1025,7 +1022,6 @@ mod tests {
         assert_eq!(result.last_page, 0);
         assert_eq!(result.page, 0);
         assert_eq!(result.select_id, 1);
-        assert_eq!(result.scroll, "".to_string());
 
         //query γ
         let query = r#"{"regex":0,"lexicon":"lsj","tag_id":0,"root_id":0,"w":"γ"}"#;
@@ -1054,7 +1050,6 @@ mod tests {
         assert_eq!(result.last_page, 1);
         assert_eq!(result.page, 0);
         assert_eq!(result.select_id, 3);
-        assert_eq!(result.scroll, "".to_string());
 
         //query ω
         let query = r#"{"regex":0,"lexicon":"lsj","tag_id":0,"root_id":0,"w":"ω"}"#;
@@ -1083,7 +1078,6 @@ mod tests {
         assert_eq!(result.last_page, 1);
         assert_eq!(result.page, 0);
         assert_eq!(result.select_id, 5);
-        assert_eq!(result.scroll, "".to_string());
 
         //DefResponse
         let resp = test::TestRequest::get()

@@ -760,7 +760,7 @@
     </style>
 </head>
 
-<body onload="start();" class="philbody">
+<body onload="start()" class="philbody">
 
     <div id="taglist" style="position:absolute;top:0px;left:0px;height:50%;width:220px;display:none;"></div>
     <div id="historylist" style="position:absolute;top:50%;left:0px;height:50%;width:220px;display:none;"></div>
@@ -809,7 +809,6 @@
             </div>
         </div>
     </div>
-
     <div id="mesg"></div>
     <script type="text/javascript">
         'use strict';
@@ -856,7 +855,8 @@
         }
 
         window.addEventListener('popstate', function (e) {
-          // exclude from history, else we push it back on at same time as popping.    see defjson.js: end of setWord.
+          // exclude from history, else we push it back on at same time as popping.
+          // see defjson.js: end of setWord.
           if (e.state && e.state.length > 1) {
             getDef(e.state[0], e.state[1], '', true, false);
           }

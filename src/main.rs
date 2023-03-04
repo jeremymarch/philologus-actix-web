@@ -365,11 +365,11 @@ async fn philologus_words(
         page: info.page,
         last_page: vlast_page,
         lastpage_up: vlast_page_up,
-        scroll: if query_params.w.is_empty() && info.page == 0 {
+        scroll: if query_params.w.is_empty() && info.page == 0 && query_params.wordid.is_none() {
             "top".to_string()
         } else {
             "".to_string()
-        }, //scroll really only needs to return top
+        },
         query: query_params.w.to_owned(),
         arr_options: result_rows_stripped,
     };

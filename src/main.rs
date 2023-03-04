@@ -138,10 +138,10 @@ pub struct QueryRequest {
 
 #[derive(Deserialize)]
 pub struct WordQuery {
-    pub regex: String,
+    pub regex: i32,
     pub lexicon: String,
-    pub tag_id: String,
-    pub root_id: String,
+    pub tag_id: i32,
+    pub root_id: i32,
     pub wordid: Option<String>,
     pub w: String,
 }
@@ -970,7 +970,7 @@ mod tests {
         }
 
         //empty query
-        let query = r#"{"regex":"0","lexicon":"lsj","tag_id":"0","root_id":"0","w":""}"#;
+        let query = r#"{"regex":0,"lexicon":"lsj","tag_id":0,"root_id":0,"w":""}"#;
         let encoded_url = format!(
             "/lsj/query?n={}&idprefix={}\
             &x=0.795795025371805&requestTime=1637859894040&\
@@ -999,7 +999,7 @@ mod tests {
         assert_eq!(result.scroll, "top".to_string());
 
         //query α
-        let query = r#"{"regex":"0","lexicon":"lsj","tag_id":"0","root_id":"0","w":"α"}"#;
+        let query = r#"{"regex":0,"lexicon":"lsj","tag_id":0,"root_id":0,"w":"α"}"#;
         let encoded_url = format!(
             "/lsj/query?n={}&idprefix={}\
             &x=0.795795025371805&requestTime=1637859894040&\
@@ -1028,7 +1028,7 @@ mod tests {
         assert_eq!(result.scroll, "".to_string());
 
         //query γ
-        let query = r#"{"regex":"0","lexicon":"lsj","tag_id":"0","root_id":"0","w":"γ"}"#;
+        let query = r#"{"regex":0,"lexicon":"lsj","tag_id":0,"root_id":0,"w":"γ"}"#;
         let encoded_url = format!(
             "/lsj/query?n={}&idprefix={}\
             &x=0.795795025371805&requestTime=1637859894040&\
@@ -1057,7 +1057,7 @@ mod tests {
         assert_eq!(result.scroll, "".to_string());
 
         //query ω
-        let query = r#"{"regex":"0","lexicon":"lsj","tag_id":"0","root_id":"0","w":"ω"}"#;
+        let query = r#"{"regex":0,"lexicon":"lsj","tag_id":0,"root_id":0,"w":"ω"}"#;
         let encoded_url = format!(
             "/lsj/query?n={}&idprefix={}\
             &x=0.795795025371805&requestTime=1637859894040&\

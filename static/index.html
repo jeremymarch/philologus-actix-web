@@ -812,6 +812,8 @@
 
     <div id="mesg"></div>
     <script type="text/javascript">
+        'use strict';
+
         const setURLToWordId = true;
         // https://github.com/le717/microajax
         function microAjax (options) {
@@ -946,9 +948,7 @@
             historyChooser();
             document.getElementById('defbody').style.marginRight = '280px';
 
-            if (vIsLoggedIn) {
-              w4.refresh();
-            } else if (supportsHTML5Storage()) {
+            if (supportsHTML5Storage()) {
               const h = window.localStorage.getItem('history2');
               if (w4 && h && h.length > 0) {
                 w4.refreshWithRows(h);
@@ -990,7 +990,7 @@
 
           document.getElementsByTagName('body')[0].appendChild(d);
 
-          w4 = new wordtree('test4', 260, h - 20);
+          w4 = new Wordtree('test4', 260, h - 20);
           w4.conTopOffset = 38;
           w4.con.style.top = w4.conTopOffset + 'px';
           w4.setHeight(w4.height);
@@ -1014,17 +1014,6 @@
           } else {
             w4.show(d);
           }
-
-          w4.params.lexicon = lex[0];
-          w4.params.tag_id = 0;
-          w4.params.root_id = 0;
-          w4.params.userid = 1;
-
-          if (vIsLoggedIn) {
-            w4.refresh();
-          }
-
-          // w4.entry.focus(); //breaks ie6 and ie8 because offscreen
         }
 
         function globalKeyUp (ev) {
@@ -1033,7 +1022,6 @@
             if (key === 27) { // esc
               const w = lookupWT('test1');
               w.entry.focus();
-              // block default hot keys, like bookmark, etc
               ev.returnValue = false;
               if (typeof ev.preventDefault === 'function') {
                 ev.preventDefault();
@@ -1063,35 +1051,24 @@
               if (typeof ev.preventDefault === 'function') {
                 ev.preventDefault();
               }
-            } // else if (key === 52) { // 4
-            //   document.getElementById('test2Entry').focus();
-            //   ev.returnValue = false;
-            //   if (typeof ev.preventDefault === 'function') {
-            //     ev.preventDefault();
-            //   }
-            // } else if (key === 53) { // 5
-            //   toggleTagChooser();
-            //   ev.returnValue = false;
-            //   if (typeof ev.preventDefault === 'function') {
-            //     ev.preventDefault();
-            //   }
-            // }
+            }
           }
           return true;
         }
 
-        function act (lexicon, cols) {
+        function onClickRow (lexicon, cols) {
           // console.log("get def: " + cols[1] + ", " + lexicon);
           getDef(cols[1], lexicon, '', false, true);
         }
 
-        function act2 (lexicon, cols) {
-          getDef(cols[2], lexicon, '', false, true);
-        }
+        // function onClickRow2 (lexicon, cols) {
+        //   getDef(cols[2], lexicon, '', false, true);
+        // }
 
         document.onkeydown = globalKeyDown;
         document.onkeyup = globalKeyUp;
 
+        // eslint-disable-next-line no-unused-vars
         function start () {
           const matches = window.location.pathname.match(/\/(lsj|ls|slater)\/?([^/]*)\/?$/);
           let startLex = 'lsj';
@@ -1116,7 +1093,7 @@
           }
           const winHeight = getViewportHeight(window);
 
-          const w = new wordtree('test1', 260, winHeight - 36);
+          const w = new Wordtree('test1', 260, winHeight - 36);
           w.show(document.getElementById('leftlist'));
 
           const showHist = getLocalStorageKey('historylist');
@@ -1153,8 +1130,8 @@
           w.onAddWord = null;// addWordToList;
           w.onDeleteWord = null;// deleteTag;
           w.onEnterActivate = null;// addWordToList;
-          w.onClickActivate = act;
-          w.onSelectionChanged = act;
+          w.onClickActivate = onClickRow;
+          w.onSelectionChanged = onClickRow;
 
           let lexNum = 0;
           for (; lexNum < lex.length; lexNum++) {
@@ -1245,20 +1222,24 @@
           }
         }
 
+        // eslint-disable-next-line no-unused-vars
         function contact () {
           const about = "Philolog.us first launched in June 2005 shortly after the Perseus Digital Library began offering access to its collections via web services. One of the primary aims has been to offer a streamlined, user-friendly interface to the lexica in the Perseus library.<br/><br/><br/>Thanks to the <a class='storelink' href='http://www.perseus.tufts.edu'>Perseus Digital Library</a> for digitizing and make available these texts.    Thanks also to <a class='storelink' href='https://logeion.uchicago.edu'>Logeion</a> for making many corrections and improvements to them. <br/><br/>Jeremy March<br/><a class='storelink' href='mailto:jmarch@gradcenter.cuny.edu'>jmarch@gradcenter.cuny.edu</a>";
           document.getElementById('lsjdef').innerHTML = "<div style='text-align:left;margin:10px;'>" + about + '</div>';
         }
 
+        // eslint-disable-next-line no-unused-vars
         function showiPhone () {
           const news = "Available for iPhone/iPad app in the <a href='https://itunes.apple.com/us/app/philolog.us/id622324932?mt=8' class='storelink'>App store</a>.<br><br><br>Available for Android in the <a href='https://play.google.com/store/apps/details?id=com.philolog.philologus&hl=en' class='storelink'>Google Play store</a>.";
           document.getElementById('lsjdef').innerHTML = "<div style='text-align:center;font-size:16pt;padding-top:60px;'>" + news + '</div>';
         }
 
+        // eslint-disable-next-line no-unused-vars
         function config () {
           window.location = 'configure.html';
         }
 
+        // eslint-disable-next-line no-unused-vars
         function closeMessage () {
           const a = document.getElementById('message1');
           if (a) {
@@ -1311,19 +1292,6 @@
           }
         }
 
-        function getViewportWidth (w) {
-          if (typeof (w.innerWidth) !== 'undefined') {
-            return w.innerWidth;
-          }
-          if (w.document.compatMode === 'CSS1Compat') {
-            return w.document.documentElement.clientWidth;
-          }
-          if (w.document.body) {
-            return w.document.body.clientWidth;
-          }
-          return window.undefined;
-        }
-
         function setLocalStorageKey (name, value) {
           if (typeof (window.localStorage) !== 'undefined') {
             window.localStorage.setItem(name, value);
@@ -1338,10 +1306,7 @@
           return null;
         }
 
-        function eraseLocalStorageKey (name) {
-          setLocalStorageKey(name, '');
-        }
-
+        // eslint-disable-next-line no-unused-vars
         function toggleSettings () {
           let settingsDiv = document.getElementById('settingsdiv');
           if (!settingsDiv) {
@@ -1380,6 +1345,7 @@
           }
         }
 
+        // eslint-disable-next-line no-unused-vars
         function darkModeClick (radio) {
           switch (radio.value) {
             case 'dark':
@@ -1392,10 +1358,9 @@
               window.localStorage.removeItem('mode');
               break;
           }
+          // eslint-disable-next-line no-undef
           setTheme();
         }
-
-        const vIsLoggedIn = false;
 
         const defCache = [];
         let defCacheLength = 0;
@@ -1544,17 +1509,6 @@
           return phPath;
         }
 
-        // function makeQueryString (paramsObj) {
-        //   let json = '{';
-
-        //   for (prop in paramsObj) { json += '"' + prop + '":"' + paramsObj[prop] + '",'; }
-
-        //   json = json.replace(/[,]+$/, ''); // trim trailing comma
-        //   json += '}';
-
-        //   return json;
-        // }
-
         function supportsHTML5Storage () {
           try {
             return 'localStorage' in window && window.localStorage !== null;
@@ -1566,17 +1520,7 @@
         function saveHistory (lexicon, id, word) {
           // alert(lexicon + ", " + id);
           if (id === lastId) {
-            if (vIsLoggedIn) {
-              const params = {};
-              params.userid = 1;
-              params.lexicon = lex[0];
-              // const q = makeQueryString(params);
-              // alert(q);
-              const query = '{"id":' + id + ',"lex":"' + lexicon + '","user":1}';
-              const url = 'saveHistory.php?query=' + query;
-              // alert(url);
-              loadXMLDoc(url);
-            } else if (supportsHTML5Storage()) {
+            if (supportsHTML5Storage()) {
               let lexi = 0;
               if (lexicon === lex[0]) { lexi = 0; } else if (lexicon === lex[1]) { lexi = 1; } else { lexi = 2; }
 
@@ -1652,7 +1596,7 @@
               let prev = null;
               let x;
               for (x in defCache) {
-                if (!defCache.hasOwnProperty(x)) { continue; }
+                if (typeof defCache.hasOwn === 'function' && !defCache.hasOwn(x)) { continue; }
 
                 if (prev == null || defCache[x].time < defCache[prev].time) { prev = x; }
               }
@@ -1679,7 +1623,7 @@
         const keyDelay = 350; // to prevent each key press from triggering a query for fast typers
         const cacheLimit = 500;
         const debug = false;
-        const mouseWheelSpeedFactor = 10; // between 4 and 12 seem to work best
+        // const mouseWheelSpeedFactor = 10; // between 4 and 12 seem to work best
         const keyScrollAccel = 4;
 
         let platform;
@@ -1706,7 +1650,7 @@
           return null;
         }
 
-        function wordtree (idPrefix, width, height) {
+        function Wordtree (idPrefix, width, height) {
           this.mode = 'context';
           this.asYouType = true;
           this.width = width;
@@ -1823,8 +1767,8 @@
           this.closedNodeImg = 'images/plus.gif';
           this.openNodeImg = 'images/minus.gif';
 
-          input.onkeydown = wordtree_ondown;
-          input.onkeyup = wordtree_onup;
+          input.onkeydown = wordtreeOnDown;
+          input.onkeyup = wordtreeOnUp;
 
           this.div.appendChild(ftcheck);
           this.div.appendChild(ftlabel);
@@ -1860,7 +1804,7 @@
 
           globalWordTrees.push([idPrefix, this]);
 
-          this.show = wordtree_show;
+          this.show = wordtreeShow;
           this.close = destroyWT;
           this.setHeight = setHeight;
           this.setWidth = setWidth;
@@ -1871,7 +1815,6 @@
           this.requestPrevPage = requestPrevPage;
           this.clearWordTree = clearWordTree;
           this.requestRows = requestRows;
-          this.makeQuery = makeQueryString;
           this.clearCache = clearCache;
           this.cache = null;
           this.cacheCount = 0;
@@ -1885,25 +1828,13 @@
           this.onSelectionChanged = null;
           this.onAddWord = null;
           this.onDeleteWord = null;
-          // this.onContextMenu = context;
 
           this.openAllNodes = openAllNodes;
           this.closeAllNodes = closeAllNodes;
 
           this.setHeight(height);
           this.setWidth(width);
-
-          function makeQueryString (paramsObj) {
-            let json = '{';
-
-            let prop;
-            for (prop in paramsObj) { json += '"' + prop + '":"' + paramsObj[prop] + '",'; }
-
-            json = json.replace(/[,]+$/, ''); // trim trailing comma
-            json += '}';
-
-            return json;
-          }
+          this.makeQueryURL = makeQueryURL;
 
           function clearWordTree () {
             const con = this.con;
@@ -1935,55 +1866,60 @@
             procResponse(rows, 'success');
           }
 
-          function refreshWordTree () {
+          function makeQueryURL (page, query) {
             const requestTime = new Date().getTime();
+            let requestPage = 0;
+            if (page < 0) {
+              requestPage = parseInt(this.pageUp) + page;
+            } else if (page > 0) {
+              requestPage = parseInt(this.page) + page;
+            }
+
+            return this.url + '?n=' + (this.maxWords + 1) +
+              '&idprefix=' + this.idPrefix +
+              '&x=' + Math.random() +
+              '&requestTime=' + requestTime +
+              '&page=' + requestPage +
+              '&mode=' + this.mode +
+              '&query=' + query;
+          }
+
+          function refreshWordTree () {
             this.loading.style.display = 'block';
 
             if (checkCache(this)) { return; }
 
             if (this.entry) { this.params.w = this.entry.value; }
-            let query = makeQueryString(this.params);
+            let query = JSON.stringify(this.params);
             query = encodeURIComponent(query);
-
             if (fullText) {
               fullTextRequest(this.entry.value);
             } else {
-              // encodeURI... only required for IE--Mozilla did it automatically
-              const url = this.url + '?n=' + (this.maxWords + 1) + '&idprefix=' + this.idPrefix + '&x=' + Math.random() + '&requestTime=' + requestTime + '&page=' + 0 + '&mode=' + this.mode + '&query=' + query;
-              // console.log(url);
+              this.page = 0;
+              const url = this.makeQueryURL(0, query);
               requestRows(url);
             }
           }
 
           function requestNextPage () {
-            const requestTime = new Date().getTime();
             this.loading.style.display = 'block';
-
             if (this.entry) { this.params.w = this.entry.value; }
-            let query = makeQueryString(this.params);
+            let query = JSON.stringify(this.params);
             query = encodeURIComponent(query);
-
-            // encodeURI... only required for IE--Mozilla did it automatically
-            const url = this.url + '?n=' + (this.maxWords + 1) + '&idprefix=' + this.idPrefix + '&x=' + Math.random() + '&requestTime=' + requestTime + '&page=' + (parseInt(this.page) + 1) + '&mode=' + this.mode + '&query=' + query;
-
+            const url = this.makeQueryURL(1, query);
             requestRows(url);
           }
 
           function requestPrevPage () {
-            const requestTime = new Date().getTime();
             this.loading.style.display = 'block';
-
             if (this.entry) { this.params.w = this.entry.value; }
-            let query = makeQueryString(this.params);
+            let query = JSON.stringify(this.params);
             query = encodeURIComponent(query);
-
-            // encodeURI... only required for IE--Mozilla did it automatically
-            const url = this.url + '?n=' + (this.maxWords + 1) + '&idprefix=' + this.idPrefix + '&x=' + Math.random() + '&requestTime=' + requestTime + '&page=' + (parseInt(this.pageUp) - 1) + '&mode=' + this.mode + '&query=' + query;
-
+            const url = this.makeQueryURL(-1, query);
             requestRows(url);
           }
 
-          function wordtree_show (parent) {
+          function wordtreeShow (parent) {
             parent.appendChild(this.div);
           }
 
@@ -2025,27 +1961,7 @@
             }
           }
 
-          function onMouseWheel (e) {
-            // v. http://www.switchonthecode.com/tutorials/javascript-tutorial-the-scroll-wheel
-            const el = this;
-            const amount = e.detail ? e.detail * mouseWheelSpeedFactor : e.wheelDelta / 40 * mouseWheelSpeedFactor * -1;
-
-            el.scrollTop += amount;
-
-            return cancelEvent(e);
-          }
-
-          function cancelEvent (e) {
-            e = e || window.event;
-            if (e.stopPropagation) { e.stopPropagation(); }
-            if (e.preventDefault) { e.preventDefault(); }
-            e.cancelBubble = true;
-            e.cancel = true;
-            e.returnValue = false;
-            return false;
-          }
-
-          function wordtree_onup (ev) {
+          function wordtreeOnUp (ev) {
             if (!ev) { ev = window.event; }
 
             const key = ev.keyCode;
@@ -2107,7 +2023,7 @@
             }
           }
 
-          function wordtree_ondown (ev) {
+          function wordtreeOnDown (ev) {
             const key = ev.keyCode;
 
             if (key === 17) {
@@ -2781,7 +2697,7 @@
 
               if (imgNode.parentNode.parentNode.nextSibling) { wt.con.insertBefore(childrenCon, imgNode.parentNode.parentNode.nextSibling); } else { wt.con.appendChild(childrenCon); }
 
-              wt.params.root_id = getColumnValues(document.getElementById(nodeid))[1];
+              wt.params.root_id = parseInt(getColumnValues(document.getElementById(nodeid))[1]);
 
               if (wt.selectedRow) { wt.params.selectedid = wt.selectedRow.id; } // maybe this should just be nodeid?
               let query = wt.makeQuery(wt.params);
@@ -2790,16 +2706,16 @@
               const url = wt.url + '?n=' + (wt.maxWords + 1) + '&idprefix=' + wt.idPrefix + '&x=' + Math.random() + '&requestTime=' + requestTime + '&page=' + wt.page + '&con=' + childrenConId + '&mode=' + wt.mode + '&query=' + query;
 
               requestRows(url);
-              wt.params.root_id = '';
-              wt.params.selectedid = '';
+              wt.params.root_id = 0;
+              wt.params.selectedid = 0;
             }
             return true;
           }
 
           /**
-             * Return true if node was closed.    False otherwise.
-             * This lets us close all, on second keypress.
-             */
+           * Return true if node was closed. False otherwise.
+           * This lets us close all, on second keypress.
+           */
           function closeNode (wt, nodeid) {
             const childrenConId = nodeid + 'Children';
             const imgId = nodeid + 'Img';
@@ -2873,10 +2789,8 @@
             if (wt.cache && wt.cache[queryKey]) {
               wt.lastRequestTime = 0; // defeat sequence check
               procResponse(wt.cache[queryKey].str, 'success');
-              // alert("here: true");
               return true;
             } else {
-              // alert("false");
               return false; // not cached, request it
             }
           }
@@ -2888,17 +2802,15 @@
           function wtAddResultToCache (wt, queryKey, str) {
             // the queryKey is the lexicon + the query word
             queryKey = wt.params.lexicon + queryKey + wt.params.tag_id;
-            // alert("add: " + queryKey + "\n\n" + str);
             // if this query isn't in the cache
             if (!wt.cache[queryKey]) {
-              // alert("here");
               // if we're at the cacheLimit remove the oldest item
               // (shorter keys are more useful results to have so maybe we should give them added importance?)
               // use cacheLength because assoc arrays have no length property and we don't want to have to count them each time
               if (cacheLimit && wt.cacheLength >= cacheLimit) {
                 let prev = null;
                 for (const x in wt.cache) {
-                  if (!wt.cache.hasOwnProperty(x)) { continue; }
+                  if (typeof wt.cache.hasOwn === 'function' && !wt.cache.hasOwn(x)) { continue; }
 
                   if (prev == null || wt.cache[x].time < wt.cache[prev].time) { prev = x; }
                 }

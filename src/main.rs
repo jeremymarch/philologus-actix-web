@@ -474,6 +474,7 @@ fn add_bibl_links(def: &str) -> String {
     def_with_links.to_string()
 }
 
+// this is for a route to specific word: /{lex}/{word}
 async fn index(_req: HttpRequest) -> Result<NamedFile> {
     let path: PathBuf = "static/index.html".parse().unwrap();
     Ok(NamedFile::open(path)?)

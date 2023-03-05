@@ -56,8 +56,8 @@
             z-index: 999;
         }
         #hamburgercontainer {
-          padding-top:18px;
-          padding-right:10px;
+          padding-top:1rem;
+          padding-right:1rem;
         }
         #hamburger {
             z-index: 999;
@@ -328,10 +328,10 @@
         #logo {
             color: black;
             z-index: 999;
-            padding: 0px 15px;
+            padding: 0rem 1rem;
             text-align:center;
             position:relative;
-            top:16px;
+            top:0.75rem;
             font-size:28pt;
             font-family:helvetica,arial,sans-serif;
         }
@@ -554,10 +554,10 @@
             position: relative;
             z-index: 1;
             top: 70px;
-            margin-left: 280px;
-            margin-right: 10px;
+            margin-left: 308px;
+            margin-right: 1rem;
             overflow: hidden;
-            height: calc(100% - 80px);
+            height: calc(100% - 84px);
             text-align: left;
         }
         .dark #defbody {
@@ -752,7 +752,7 @@
         function toggleHistoryChooser () {
           if (historyOpen) {
             closeHistoryChooser();
-            document.getElementById('defbody').style.marginRight = '10px';
+            document.getElementById('defbody').style.marginRight = '1rem';
 
             setLocalStorageKey('historylist', '0');
           } else {
@@ -823,8 +823,8 @@
           const key = ev.keyCode;
           if (!ev.metaKey && !ev.ctrlKey && !ev.shiftKey && !ev.altKey) {
             if (key === 27) { // esc
-              const w = lookupWT('test1');
-              w.entry.focus();
+              const wt = lookupWT('test1');
+              wt.entry.focus();
               ev.returnValue = false;
               ev.preventDefault();
             }
@@ -876,19 +876,19 @@
             setLocalStorageKey('filter', 'red:bold:blue:blue:green:orange');
           }
 
-          const w = new Wordtree('test1', 260, winHeight - 36);
-          w.show(document.getElementById('leftlist'));
+          const wt = new Wordtree('test1', 280, winHeight - 36);
+          wt.show(document.getElementById('leftlist'));
 
-          w.cache = [];
-          w.params.regex = 0;
-          w.params.lexicon = globalLexica[0];
-          w.params.tag_id = 0;
-          w.params.root_id = 0;
-          w.conTopOffset = 98;
-          w.con.style.top = w.conTopOffset + 'px';
-          w.entry.focus();
+          wt.cache = [];
+          wt.params.regex = 0;
+          wt.params.lexicon = globalLexica[0];
+          wt.params.tag_id = 0;
+          wt.params.root_id = 0;
+          wt.conTopOffset = 98;
+          wt.con.style.top = wt.conTopOffset + 'px';
+          wt.entry.focus();
 
-          w.title.innerHTML = '<div style="margin-left:4px;width:' + (w.width - 18) + 'px;display:flex;"><BUTTON id="lexlabel0" class="lexitem" style="width:31%;" onclick="switchLex(0)">LSJ</BUTTON><BUTTON id="lexlabel1" class="lexitem" style="width:33%;" onclick="switchLex(1)">Slater</BUTTON><BUTTON id="lexlabel2" class="lexitem" style="width:36%;" onclick="switchLex(2)">Lewis &amp; Short</BUTTON></div><div style="margin-left:4px;width:' + (w.width - 18) + 'px;display:flex;"><BUTTON id="searchlabel0" class="lexitem" style="width:50%;" onclick="switchSearch(0)">Lemma</BUTTON><BUTTON id="searchlabel1" class="lexitem" style="width:50%;" onclick="switchSearch(1)">Full-text</BUTTON></div>';
+          wt.title.innerHTML = '<div style="margin-left:4px;width:' + (wt.width - 18) + 'px;display:flex;"><BUTTON id="lexlabel0" class="lexitem" style="width:31%;" onclick="switchLex(0)">LSJ</BUTTON><BUTTON id="lexlabel1" class="lexitem" style="width:33%;" onclick="switchLex(1)">Slater</BUTTON><BUTTON id="lexlabel2" class="lexitem" style="width:36%;" onclick="switchLex(2)">Lewis &amp; Short</BUTTON></div><div style="margin-top:2px;margin-left:4px;width:' + (wt.width - 18) + 'px;display:flex;"><BUTTON id="searchlabel0" class="lexitem" style="width:50%;" onclick="switchSearch(0)">Lemma</BUTTON><BUTTON id="searchlabel1" class="lexitem" style="width:50%;" onclick="switchSearch(1)">Full-text</BUTTON></div>';
 
           // https://stackoverflow.com/questions/16242980/making-radio-buttons-look-like-buttons-instead
           // let title = '<div style="margin-left:4px;width:' + (w.width - 18) + 'px;display:flex;">\
@@ -896,12 +896,12 @@
           // <input id="lexlabel1" onclick="switchLex(1)" aria-label="Slater" class="lexitem" type="radio" name="lex_radio" value="slater">Slater</input>\
           // <input id="lexlabel2" onclick="switchLex(2)" aria-label="Lewis & Short" class="lexitem" type="radio" name="lex_radio" value="ls">Lewis &amp; Short</input></div>';
 
-          w.mode = 'context';
-          w.onAddWord = null; // addWordToList;
-          w.onDeleteWord = null; // deleteTag;
-          w.onEnterActivate = null; // addWordToList;
-          w.onClickActivate = onClickRow;
-          w.onSelectionChanged = onClickRow;
+          wt.mode = 'context';
+          wt.onAddWord = null;
+          wt.onDeleteWord = null;
+          wt.onEnterActivate = null;
+          wt.onClickActivate = onClickRow;
+          wt.onSelectionChanged = onClickRow;
         
           highlightSearch(0);
 
@@ -911,7 +911,7 @@
             // for now list is loaded in switchSearch(0)
             getDefFromWordid(urlLexDef.word, urlLexDef.lex, '', true, true);
             const lexNum = urlLexDef.lex === 'ls' ? 2 : urlLexDef.lex === 'slater' ? 1 : 0;
-            w.params.lexicon = globalLexica[lexNum];
+            wt.params.lexicon = globalLexica[lexNum];
             highlightLex(lexNum);
             switchSearch(0);
           } else {
@@ -932,21 +932,20 @@
           const showHist = getLocalStorageKey('historylist');
           if (showHist && showHist === 1) {
             toggleHistoryChooser();
-            document.getElementById('defbody').style.marginRight = '280px';
+            document.getElementById('defbody').style.marginRight = '310px';
           } else {
-            document.getElementById('defbody').style.marginRight = '10px';
+            document.getElementById('defbody').style.marginRight = '1rem';
           }
 
-          // window.onresize = onResize; // $(window).resize(onResize);
-          // onResize();
+          window.onresize = onResize; // $(window).resize(onResize);
+          onResize();
         }
 
         function onResize () {
           const height = getViewportHeight(window);
 
-          const w = lookupWT('test1');
-
-          w.setHeight(height - 24);
+          const wt = lookupWT('test1');
+          wt.setHeight(height - 24);
 
           // let defbody = document.getElementById("defbody");
           // defbody.style.height = h - 80 + "px";
@@ -1428,24 +1427,17 @@
         if (window.navigator.userAgent.indexOf('iPhone') !== -1) { platform = 'iphone'; } else if (window.navigator.userAgent.indexOf('iPad') !== -1) { platform = 'ipad'; } else if (window.navigator.platform.toLowerCase().indexOf('mac') !== -1) { platform = 'mac'; } else if (window.navigator.platform.toLowerCase().indexOf('linux') !== -1) { platform = 'linux'; } else { platform = 'windows'; }
 
         function lookupWT (idPrefix) {
-          for (let i = 0; i < globalWordTrees.length; i++) {
-            if (globalWordTrees[i][0] === idPrefix) { return globalWordTrees[i][1]; }
+          if (typeof globalWordTrees[idPrefix] !== 'undefined') {
+            return globalWordTrees[idPrefix];
+          } else {
+            return null;
           }
-
-          return null;
         }
 
         function destroyWT () {
           const p = this.div.parentNode;
           p.removeChild(this.div);
-
-          for (let i = 0; i < globalWordTrees.length; i++) {
-            if (globalWordTrees[i][0] === this.idPrefix) {
-              globalWordTrees.splice(i, 1);
-              break;
-            }
-          }
-          return null;
+          delete globalWordTrees[this.idPrefix];
         }
 
         function Wordtree (idPrefix, width, height) {
@@ -1591,7 +1583,8 @@
           */
 
           con.onscroll = conOnScroll;
-          if (platform === 'ipad' || platform === 'iphone' || (navigator.maxTouchPoints && navigator.maxTouchPoints > 1)) {
+          if (platform === 'ipad' || platform === 'iphone' ||
+            (navigator.maxTouchPoints && navigator.maxTouchPoints > 1)) {
             con.ontouchstart = onTouch;
           }
           const wt = this;
@@ -1600,7 +1593,7 @@
 
           this.con = con;
 
-          globalWordTrees.push([idPrefix, this]);
+          globalWordTrees[idPrefix] = this;
 
           this.show = wordtreeShow;
           this.close = destroyWT;
@@ -1649,7 +1642,7 @@
           function setHeight (height) {
             this.height = height;
             this.div.style.height = (height - 7) + 'px';
-            this.con.style.height = (height - 22 - this.conTopOffset) + 'px';
+            this.con.style.height = (height - 32 - this.conTopOffset) + 'px';
           }
 
           function setWidth (width) {
@@ -2121,7 +2114,7 @@
               return;
             }
 
-            // save original height here, for use if we're paging up. See below.
+            // save original height here, for use if we're paging up. See below
             const saveHeight = wt.con.scrollHeight;
 
             // block result sets which come out of sequence
@@ -2316,30 +2309,30 @@
 
               const idPrefix = res.wtPrefix;
 
-              const w = lookupWT(idPrefix);
+              const wt = lookupWT(idPrefix);
 
-              if (w.selectedRow) {
-                w.selectedRow.setAttribute('draggable', false);
+              if (wt.selectedRow) {
+                wt.selectedRow.setAttribute('draggable', false);
 
-                if (w.selectedRow.classList.contains('selectedRowClass')) {
-                  w.selectedRow.classList.remove('selectedRowClass');
+                if (wt.selectedRow.classList.contains('selectedRowClass')) {
+                  wt.selectedRow.classList.remove('selectedRowClass');
                 }
               }
 
               this.classList.add('selectedRowClass');
 
-              if (w.dragSource) {
+              if (wt.dragSource) {
                 this.setAttribute('draggable', true);
-                this.addEventListener('dragstart', w.dragStartFunc, false);
+                this.addEventListener('dragstart', wt.dragStartFunc, false);
               }
 
-              w.selectedRow = this;
+              wt.selectedRow = this;
 
-              if (typeof w.onClickActivate === 'function') {
-                w.onClickActivate(w.params.lexicon, getColumnValues(this));
-                // console.log("select: " + w.params.lexicon + ", " + getColumnValues(this));
+              if (typeof wt.onClickActivate === 'function') {
+                wt.onClickActivate(wt.params.lexicon, getColumnValues(this));
+                // console.log("select: " + wt.params.lexicon + ", " + getColumnValues(this));
               }
-              if (w.entry && wt.autofocus) { w.entry.focus(); }
+              if (wt.entry && wt.autofocus) { wt.entry.focus(); }
             }
 
             function printTree (wt, con, treeRow, level, insertBefore, roots, selectedId) {

@@ -27,7 +27,6 @@
             src: url('/newathu5_8.woff') format('woff'),
                 url('/newathu5_8.ttf') format('ttf');
         }
-
         #mesg { 
           display:none;
           background-color:blue;
@@ -37,24 +36,33 @@
           left:10px;
           bottom:10px;
         }
-
         BODY {
             font-family: NewAthenaUnicode, WebNewAthenaUnicode, helvetica, san-serif;
+            background-color: #eee;
+            padding: 0px;
+            margin: 0px;
+            text-align: center;
+            overflow: hidden;
+            width: 100%;
+            height: 100%;
         }
-
+        .dark BODY {
+            background-color: black;
+        }
         BUTTON {
             border-style: none;
         }
-
         #test1Entry {
             z-index: 999;
         }
-
+        #hamburgercontainer {
+          padding-top:18px;
+          padding-right:10px;
+        }
         #hamburger {
             z-index: 999;
             position: relative;
         }
-
         .ftrow {
             border: 1px solid black;
             margin-bottom: 10px;
@@ -63,17 +71,14 @@
             max-height: 200px;
             overflow: auto;
         }
-
         .dark .ftrow {
             border: 1px solid white;
         }
-
         .wordtree input {
             font-family: helvetica, arial;
             /*WebNewAthenaUnicode;*/
             font-size: 11pt;
         }
-
         :root {
             --author-color: red;
             --bib-color: green;
@@ -93,110 +98,82 @@
             --foreign-weight: normal;
             --quote-weight: normal;
         }
-
         .ftrowheaderlink {
             color: blue;
         }
-
         .dark .ftrowheaderlink {
             color: #03a5fc;
         }
-
         .ftrowhead {
             padding: 0px;
             margin: 5px 0px;
         }
-
-        /* document.documentElement.style.setProperty("--author-color", "green"); */
-
         .dark .fo {
             color: blue;
             color: var(--foreign-color-dark, blue);
         }
-
         .dark .qu {
             color: blue;
             color: var(--quote-color-dark, blue);
         }
-
         .fo {
             color: blue;
             color: var(--foreign-color, blue);
         }
-
         .qu {
             color: blue;
             color: var(--quote-color, blue);
         }
-
         .tr {
             font-weight: bold;
         }
-
         .au {
             color: red;
             color: var(--author-color, red);
         }
-
         .bi {
             color: green;
             color: var(--bib-color, green);
         }
-
         .ti {
             color: orange;
             color: var(--ref-color, orange);
         }
-
         .biblLink {
             color: green;
             color: var(--bib-color, green);
         }
-
         .attrlink {
             color: blue;
             color: var(--attr-color, blue);
         }
-
         .dark .attrlink {
             color: #03a5fc;
             color: var(--attr-color-dark, #03a5fc);
         }
-
-        .dark .defbody {
-            color: white;
-        }
-
         .storelink {
             color: blue;
         }
-
         .dark .storelink {
             color: #03a5fc;
         }
-
         .qu:before {
             content: '\"';
         }
-
         .qu:after {
             content: '\"';
         }
-
         .label {
             font-weight: bold;
             position: absolute;
             left: -36px;
         }
-
         .label:after {
             content: ' ';
         }
-
         .orth {
             font-weight: bold;
         }
-
         #hamburger {
             background-color: white;
             border: 1px solid #666;
@@ -205,11 +182,9 @@
             height: 30px;
             width: 30px;
         }
-
         #hamburger rect {
             fill: black;
         }
-
         .lexitem {
             cursor: pointer;
             text-align: center;
@@ -219,56 +194,45 @@
             font-size: 8pt;
             font-family: helvetica, arial, sans-serif;
         }
-
         .lexselected,
         .searchselected {
             background-color: #444;
             color: white;
         }
-
         .dark .lexselected,
         .dark .searchselected {
             background-color: #444;
             color: white;
             border: 1px solid white;
         }
-
         .menulink:link {
             color: black;
             text-decoration: none;
         }
-
         .menulink:visited {
             color: black;
             text-decoration: none;
         }
-
         .menulink:hover {
             color: black;
             text-decoration: none;
         }
-
         .menulink:active {
             color: black;
             text-decoration: none;
         }
-
         .dark .menulink:link {
             color: white;
         }
-
         .dark .menulink:visited {
             color: white;
         }
-
         .dark .menulink:hover {
             color: white;
         }
-
         .dark .menulink:active {
             color: white;
         }
-
         #settingsdiv div {
             background-color: white;
             color: black;
@@ -277,16 +241,13 @@
             cursor: pointer;
             border: 2px solid white;
         }
-
         #settingsdiv div:hover {
             border: 2px solid black;
         }
-
         #settingsdiv div:focus {
             border: 2px solid black;
             outline: 0px solid black;
         }
-
         .dark #settingsdiv div {
             background-color: black;
             color: white;
@@ -295,89 +256,85 @@
             cursor: pointer;
             border: 2px solid black;
         }
-
         .dark #settingsdiv div:hover {
             border: 2px solid white;
         }
-
         .dark #settingsdiv div:focus {
             border: 2px solid white;
             outline: 0px solid white;
         }
-
         .menucell {
             text-align: center;
             width: 25%;
             white-space: nowrap;
         }
-
         .biblLink:link {
             text-decoration: none;
         }
-
         .biblLink:visited {
             text-decoration: none;
         }
-
         .biblLink:hover {
             text-decoration: underline;
         }
-
         .biblLink:active {
             text-decoration: none;
         }
-
         .bi {
             text-decoration: none;
         }
-
         HTML {
             overflow: hidden;
             width: 100%;
             height: 100%;
             font-family: NewAthenaUnicode, WebNewAthenaUnicode;
         }
-
+        body,html {
+            position: fixed;
+        }
         .l1 {
             margin-left: 36px;
             position: relative;
         }
-
         .l2 {
             margin-left: 72px;
             position: relative;
         }
-
         .l3 {
             margin-left: 108px;
             position: relative;
         }
-
         .l4 {
             margin-left: 144px;
             position: relative;
         }
-
         .l5 {
             margin-left: 180px;
             position: relative;
         }
-
         .body {
             line-height: 1.2;
             margin: 8px 0px
         }
-
-        body,
-        html {
-            position: fixed;
+        #logocontainer {
+          position:absolute;
+          top:0px;
+          right:0px;
+          height:48px;
+          text-align:center;
+          letter-spacing:normal;
+          display:flex;
         }
-
         #logo {
             color: black;
             z-index: 999;
+            padding: 0px 15px;
+            text-align:center;
+            position:relative;
+            top:16px;
+            font-size:28pt;
+            font-family:helvetica,arial,sans-serif;
         }
-
         .nodestyle {
             line-height: 32px;
             margin: 0px;
@@ -388,17 +345,14 @@
             background-color: white;
             overflow: hidden;
         }
-
         .nodestylecol {
             position: absolute;
             top: 0px;
         }
-
         .selectedRowClass {
             background-color: #31408e;
             color: white;
         }
-
         .WordContainer {
             position: relative;
             left: 11px;
@@ -411,22 +365,10 @@
             scrollbar-width: none;
             /* Firefox */
         }
-
         /* Hide scrollbar for Chrome, Safari and Opera */
         .WordContainer::-webkit-scrollbar {
             display: none;
         }
-
-        .philbody {
-            background-color: #eee;
-            padding: 0px;
-            margin: 0px;
-            text-align: center;
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
-        }
-
         .wordtree {
             margin: 0px;
             background-color: white;
@@ -435,11 +377,6 @@
             border-radius: 14px;
 
         }
-
-        .defbody {
-            background-color: white;
-        }
-
         .wordtree input {
             position: absolute;
             top: 40px;
@@ -449,35 +386,27 @@
             padding-left: 6px;
             height: 22px;
         }
-
         .orangetext {
             color: orange;
         }
-
         .greentext {
             color: green;
         }
-
         .bluetext {
             color: blue;
         }
-
         .redtext {
             color: red;
         }
-
         .boldtext {
             font-weight: bold;
         }
-
         .blacktext {
             color: black;
         }
-
         .attrlink {
             color: blue;
         }
-
         #openHistory {
             color: black;
             position: fixed;
@@ -493,7 +422,6 @@
             border-radius: 4px;
             display: none;
         }
-
         .lds-spinner {
             color: official;
             display: inline-block;
@@ -501,12 +429,10 @@
             width: 18px;
             height: 18px;
         }
-
         .lds-spinner div {
             transform-origin: 40px 40px;
             animation: lds-spinner 1.2s linear infinite;
         }
-
         .lds-spinner div:after {
             content: " ";
             display: block;
@@ -518,67 +444,54 @@
             /*border-radius: 20%;*/
             background: red;
         }
-
         .lds-spinner div:nth-child(1) {
             transform: rotate(0deg);
             animation-delay: -1.1s;
         }
-
         .lds-spinner div:nth-child(2) {
             transform: rotate(30deg);
             animation-delay: -1s;
         }
-
         .lds-spinner div:nth-child(3) {
             transform: rotate(60deg);
             animation-delay: -0.9s;
         }
-
         .lds-spinner div:nth-child(4) {
             transform: rotate(90deg);
             animation-delay: -0.8s;
         }
-
         .lds-spinner div:nth-child(5) {
             transform: rotate(120deg);
             animation-delay: -0.7s;
         }
-
         .lds-spinner div:nth-child(6) {
             transform: rotate(150deg);
             animation-delay: -0.6s;
         }
-
         .lds-spinner div:nth-child(7) {
             transform: rotate(180deg);
             animation-delay: -0.5s;
         }
-
         .lds-spinner div:nth-child(8) {
             transform: rotate(210deg);
             animation-delay: -0.4s;
         }
-
         .lds-spinner div:nth-child(9) {
             transform: rotate(240deg);
             animation-delay: -0.3s;
         }
-
         .lds-spinner div:nth-child(10) {
             transform: rotate(270deg);
             animation-delay: -0.2s;
         }
-
         .lds-spinner div:nth-child(11) {
             transform: rotate(300deg);
             animation-delay: -0.1s;
         }
-
         .lds-spinner div:nth-child(12) {
             transform: rotate(330deg);
             animation-delay: 0s;
         }
-
         @keyframes lds-spinner {
             0% {
                 opacity: 1;
@@ -588,14 +501,12 @@
                 opacity: 0;
             }
         }
-
         #settingsdiv ul {
             list-style-type: none;
             margin: 0px;
             padding: 0px;
             text-align: left;
         }
-
         .settings {
             position: absolute;
             top: 70px;
@@ -605,74 +516,50 @@
             z-index: 999;
             padding: 10px;
         }
-
         #settingsdiv {
             background-color: white;
             color: black;
             border: 2px solid black;
             border-radius: 10px;
         }
-
         .dark #settingsdiv {
             background-color: black;
             color: white;
             border: 2px solid white;
         }
-
         .dark #settingsdiv li {
             color: white;
         }
-
         .dark #hamburger {
             background-color: black;
         }
-
         .dark #hamburger rect {
             fill: white;
         }
-
         .dark .lds-spinner div:after {
             background: #fff;
         }
-
         .dark #logo {
             color: white;
         }
-
-        .dark .philbody {
-            background-color: black;
-        }
-
         .dark .wordtree {
             background-color: #202124;
         }
-
         .dark .wordtree .nodestyle {
             background-color: #202124;
             color: white;
             border:1px solid #202124;
         }
-
         .dark .nodestyle.selectedRowClass {
             background-color: #444;
             border: 1px solid white;
             color: white;
         }
-
-        .dark .defbody {
-            background-color: #202124;
-        }
-
         .dark .wordtree input {
             background-color: #202124;
             border: 2px solid white;
             color: white;
         }
-
-        #topmenu {
-            visibility: hidden;
-        }
-
         #backdrop {
             position: absolute;
             top: 0px;
@@ -681,28 +568,43 @@
             height: 100%;
             z-index: 900;
         }
-
+        #rightlist {
+          position:absolute;
+          top:69px;
+          right:20px;
+          width:260px;
+          height:500px;
+        }
         #leftlist {
             background-color: white;
+            position:absolute;
+            top:0px;
+            left:0px;
+            height:calc(100% - 20px);
+            width:259px;
+            margin:10px;
+            border-radius: 14px;
         }
-
         .dark #leftlist {
             background-color: #202124;
         }
-
         #defbody {
+          background-color: white;
             transition: .75s;
             border-radius: 14px;
             position: relative;
             z-index: 1;
-            top: 50px;
+            top: 70px;
             margin-left: 280px;
             margin-right: 10px;
             overflow: hidden;
             height: calc(100% - 80px);
             text-align: left;
         }
-
+        .dark #defbody {
+            color: white;
+            background-color: #202124;
+        }
         #lsjdef {
             transition: .75s;
             position: relative;
@@ -712,104 +614,63 @@
             overflow: auto;
             height: calc(100% - 20px);
         }
-
         .fulltext #defbody {
             transition: .75s;
             margin-left: 10px;
             top: -10px;
             height: calc(100% - 18px);
         }
-
         .fulltext #lsjdef {
             transition: .75s;
             top: 62px;
             height: calc(100% - 100px);
         }
-
         #test1Entry {
             transition: .75s;
             width: 193px;
         }
-
         #test1Loading {
             transition: .75s;
             right: 35px;
         }
-
         .fulltext #test1Loading {
             transition: .75s;
             right: -51px;
         }
-
         .fulltext #test1Entry {
             transition: .75s;
             width: 256px;
         }
-
         #test1FTCheck {
             z-index: 999;
         }
-
         LABEL {
             color: black;
         }
-
         .dark LABEL {
             color: white;
         }
     </style>
 </head>
 
-<body onload="start()" class="philbody">
-
-    <div id="taglist" style="position:absolute;top:0px;left:0px;height:50%;width:220px;display:none;"></div>
-    <div id="historylist" style="position:absolute;top:50%;left:0px;height:50%;width:220px;display:none;"></div>
-    <div id="leftlist"
-        style="position:absolute;top:0px;left:0px;height:calc(100% - 20px);width:259px;margin:10px;border-radius: 14px;">
-    </div>
-    <!--<div id="openHistory">History</div>-->
-    <div id="rightlist" style="position:absolute;top:69px;right:20px;width:260px;height:500px;">
-        <!--<div style="border:1px solid black;margin-top:40px;padding:5px;text-align:left;" id="message1">The site has been updated with new code and data.    Please report any problems you might have with the update to <a href="mailto:jmarch@gradcenter.cuny.edu">jmarch@gradcenter.cuny.edu</a>.    The previous version is available <a href="http://philolog.us/v1">here</a> if you need it.<br><br><div style="width:100%;text-align:center;"><a href="javascript:closeMessage()">close</a></div></div>
-    -->
-        <div id="taglistRight" style="position:absolute;top:0px;left:0px;height:50%;width:220px;"></div>
-        <div id="historylistRight" style="position:absolute;top:50%;left:0px;height:50%;width:220px;"></div>
-    </div>
-
-    <div id="topmenu"
-        style="color:#888;font-size:10pt;padding-top:3px;padding-bottom:0px;position:relative;z-index:1;top:4px;margin-left:280px;margin-right:280px;overflow:hidden;border-bottom:1px solid #CCC;text-align:left;">
-        <div style="width:100%;display:flex;">
-            <div class='menucell'><a href='javascript:contact()' class="menulink">about</a></div>
-            <div class='menucell'><a href='javascript:showiPhone()' class="menulink">mobile app</a></div>
-            <div class='menucell'><a href='javascript:config()' class="menulink">configure</a></div>
-            <dov class='menucell'><a href='javascript:toggleHistoryChooser()' class="menulink">toggle history</a>
-        </div>
-        <!--<td class='menucell'><a href='javascript:toggleTagList()' class="menulink">tags</a></td>
-    <td class='menucell' style="width:20%;"><span id="userNameField"></span><a id="loginLink" href='javascript:toggleLogin()' class="menulink">login</a></td>
--->
-    </div>
-    </div>
-
-    <div id="defbody" class="defbody">
+<body onload="start()">
+    <div id="leftlist"></div>
+    <div id="rightlist"></div>
+    <div id="defbody">
         <div id="lsjdef" ontouchstart="onTouch(event)"></div>
     </div>
-
-    <div
-        style="position:absolute;top:0px;right:0px;height:48px;border:0px solid green;text-align:center;letter-spacing:normal;display:flex;">
-        <div id="logo"
-            style="padding: 0px 15px;text-align:center;position:relative;top:16px;font-size:28pt;font-family:helvetica,arial,sans-serif;">
-            philolog.us</div>
-        <div style="padding-top:18px;padding-right:10px;">
-            <div>
-
-                <svg onclick="toggleSettings()" id="hamburger" viewBox="0 0 120 120">
-                    <rect x="10" y="30" width="100" height="12"></rect>
-                    <rect x="10" y="56" width="100" height="12"></rect>
-                    <rect x="10" y="82" width="100" height="12"></rect>
-                </svg>
-            </div>
+    <div id="logocontainer">
+        <div id="logo">philolog.us</div>
+        <div id="hamburgercontainer">
+            <svg id="hamburger" onclick="toggleSettings()" viewBox="0 0 120 120">
+                <rect x="10" y="30" width="100" height="12"></rect>
+                <rect x="10" y="56" width="100" height="12"></rect>
+                <rect x="10" y="82" width="100" height="12"></rect>
+            </svg>
         </div>
     </div>
     <div id="mesg"></div>
+
     <script type="text/javascript">
         'use strict';
 
@@ -862,8 +723,7 @@
           }
         }, false);
 
-        const useRight = true;
-        const lex = ['lsj', 'slater', 'ls'];
+        const globalLexica = ['lsj', 'slater', 'ls'];
 
         function closeHistoryChooser () {
           historyOpen = false;
@@ -978,10 +838,6 @@
           const h = getViewportHeight(window);
 
           historyOpen = true;
-          const d = document.getElementById('historylist');
-
-          document.getElementsByTagName('body')[0].appendChild(d);
-
           w4 = new Wordtree('test4', 260, h - 20);
           w4.conTopOffset = 38;
           w4.con.style.top = w4.conTopOffset + 'px';
@@ -1001,11 +857,7 @@
           w4.onAddWord = null;
           w4.onDeleteWord = null; // deleteTag;
 
-          if (useRight) {
-            w4.show(document.getElementById('rightlist')); // w4.show(document.getElementById("historylistRight"));
-          } else {
-            w4.show(d);
-          }
+          w4.show(document.getElementById('rightlist'));
         }
 
         function globalKeyUp (ev) {
@@ -1050,13 +902,10 @@
 
         function getLexAndWordFromURL (url) {
           const matches = url.match(/\/(lsj|ls|slater)\/?([^/]*)\/?$/);
-          let startLex = 'lsj';
-          let startWord = '';
-
-          if (matches && matches.length === 3 && setURLToWordId) {
-            startLex = matches[1];
-            startWord = matches[2];
-            return { lex: startLex, word: startWord };
+          if (matches && matches.length === 3) {
+            const urlLex = matches[1];
+            const urlWord = matches[2];
+            return { lex: urlLex, word: urlWord };
           }
           return null;
         }
@@ -1073,17 +922,12 @@
 
           w.cache = [];
           w.params.regex = 0;
-          w.params.lexicon = lex[0];
+          w.params.lexicon = globalLexica[0];
           w.params.tag_id = 0;
           w.params.root_id = 0;
-          // if (urlLexDef) {
-          //   w.params.wordid = urlLexDef.word;
-          // }
-
           w.conTopOffset = 98;
           w.con.style.top = w.conTopOffset + 'px';
-
-          document.getElementById('test1Entry').focus();
+          w.entry.focus();
 
           w.title.innerHTML = '<div style="margin-left:4px;width:' + (w.width - 18) + 'px;display:flex;"><BUTTON id="lexlabel0" class="lexitem" style="width:31%;" onclick="switchLex(0)">LSJ</BUTTON><BUTTON id="lexlabel1" class="lexitem" style="width:33%;" onclick="switchLex(1)">Slater</BUTTON><BUTTON id="lexlabel2" class="lexitem" style="width:36%;" onclick="switchLex(2)">Lewis &amp; Short</BUTTON></div><div style="margin-left:4px;width:' + (w.width - 18) + 'px;display:flex;"><BUTTON id="searchlabel0" class="lexitem" style="width:50%;" onclick="switchSearch(0)">Lemma</BUTTON><BUTTON id="searchlabel1" class="lexitem" style="width:50%;" onclick="switchSearch(1)">Full-text</BUTTON></div>';
 
@@ -1094,28 +938,32 @@
           // <input id="lexlabel2" onclick="switchLex(2)" aria-label="Lewis & Short" class="lexitem" type="radio" name="lex_radio" value="ls">Lewis &amp; Short</input></div>';
 
           w.mode = 'context';
-          w.onAddWord = null;// addWordToList;
-          w.onDeleteWord = null;// deleteTag;
-          w.onEnterActivate = null;// addWordToList;
+          w.onAddWord = null; // addWordToList;
+          w.onDeleteWord = null; // deleteTag;
+          w.onEnterActivate = null; // addWordToList;
           w.onClickActivate = onClickRow;
           w.onSelectionChanged = onClickRow;
         
-          switchSearch(0);
+          highlightSearch(0);
 
           const urlLexDef = getLexAndWordFromURL(window.location.pathname);
-          if (urlLexDef !== null) {
+          if (setURLToWordId && urlLexDef !== null) {
+            // maybe include list words in same xhr request so we don't have to query separately
+            // for now list is loaded in switchSearch(0)
             getDefFromWordid(urlLexDef.word, urlLexDef.lex, '', true, true);
             const lexNum = urlLexDef.lex === 'ls' ? 2 : urlLexDef.lex === 'slater' ? 1 : 0;
+            w.params.lexicon = globalLexica[lexNum];
             highlightLex(lexNum);
+            switchSearch(0);
           } else {
             let oldlex = getLocalStorageKey('lex');
-            oldlex = oldlex || lex[0];
+            oldlex = oldlex || globalLexica[0];
             if (urlLexDef) {
               oldlex = urlLexDef.lex;
             }
             let lexNum = 0;
-            for (; lexNum < lex.length; lexNum++) {
-              if (oldlex === lex[lexNum]) {
+            for (; lexNum < globalLexica.length; lexNum++) {
+              if (oldlex === globalLexica[lexNum]) {
                 switchLex(lexNum); // switchLex calls refresh() on wordtree
                 break;
               }
@@ -1164,18 +1012,23 @@
           const wt = lookupWT('test1');
           wt.entry.value = '';
 
+          highlightSearch(num);
+
+          if (num === 0) {
+            wt.refresh();
+          }
+        }
+
+        function highlightSearch (num) {
+          if (num === 0) {
+            fullText = false;
+          } else {
+            fullText = true;
+          }
           const a = document.querySelector('.searchselected');
           if (a) {
             a.classList.remove('searchselected');
           }
-
-          if (num === 0) {
-            fullText = false;
-            wt.refresh();
-          } else {
-            fullText = true;
-          }
-
           const b = document.getElementById('searchlabel' + num);
           if (b) {
             b.classList.add('searchselected');
@@ -1186,7 +1039,7 @@
           const wt = lookupWT('test1');
           if (wt) {
             wt.entry.value = '';
-            wt.params.lexicon = lex[num];
+            wt.params.lexicon = globalLexica[num];
             wt.refresh();
 
             if (wt.entry) {
@@ -1205,7 +1058,7 @@
           if (b) {
             b.classList.add('lexselected');
           }
-          setLocalStorageKey('lex', lex[num] ? lex[num] : lex[0]);
+          setLocalStorageKey('lex', globalLexica[num] ? globalLexica[num] : globalLexica[0]);
         }
 
         // eslint-disable-next-line no-unused-vars
@@ -1508,7 +1361,7 @@
           if (id === lastId) {
             if (supportsHTML5Storage()) {
               let lexi = 0;
-              if (lexicon === lex[0]) { lexi = 0; } else if (lexicon === lex[1]) { lexi = 1; } else { lexi = 2; }
+              if (lexicon === globalLexica[0]) { lexi = 0; } else if (lexicon === globalLexica[1]) { lexi = 1; } else { lexi = 2; }
 
               const hist = window.localStorage.getItem('history2');
               let tree = null;
@@ -2769,9 +2622,14 @@
           const values = [];
           let col = row.firstChild;
 
-          for (let i = 0; col; i++) {
+          let i = 0;
+          for (; col; i++) {
             const match = /.*Img/.exec(col.firstChild.id); // in case it has a + or - image
-            if (match) { values[i] = col.firstChild.nextSibling.nodeValue; } else { values[i] = col.firstChild.nodeValue; }
+            if (match) {
+              values[i] = col.firstChild.nextSibling.nodeValue;
+            } else {
+              values[i] = col.firstChild.nodeValue;
+            }
             col = col.nextSibling;
           }
           return values;

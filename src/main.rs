@@ -668,7 +668,7 @@ async fn hc(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 // }
 
 use actix_web::dev::Service;
-use actix_web::http::header::{ HeaderValue, CONTENT_SECURITY_POLICY };
+use actix_web::http::header::{HeaderValue, CONTENT_SECURITY_POLICY};
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {

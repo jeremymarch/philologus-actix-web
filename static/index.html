@@ -80,9 +80,11 @@
             font-size: 11pt;
         }
         :root {
-            --author-color: red;
+            --author-color: #ac1b1b;
             --bib-color: green;
-            --ref-color: orange;
+            --author-color-dark: #f45757;
+            --bib-color-dark: #3dd171;
+            --ref-color: darkorange;
             --gloss-color: black;
             --foreign-color: blue;
             --quote-color: blue;
@@ -128,16 +130,24 @@
             font-weight: bold;
         }
         .au {
-            color: red;
-            color: var(--author-color, red);
+            color: #ac1b1b;
+            color: var(--author-color, #ac1b1b);
+        }
+        .dark .au {
+            color: #f45757;
+            color: var(--author-color-dark, #f45757);
         }
         .bi {
             color: green;
             color: var(--bib-color, green);
         }
+        .dark .bi {
+            color: #3dd171;
+            color: var(--bib-color-dark, #3dd171);
+        }
         .ti {
-            color: orange;
-            color: var(--ref-color, orange);
+            color: darkorange;
+            color: var(--ref-color, darkorange);
         }
         .biblLink {
             color: green;

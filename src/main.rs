@@ -77,6 +77,13 @@ struct QueryResponse {
     arr_options: Vec<(String, u32)>,
 }
 
+struct QueryResult {
+    seq: u32,
+    vlast_page_up: u8,
+    vlast_page: u8,
+    rows: Vec<(String, u32)>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct DefResponse {
     #[serde(
@@ -281,6 +288,93 @@ async fn full_text_query(
     Ok(HttpResponse::Ok().json(res))
 }
 
+//remove any diacritics and make lowercase
+fn sanitize_query(query: &str) -> String {
+    query
+        .nfd()
+        .filter(|x| {
+            !unicode_normalization::char::is_combining_mark(*x)
+                && *x != '´'
+                && *x != '`'
+                && *x != '῀'
+        })
+        .collect::<String>()
+        .to_lowercase()
+        .replace('ς', "σ")
+}
+
+async fn query_words(
+    db: &SqlitePool,
+    word_id: Option<String>,
+    query: &str,
+    table: &str,
+    limit: u32,
+    page: i32,
+) -> Result<QueryResult, AWError> {
+    let seq = if word_id.is_none() {
+        let query = sanitize_query(query);
+        get_seq_by_prefix(db, table, &query).await.unwrap()
+    } else {
+        let decoded_word = percent_decode_str(word_id.as_ref().unwrap())
+            .decode_utf8()
+            .map_err(map_utf8_error)?;
+        get_seq_by_word(db, table, &decoded_word).await.unwrap()
+    };
+
+    let mut before_rows = vec![];
+    let mut after_rows = vec![];
+    if page <= 0 {
+        before_rows = get_before(db, table, seq, page, limit).await.unwrap();
+        if page == 0 {
+            // only reverse if page 0. if < 0, each row is inserted under top
+            // of container one-by-one in order
+            before_rows.reverse();
+        }
+    }
+    if page >= 0 {
+        after_rows = get_equal_and_after(db, table, seq, page, limit)
+            .await
+            .unwrap();
+    }
+
+    //only check page 0 or page less than 0
+    let vlast_page_up = if before_rows.len() < limit as usize && page <= 0 {
+        1
+    } else {
+        0
+    };
+    //only check page 0 or page greater than 0
+    let vlast_page = if after_rows.len() < limit as usize && page >= 0 {
+        1
+    } else {
+        0
+    };
+
+    //strip any numbers from end of string
+    let re = Regex::new(r"[0-9]").unwrap();
+    let result_rows_stripped = [before_rows, after_rows]
+        .concat()
+        .into_iter()
+        .map(|mut row| {
+            row.0 = re.replace_all(&row.0, "").to_string();
+            row
+        })
+        .collect();
+
+    let res = QueryResult {
+        seq: if query.is_empty() && page == 0 && word_id.is_none() {
+            0
+        } else {
+            seq
+        },
+        vlast_page_up,
+        vlast_page,
+        rows: result_rows_stripped,
+    };
+
+    Ok(res)
+}
+
 async fn philologus_words(
     (info, req): (web::Query<QueryRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
@@ -290,86 +384,29 @@ async fn philologus_words(
 
     let table = get_long_lex(query_params.lexicon.as_str());
 
-    let seq = if query_params.wordid.is_none() {
-        //remove any diacritics and make lowercase
-        //println!("1: {}",query_params.w);
-        let q = query_params
-            .w
-            .nfd()
-            .filter(|x| {
-                !unicode_normalization::char::is_combining_mark(*x)
-                    && *x != '´'
-                    && *x != '`'
-                    && *x != '῀'
-            })
-            .collect::<String>()
-            .to_lowercase()
-            .replace('ς', "σ");
-        //println!("2: {}",q);
-        get_seq_by_prefix(db, table, &q).await.unwrap()
-    } else {
-        let decoded_word = percent_decode_str(query_params.wordid.as_ref().unwrap())
-            .decode_utf8()
-            .map_err(map_utf8_error)?;
-        get_seq_by_word(db, table, &decoded_word).await.unwrap()
-    };
-
-    let mut before_rows = vec![];
-    let mut after_rows = vec![];
-    if info.page <= 0 {
-        before_rows = get_before(db, table, seq, info.page, info.n).await.unwrap();
-        if info.page == 0 {
-            //only reverse if page 0. if < 0, each row is inserted under top of container one-by-one in order
-            before_rows.reverse();
-        }
-    }
-    if info.page >= 0 {
-        after_rows = get_equal_and_after(db, table, seq, info.page, info.n)
-            .await
-            .unwrap();
-    }
-
-    //only check page 0 or page less than 0
-    let vlast_page_up = if before_rows.len() < info.n as usize && info.page <= 0 {
-        1
-    } else {
-        0
-    };
-    //only check page 0 or page greater than 0
-    let vlast_page = if after_rows.len() < info.n as usize && info.page >= 0 {
-        1
-    } else {
-        0
-    };
-
-    let result_rows = [before_rows, after_rows].concat();
-
-    //strip any numbers from end of string
-    let re = Regex::new(r"[0-9]").unwrap();
-    let result_rows_stripped = result_rows
-        .into_iter()
-        .map(|mut row| {
-            row.0 = re.replace_all(&row.0, "").to_string();
-            row
-        })
-        .collect();
+    let query_result = query_words(
+        db,
+        query_params.wordid.clone(),
+        &query_params.w,
+        table,
+        info.n,
+        info.page,
+    )
+    .await
+    .unwrap();
 
     let res = QueryResponse {
-        select_id: if query_params.w.is_empty() && info.page == 0 && query_params.wordid.is_none() {
-            0
-        } else {
-            seq
-        },
+        select_id: query_result.seq,
         error: "".to_owned(),
         wtprefix: info.idprefix.clone(),
         nocache: if query_params.wordid.is_none() { 0 } else { 1 }, //prevents caching when queried by wordid in url
         container: format!("{}Container", info.idprefix),
         request_time: info.request_time,
         page: info.page,
-        last_page: vlast_page,
-        lastpage_up: vlast_page_up,
+        last_page: query_result.vlast_page,
+        lastpage_up: query_result.vlast_page_up,
         query: query_params.w.to_owned(),
-        arr_options: result_rows_stripped,
+        arr_options: query_result.rows,
     };
 
     Ok(HttpResponse::Ok().json(res))

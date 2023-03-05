@@ -81,10 +81,11 @@
         }
         :root {
             --author-color: #ac1b1b;
-            --bib-color: green;
+            --bib-color: #0c640c;
             --author-color-dark: #f45757;
             --bib-color-dark: #3dd171;
-            --ref-color: darkorange;
+            --ref-color: #8b22a0;
+            --ref-color-dark:darkorange
             --gloss-color: black;
             --foreign-color: blue;
             --quote-color: blue;
@@ -138,20 +139,28 @@
             color: var(--author-color-dark, #f45757);
         }
         .bi {
-            color: green;
-            color: var(--bib-color, green);
+            color: #0c640c;
+            color: var(--bib-color, #0c640c);
         }
         .dark .bi {
             color: #3dd171;
             color: var(--bib-color-dark, #3dd171);
         }
         .ti {
+            color: #8b22a0;
+            color: var(--ref-color, #8b22a0);
+        }
+        .dark .ti {
             color: darkorange;
-            color: var(--ref-color, darkorange);
+            color: var(--ref-color-dark, darkorange);
         }
         .biblLink {
-            color: green;
-            color: var(--bib-color, green);
+            color: #0c640c;
+            color: var(--bib-color, #0c640c);
+        }
+        .dark .biblLink {
+            color: #3dd171;
+            color: var(--bib-color-dark, #3dd171);
         }
         .attrlink {
             color: blue;

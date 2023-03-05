@@ -667,6 +667,9 @@ async fn hc(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 //     }
 // }
 
+use actix_web::dev::Service;
+use actix_web::http::header::{ HeaderValue, CONTENT_SECURITY_POLICY };
+
 #[actix_web::main]
 async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "trace");
@@ -743,6 +746,15 @@ async fn main() -> io::Result<()> {
             //         .limit(262_144),
             // )
             .app_data(web::PayloadConfig::default().limit(262_144))
+            .wrap_fn(|req, srv| {
+                let fut = srv.call(req);
+                async {
+                    let mut res = fut.await?;
+                    res.headers_mut()
+                        .insert(CONTENT_SECURITY_POLICY, HeaderValue::from_static("script-src 'nonce-2726c7f26c' 'unsafe-inline'; object-src 'none'; base-uri 'none'"));
+                    Ok(res)
+                }
+            })
             //.wrap(error_handlers)
             .service(web::resource("/{lex}/query").route(web::get().to(philologus_words)))
             .service(web::resource("/{lex}/item").route(web::get().to(philologus_defs)))

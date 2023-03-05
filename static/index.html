@@ -10,7 +10,7 @@
         content="Philologus is a fast, streamlined interface to the online Greek and Latin lexica hosted by the Perseus Project." />
     <meta name="keywords"
         content="Liddell Scott and Jones, Lewis and Short, Slater's Lexicon to Pindar, Perseus Project, Greek, Classical Greek, Ancient Greek, Latin, lexica, lexicon, dictionary, dendrea.org" />
-    <script type="text/javascript">
+    <script nonce="2726c7f26c" type="text/javascript">
         function setTheme () {
           const mode = window.localStorage.getItem('mode'); // use mode to override system dark mode
           if ((window.matchMedia('(prefers-color-scheme: dark)').matches || mode === 'dark') && mode !== 'light') {
@@ -631,7 +631,7 @@
     </style>
 </head>
 
-<body onload="start()">
+<body>
     <div id="leftlist"></div>
     <div id="rightlist"></div>
     <div id="defbody">
@@ -640,7 +640,7 @@
     <div id="logocontainer">
         <div id="logo">philolog.us</div>
         <div id="hamburgercontainer">
-            <svg id="hamburger" onclick="toggleSettings()" viewBox="0 0 120 120">
+            <svg id="hamburger" viewBox="0 0 120 120">
                 <rect x="10" y="30" width="100" height="12"></rect>
                 <rect x="10" y="56" width="100" height="12"></rect>
                 <rect x="10" y="82" width="100" height="12"></rect>
@@ -649,8 +649,10 @@
     </div>
     <div id="mesg"></div>
 
-    <script type="text/javascript">
+    <script nonce="2726c7f26c" type="text/javascript">
         'use strict';
+
+        window.addEventListener('load', start, false);
 
         const setURLToWordId = true;
         // https://github.com/le717/microajax
@@ -888,7 +890,6 @@
           return null;
         }
 
-        // eslint-disable-next-line no-unused-vars
         function start () {
           const winHeight = getViewportHeight(window);
           if (!getLocalStorageKey('filter')) {
@@ -907,7 +908,7 @@
           wt.con.style.top = wt.conTopOffset + 'px';
           wt.entry.focus();
 
-          wt.title.innerHTML = '<div style="margin-left:4px;width:' + (wt.width - 18) + 'px;display:flex;"><BUTTON id="lexlabel0" class="lexitem" style="width:31%;" onclick="switchLex(0)">LSJ</BUTTON><BUTTON id="lexlabel1" class="lexitem" style="width:33%;" onclick="switchLex(1)">Slater</BUTTON><BUTTON id="lexlabel2" class="lexitem" style="width:36%;" onclick="switchLex(2)">Lewis &amp; Short</BUTTON></div><div style="margin-top:2px;margin-left:4px;width:' + (wt.width - 18) + 'px;display:flex;"><BUTTON id="searchlabel0" class="lexitem" style="width:50%;" onclick="switchSearch(0)">Lemma</BUTTON><BUTTON id="searchlabel1" class="lexitem" style="width:50%;" onclick="switchSearch(1)">Full-text</BUTTON></div>';
+          wt.title.innerHTML = '<div style="margin-left:4px;width:' + (wt.width - 18) + 'px;display:flex;"><BUTTON id="lexlabel0" class="lexitem" style="width:31%;">LSJ</BUTTON><BUTTON id="lexlabel1" class="lexitem" style="width:33%;">Slater</BUTTON><BUTTON id="lexlabel2" class="lexitem" style="width:36%;">Lewis &amp; Short</BUTTON></div><div style="margin-top:2px;margin-left:4px;width:' + (wt.width - 18) + 'px;display:flex;"><BUTTON id="searchlabel0" class="lexitem" style="width:50%;">Lemma</BUTTON><BUTTON id="searchlabel1" class="lexitem" style="width:50%;">Full-text</BUTTON></div>';
 
           // https://stackoverflow.com/questions/16242980/making-radio-buttons-look-like-buttons-instead
           // let title = '<div style="margin-left:4px;width:' + (w.width - 18) + 'px;display:flex;">\
@@ -956,7 +957,30 @@
             document.getElementById('defbody').style.marginRight = '1rem';
           }
 
-          window.onresize = onResize; // $(window).resize(onResize);
+          // add event listeners
+
+          document.getElementById('hamburger')
+            .addEventListener('click', toggleSettings, false);
+
+          // onclick listeners for lexitem buttons
+          const lexitems = document.querySelectorAll('.lexitem');
+          for (let i = 0; i < lexitems.length; i++) {
+            lexitems[i].addEventListener('click', function () {
+              const match = /([a-z]+)([0-9])/.exec(this.id);
+              if (match && match.length === 3) {
+                const intValue = parseInt(match[2]);
+                if (!isNaN(intValue)) {
+                  if (match[1] === 'lexlabel') {
+                    switchLex(intValue);
+                  } else if (match[1] === 'searchlabel') {
+                    switchSearch(intValue);
+                  }
+                }
+              }
+            }, false);
+          }
+
+          window.onresize = onResize;
           onResize();
         }
 
@@ -965,12 +989,6 @@
 
           const wt = lookupWT('test1');
           wt.setHeight(height - 24);
-
-          // let defbody = document.getElementById("defbody");
-          // defbody.style.height = h - 80 + "px";
-
-          // let lsjdef = document.getElementById("lsjdef");
-          // lsjdef.style.height = (h - 110) + "px";
 
           const rl = document.getElementById('rightlist');
           if (rl) {
@@ -1038,30 +1056,20 @@
           setLocalStorageKey('lex', globalLexica[num] ? globalLexica[num] : globalLexica[0]);
         }
 
-        // eslint-disable-next-line no-unused-vars
         function contact () {
           const about = "Philolog.us first launched in June 2005 shortly after the Perseus Digital Library began offering access to its collections via web services. One of the primary aims has been to offer a streamlined, user-friendly interface to the lexica in the Perseus library.<br/><br/><br/>Thanks to the <a class='storelink' href='http://www.perseus.tufts.edu'>Perseus Digital Library</a> for digitizing and make available these texts.    Thanks also to <a class='storelink' href='https://logeion.uchicago.edu'>Logeion</a> for making many corrections and improvements to them. <br/><br/>Jeremy March<br/><a class='storelink' href='mailto:jmarch@gradcenter.cuny.edu'>jmarch@gradcenter.cuny.edu</a>";
           document.getElementById('lsjdef').innerHTML = "<div style='text-align:left;margin:10px;'>" + about + '</div>';
         }
 
-        // eslint-disable-next-line no-unused-vars
         function showiPhone () {
           const news = "Available for iPhone/iPad app in the <a href='https://itunes.apple.com/us/app/philolog.us/id622324932?mt=8' class='storelink'>App store</a>.<br><br><br>Available for Android in the <a href='https://play.google.com/store/apps/details?id=com.philolog.philologus&hl=en' class='storelink'>Google Play store</a>.";
           document.getElementById('lsjdef').innerHTML = "<div style='text-align:center;font-size:16pt;padding-top:60px;'>" + news + '</div>';
         }
 
         // eslint-disable-next-line no-unused-vars
-        function config () {
-          window.location = 'configure.html';
-        }
-
-        // eslint-disable-next-line no-unused-vars
-        function closeMessage () {
-          const a = document.getElementById('message1');
-          if (a) {
-            a.style.display = 'none';
-          }
-        }
+        // function config () {
+        //   window.location = 'configure.html';
+        // }
 
         const la = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
         const gr = ['α', 'β', 'ψ', 'δ', 'ε', 'φ', 'γ', 'η', 'ι', 'ξ', 'κ', 'λ', 'μ', 'ν', 'ο', 'π', '', 'ρ', 'σ', 'τ', 'θ', 'ω', 'ς', 'χ', 'υ', 'ζ', 'Α', 'Β', 'Ψ', 'Δ', 'Ε', 'Φ', 'Γ', 'Η', 'Ι', 'Ξ', 'Κ', 'Λ', 'Μ', 'Ν', 'Ο', 'Π', '', 'Ρ', 'Σ', 'Τ', 'Θ', 'Ω', 'Σ', 'Χ', 'Υ', 'Ζ'];
@@ -1122,7 +1130,6 @@
           return null;
         }
 
-        // eslint-disable-next-line no-unused-vars
         function toggleSettings () {
           let settingsDiv = document.getElementById('settingsdiv');
           if (!settingsDiv) {
@@ -1130,7 +1137,7 @@
             settingsDiv.id = 'settingsdiv';
             settingsDiv.classList.add('settings');
             settingsDiv.style.display = 'block';
-            settingsDiv.innerHTML = "Settings<br><ul><li><div tabindex='0' onclick='contact()' class='menulink'>about</div></li><li><div tabindex='0' onclick='showiPhone()' class='menulink'>iOS/Android app</div></li><!--<li><div tabindex='0' onclick='config()' class='menulink'>configure</div></li>--><li><div tabindex='0' onclick='toggleHistoryChooser()' class='menulink'>show/hide history</div></li><li><div tabindex='0' style='height:70px;'>dark mode: <div style='text-align:right;float:right;padding:0px;border:none;'><label for='darkModeSystem'>system</label> <input id='darkModeSystem' type='radio' name='darkmode' onclick='darkModeClick(this);' value='system'/><br><label for='darkModeDark'>dark</label> <input id='darkModeDark' type='radio' name='darkmode' onclick='darkModeClick(this);' value='dark'/><br><label for='darkModeLight'>light</label><input id='darkModeLight' type='radio' name='darkmode' onclick='darkModeClick(this);' value='light'/></div></div></li></ul>";
+            settingsDiv.innerHTML = "Settings<br><ul><li><div id='aboutButton' tabindex='0' class='menulink'>about</div></li><li><div id='iOSButton' tabindex='0' class='menulink'>iOS/Android app</div></li><!--<li><div id='configureButton' tabindex='0' class='menulink'>configure</div></li>--><li><div id='toggleHistoryButton' tabindex='0' class='menulink'>show/hide history</div></li><li><div tabindex='0' style='height:70px;'>dark mode: <div style='text-align:right;float:right;padding:0px;border:none;'><label for='darkModeSystem'>system</label> <input id='darkModeSystem' type='radio' name='darkmode' value='system'/><br><label for='darkModeDark'>dark</label> <input id='darkModeDark' type='radio' name='darkmode' value='dark'/><br><label for='darkModeLight'>light</label><input id='darkModeLight' type='radio' name='darkmode' value='light'/></div></div></li></ul>";
             const noclick = document.createElement('div');
             noclick.id = 'backdrop';
             noclick.onclick = function () {
@@ -1139,6 +1146,14 @@
             };
             document.body.appendChild(noclick);
             document.body.appendChild(settingsDiv);
+
+            document.getElementById('aboutButton').addEventListener('click', contact, false);
+            document.getElementById('iOSButton').addEventListener('click', showiPhone, false);
+            // document.getElementById('configureButton').addEventListener('click', config, false);
+            document.getElementById('toggleHistoryButton').addEventListener('click', toggleHistoryChooser, false);
+            document.getElementById('darkModeSystem').addEventListener('click', darkModeClick, false);
+            document.getElementById('darkModeDark').addEventListener('click', darkModeClick, false);
+            document.getElementById('darkModeLight').addEventListener('click', darkModeClick, false);
           } else if (settingsDiv.style.display === 'block') {
             document.querySelector('#backdrop').style.display = 'none';
             settingsDiv.style.display = 'none';
@@ -1161,13 +1176,12 @@
           }
         }
 
-        // eslint-disable-next-line no-unused-vars
-        function darkModeClick (radio) {
-          switch (radio.value) {
-            case 'dark':
+        function darkModeClick () {
+          switch (this.id) {
+            case 'darkModeDark':
               window.localStorage.setItem('mode', 'dark');
               break;
-            case 'light':
+            case 'darkModeLight':
               window.localStorage.setItem('mode', 'light');
               break;
             default:
@@ -2555,7 +2569,6 @@
 
           function centerSelectedRow () {
             if (this.selectedRow) {
-              // scroll to middle
               this.con.scrollTop = this.selectedRow.offsetTop - (this.con.offsetHeight / 2) + 30;
             }
           }

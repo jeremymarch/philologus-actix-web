@@ -74,14 +74,14 @@ struct QueryResponse {
     lastpage_up: u8,
     query: String,
     #[serde(rename(serialize = "arrOptions"), rename(deserialize = "arrOptions"))]
-    arr_options: Vec<(u32, String,)>,
+    arr_options: Vec<(u32, String)>,
 }
 
 struct QueryResult {
     seq: u32,
     vlast_page_up: u8,
     vlast_page: u8,
-    rows: Vec<(u32, String,)>,
+    rows: Vec<(u32, String)>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

@@ -1316,7 +1316,7 @@
 
           if (vAddToBackHistory) {
             if (window.history && typeof (window.history.pushState) === 'function') {
-              // add lexicon and word to path
+              // add lexicon and word to url path and thus to history: i.e. you can navigate back through history
               if (setURLToWordId) {
                 window.history.pushState([id, lexicon], wordid, getPathBeforeLexicon(window.location.pathname) + lexicon + '/' + wordid);
               }

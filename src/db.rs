@@ -178,16 +178,16 @@ pub async fn get_before(
     seq: u32,
     page: i32,
     limit: u32,
-) -> Result<Vec<(u32, String,)>, sqlx::Error> {
+) -> Result<Vec<(u32, String)>, sqlx::Error> {
     info!(seq, table, page, limit, "get_before()");
 
     let query = "SELECT seq, word FROM words WHERE seq < $1 AND lexicon = $2 ORDER BY seq DESC LIMIT $3, $4;";
-    let res: Result<Vec<(u32, String,)>, sqlx::Error> = sqlx::query(query)
+    let res: Result<Vec<(u32, String)>, sqlx::Error> = sqlx::query(query)
         .bind(seq)
         .bind(table)
         .bind(-page * limit as i32)
         .bind(limit)
-        .map(|rec: SqliteRow| (rec.get("seq"), rec.get("word"),))
+        .map(|rec: SqliteRow| (rec.get("seq"), rec.get("word")))
         .fetch_all(pool)
         .await;
 
@@ -200,17 +200,17 @@ pub async fn get_equal_and_after(
     seq: u32,
     page: i32,
     limit: u32,
-) -> Result<Vec<(u32, String,)>, sqlx::Error> {
+) -> Result<Vec<(u32, String)>, sqlx::Error> {
     info!(seq, table, page, limit, "get_after()");
 
     let query =
         "SELECT seq, word FROM words WHERE seq >= $1 AND lexicon = $2 ORDER BY seq LIMIT $3, $4;";
-    let res: Result<Vec<(u32, String,)>, sqlx::Error> = sqlx::query(query)
+    let res: Result<Vec<(u32, String)>, sqlx::Error> = sqlx::query(query)
         .bind(seq)
         .bind(table)
         .bind(page * limit as i32)
         .bind(limit)
-        .map(|rec: SqliteRow| (rec.get("seq"), rec.get("word"),))
+        .map(|rec: SqliteRow| (rec.get("seq"), rec.get("word")))
         .fetch_all(pool)
         .await;
 

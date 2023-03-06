@@ -1084,10 +1084,10 @@
           }
         }
 
-        function transliterateKey (evt) {
-          const source = evt.target || evt.srcElement;
+        function transliterateKey (ev) {
+          const source = ev.target || ev.srcElement;
           const val = source.value;
-          const charCode = typeof (evt.which) === 'number' ? evt.which : evt.keyCode;
+          const charCode = typeof (ev.which) === 'number' ? ev.which : ev.keyCode;
 
           if (charCode && charCode > 64 && charCode < 123 && !fullText) { // letter
             const start = source.selectionStart;
@@ -1521,10 +1521,9 @@
           this.lastPageUp = false;
           this.blockScroll = false; // fixes a bug in webkit where next page was requested while loading 0 page
 
-          const d = document.createElement('div');
-          this.div = d;
-          d.id = idPrefix;
-          d.classList.add('wordtree');
+          this.div = document.createElement('div');
+          this.div.id = idPrefix;
+          this.div.classList.add('wordtree');
 
           const ti = document.createElement('div');
           ti.style.position = 'absolute';
@@ -1606,12 +1605,9 @@
           con.style.width = this.width - 20 + 'px';
 
           /*
-          if (con.addEventListener) {
-                  con.addEventListener('DOMMouseScroll', onMouseWheel, false);
-                  con.addEventListener("mousewheel", onMouseWheel, false);
-          }
-          else if (con.attachEvent) {
-                  con.attachEvent("onmousewheel", onMouseWheel);
+          if (typeof (con.addEventListener) === 'function') {
+            con.addEventListener('DOMMouseScroll', onMouseWheel, false);
+            con.addEventListener("mousewheel", onMouseWheel, false);
           }
           */
 
@@ -1620,8 +1616,8 @@
             (navigator.maxTouchPoints && navigator.maxTouchPoints > 1)) {
             con.ontouchstart = onTouch;
           }
-          const wt = this;
-          d.onclick = function () { if (wt.entry && wt.autofocus) wt.entry.focus(); };
+          const wt = this; // allows value to be captured by closure in next line
+          this.div.onclick = function () { if (wt.entry && wt.autofocus) wt.entry.focus(); };
           this.div.appendChild(con);
 
           this.con = con;
@@ -1662,11 +1658,8 @@
 
           function clearWordTree () {
             const con = this.con;
-            let a = con.firstChild;
-            while (a) {
-              const b = a.nextSibling;
-              con.removeChild(a);
-              a = b;
+            while (con.hasChildNodes()) {
+              con.removeChild(con.lastChild);
             }
             this.selectedRow = null;
             this.rowCount = 0;

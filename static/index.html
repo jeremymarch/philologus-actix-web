@@ -2191,12 +2191,14 @@
             }
 
             if (returnObj.parentid) {
+              const fragment = document.createDocumentFragment(); // this isn't tested here yet
               let i = 0;
               for (; i < len; i++) {
                 // insertBefore, roots, and selectedId are both false because this function is only for inserting
                 // non-top-level items lazily
-                printTree(wt, con, arrOptions[i], 1, false, false, -1);
+                printTree(wt, fragment, arrOptions[i], 1, false, false, -1);
               }
+              con.append(fragment);
 
               if (returnObj.selectId) {
                 const node = document.getElementById(returnObj.selectId);
@@ -2223,14 +2225,19 @@
                 wt.clearWordTree();
               }
 
+              const fragment = document.createDocumentFragment();
+              let insertBefore = false;
+              if (returnedPage < 0) {
+                insertBefore = true;
+              }
               let i = 0;
               for (; i < len; i++) {
-                let insertBefore = false;
-                if (returnedPage < 0) {
-                  insertBefore = true;
-                }
-
-                printTree(wt, con, arrOptions[i], 0, insertBefore, returnObj.roots, returnObj.selectId);
+                printTree(wt, fragment, arrOptions[i], 0, insertBefore, returnObj.roots, returnObj.selectId);
+              }
+              if (insertBefore) {
+                con.prepend(fragment);
+              } else {
+                con.append(fragment);
               }
 
               if (wt && returnObj.selectId === 0) {
@@ -2270,7 +2277,7 @@
 
             // topLevelTreeRow tells us to indent rows with no children the width of the plus sign,
             // so they line up with the rows that do have children.
-            function printRow (wt, con, rowItem, level, insertAtTop, topLevelTreeRow, selectedId) {
+            function printRow (wt, fragment, rowItem, level, insertAtTop, topLevelTreeRow, selectedId) {
               const node = document.createElement('div');
               node.classList.add('nodestyle');
               node.setAttribute('rowid', wt.rowCount + wt.idPrefix);
@@ -2315,8 +2322,8 @@
                 wt.selectedRowId = node.id;
               }
 
-              const before = con.firstChild;
-              if (insertAtTop && before) { con.insertBefore(node, before); } else { con.appendChild(node); }
+              const before = fragment.firstChild;
+              if (insertAtTop && before) { fragment.insertBefore(node, before); } else { fragment.appendChild(node); }
             }
 
             function openCloseCon (ev) {
@@ -2368,19 +2375,20 @@
               if (wt.entry && wt.autofocus) { wt.entry.focus(); }
             }
 
-            function printTree (wt, con, treeRow, level, insertBefore, roots, selectedId) {
-              printRow(wt, con, treeRow, level, insertBefore, roots, selectedId);
+            function printTree (wt, fragment, treeRow, level, insertBefore, roots, selectedId) {
+              printRow(wt, fragment, treeRow, level, insertBefore, roots, selectedId);
 
+              // if node has children create a container and recursively call printTree()
               if (treeRow.h && treeRow.c) {
-                let node2 = document.createElement('div');
-                node2.style.position = 'relative';
-                if (!treeRow.o) { node2.style.display = 'none'; }
-                node2 = con.appendChild(node2);
-                node2.id = node2.previousSibling.id + 'Children';
+                let node = document.createElement('div');
+                node.style.position = 'relative';
+                if (!treeRow.o) { node.style.display = 'none'; }
+                node = fragment.appendChild(node);
+                node.id = node.previousSibling.id + 'Children';
 
                 const treeRowLen = treeRow.c.length;
                 for (let i = 0; i < treeRowLen; i++) {
-                  printTree(wt, node2, treeRow.c[i], level + 1, insertBefore, roots, selectedId);
+                  printTree(wt, node, treeRow.c[i], level + 1, insertBefore, roots, selectedId);
                 }
               }
             }

@@ -739,37 +739,35 @@
         function procFTResponse (str, status) {
           const wt = lookupWT('test1');
           wt.loading.style.display = 'none';
-          let returnObj = null;
+          let responseObj = null;
           try {
-            returnObj = JSON.parse(str);
+            responseObj = JSON.parse(str);
           } catch (e) { if (debug) console.log(e.message + '\n' + str); return; };
 
-          if (!returnObj) {
+          if (!responseObj) {
             return;
           }
 
           let rows = '';
           let i = 0;
-          for (; i < returnObj.ftresults.length; i++) {
+          for (; i < responseObj.ftresults.length; i++) {
             let lex = '';
-            if (returnObj.ftresults[i].lex === 'greatscott') {
+            if (responseObj.ftresults[i].lex === 'greatscott') {
               lex = 'LSJ';
-            } else if (returnObj.ftresults[i].lex === 'latindico') {
+            } else if (responseObj.ftresults[i].lex === 'latindico') {
               lex = 'LS';
-            } else if (returnObj.ftresults[i].lex === 'pindar_dico') {
+            } else if (responseObj.ftresults[i].lex === 'pindar_dico') {
               lex = 'Slater';
             } else {
-              lex = returnObj.ftresults[i].lex;
+              lex = responseObj.ftresults[i].lex;
             }
 
-            rows += "<div class='ftrow'><p class='ftrowhead'><a class='ftrowheaderlink' href='javascript:getDef(" + returnObj.ftresults[i].id + ', "' + lex.toLowerCase() + "\", false, true)'>" + lex + ': ' + returnObj.ftresults[i].lemma + '</a></p>' + returnObj.ftresults[i].def + '</div>';
+            rows += "<div class='ftrow'><p class='ftrowhead'><a class='ftrowheaderlink' href='javascript:getDef(" +
+              responseObj.ftresults[i].id + ', "' + lex.toLowerCase() + "\", false, true)'>" +
+              lex + ': ' + responseObj.ftresults[i].lemma + '</a></p>' + responseObj.ftresults[i].def + '</div>';
           }
 
           const con = document.getElementById('lsjdef');
-          // if (data.errorMesg) {
-          //     con.innerHTML = "<div id='lsj222' style='padding:40px 18px;text-align:center;'>" + data.errorMesg + "</div>";
-          //     return;
-          // }
           con.innerHTML = "<div id='lsj222' style='padding:10px 18px;'><div style='font-size:14pt;margin-top:6px;margin-bottom:4px;'>Full-text search results: </div><div style='margin-bottom:24px;'></div>" + rows + '</div>'; // the firstChild is the CDATA node
           con.scrollTo(0, 0);
         }
@@ -838,13 +836,10 @@
           w4.div.style.marginTop = '0px';
 
           w4.title.innerHTML = '<div style="width:' + (w4.width - 14) + 'px;"><div class="lexitem">History</div></div>';
-          w4.url = 'historyserv.php';
+          w4.url = '';
           w4.entry.style.left = '-4000px';
           w4.onSelectionChanged = historyChooserOnSelect;
-
           w4.onClickActivate = historyChooserOnSelect;
-          w4.onAddWord = null;
-          w4.onDeleteWord = null; // deleteTag;
 
           w4.show(document.getElementById('rightlist'));
         }
@@ -882,12 +877,8 @@
         }
 
         function onClickRow (lexicon, cols) {
-          // console.log("get def: " + cols[1] + ", " + lexicon);
           getDef(cols[0], lexicon, '', false, true);
         }
-
-        document.onkeydown = globalKeyDown;
-        document.onkeyup = globalKeyUp;
 
         function getLexAndWordFromURL (url) {
           const matches = url.match(/\/(lsj|ls|slater)\/?([^/]*)\/?$/);
@@ -925,10 +916,6 @@
           // <input id="lexlabel1" onclick="switchLex(1)" aria-label="Slater" class="lexitem" type="radio" name="lex_radio" value="slater">Slater</input>\
           // <input id="lexlabel2" onclick="switchLex(2)" aria-label="Lewis & Short" class="lexitem" type="radio" name="lex_radio" value="ls">Lewis &amp; Short</input></div>';
 
-          wt.mode = 'context';
-          wt.onAddWord = null;
-          wt.onDeleteWord = null;
-          wt.onEnterActivate = null;
           wt.onClickActivate = onClickRow;
           wt.onSelectionChanged = onClickRow;
         
@@ -985,6 +972,9 @@
               }
             }, false);
           }
+
+          document.onkeydown = globalKeyDown;
+          document.onkeyup = globalKeyUp;
 
           window.onresize = onResize;
           onResize();
@@ -1244,18 +1234,12 @@
         let lastId = -1;
         function setWord (json, status) {
           let data = null;
-          // str = resp2;
-          // alert(json);
           try {
-            if (typeof JSON !== 'undefined') {
-              data = JSON.parse(json);
-            } else {
-              return; // data = eval("(" + json + ")");
-            }
+            data = JSON.parse(json);
           } catch (e) {
             // if (debug) console.log(e.message + "\n" + json);
             return;
-          };
+          }
 
           if (!data) {
             return;
@@ -1299,7 +1283,7 @@
           attr += '</div>';
           // attr += "</div>";
 
-          con.innerHTML = "<div id='lsj222'    style='padding:10px 18px;'><div style='font-size:20pt;margin-bottom:16px;'>" + word + "</div><div style='margin-bottom:24px;'>" + pps + '</div>' + def + attr + '</div>'; // the firstChild is the CDATA node
+          con.innerHTML = "<div id='lsj222' style='padding:10px 18px;'><div style='font-size:20pt;margin-bottom:16px;'>" + word + "</div><div style='margin-bottom:24px;'>" + pps + '</div>' + def + attr + '</div>'; // the firstChild is the CDATA node
           con.scrollTo(0, 0);
 
           if (useDefCache) {
@@ -1308,7 +1292,6 @@
 
           if (vSaveHistory) {
             lastId = id;
-            // setTimeout("saveHistory('" + lexicon + "'," + id + ", '" + word + "')", 1500);
             setTimeout(function () {
               saveHistory(lexicon, id, word);
             }, 1500);
@@ -1316,7 +1299,8 @@
 
           if (vAddToBackHistory) {
             if (window.history && typeof (window.history.pushState) === 'function') {
-              // add lexicon and word to url path and thus to history: i.e. you can navigate back through history
+              // add lexicon and word to url path and thus to history:
+              // i.e. you can navigate back through history
               if (setURLToWordId) {
                 window.history.pushState([id, lexicon], wordid, getPathBeforeLexicon(window.location.pathname) + lexicon + '/' + wordid);
               }
@@ -1341,7 +1325,6 @@
               }
             }
           }
-          // console.log(phPath);
           return phPath;
         }
 
@@ -1354,7 +1337,6 @@
         }
 
         function saveHistory (lexicon, id, word) {
-          // alert(lexicon + ", " + id);
           if (id === lastId) {
             if (supportsHTML5Storage()) {
               let lexi = 0;
@@ -1413,7 +1395,6 @@
         function defCheckCache (lexicon, queryKey) {
           queryKey = lexicon + queryKey;
           if (defCache && defCache[queryKey]) {
-            // alert("here");
             setWord(defCache[queryKey].str);
             return true;
           } else {
@@ -1493,7 +1474,7 @@
 
           /*
             At first we were using the system default rate for scrolling when
-            the arrow keys were held down.    It might be more consistent across
+            the arrow keys were held down. It might be more consistent across
             systems and smoother to use a timer to control how fast scrolling
             occurs.
             */
@@ -1785,8 +1766,6 @@
           }
 
           function wordtreeOnUp (ev) {
-            if (!ev) { ev = window.event; }
-
             const key = ev.keyCode;
 
             const match = /(.*)Entry/.exec(this.id);
@@ -2103,7 +2082,7 @@
 
             try {
               returnObj = JSON.parse(str);
-            } catch (e) { if (debug) alert(e.message + '\n' + str); return; };
+            } catch (e) { if (debug) console.log(e.message + '\n' + str); return; };
 
             if (!returnObj) {
               return;
@@ -2393,11 +2372,9 @@
           function toggleNode (wt, nodeid) {
             const imgId = nodeid + 'Img';
             const imgNode = document.getElementById(imgId);
-
             if (!imgNode) { // its ok for n to be null (lazy load)
               return;
             }
-
             if (imgNode.src.indexOf(wt.closedNodeImg) !== -1) {
               openNode(wt, nodeid);
             } else {
@@ -2407,9 +2384,9 @@
           }
 
           /**
-             * Return true if node was opened.    False otherwise.
-             * This lets us open all, on second keypress.
-             */
+           * Return true if node was opened. False otherwise.
+           * This lets us open all, on second keypress.
+           */
           function openNode (wt, nodeid) {
             const childrenConId = nodeid + 'Children';
             const imgId = nodeid + 'Img';
@@ -2509,12 +2486,17 @@
           }
 
           function procResponseError (str) {
-            if (typeof JSON !== 'undefined') {
-              const returnObj = JSON.parse(str);
-              if (typeof (returnObj.error) !== 'undefined') {
-                console.log('response error: ' + returnObj.error);
-                // wt.loading.style.display = "none";
-              }
+            let responseObj = null;
+            try {
+              responseObj = JSON.parse(str);
+            } catch (e) { if (debug) console.log(e.message + '\n' + str); return; };
+
+            if (!responseObj) {
+              return;
+            }
+            if (typeof (responseObj.error) !== 'undefined') {
+              console.log('response error: ' + responseObj.error);
+              // wt.loading.style.display = "none";
             }
           }
 

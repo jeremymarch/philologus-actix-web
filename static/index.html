@@ -11,6 +11,7 @@
     <meta name="keywords"
         content="Liddell Scott and Jones, Lewis and Short, Slater's Lexicon to Pindar, Perseus Project, Greek, Classical Greek, Ancient Greek, Latin, lexica, lexicon, dictionary, dendrea.org" />
     <script nonce="2726c7f26c" type="text/javascript">
+        'use strict';
         function setTheme () {
           const mode = window.localStorage.getItem('mode'); // use mode to override system dark mode
           if ((window.matchMedia('(prefers-color-scheme: dark)').matches || mode === 'dark') && mode !== 'light') {
@@ -337,7 +338,7 @@
         }
         .body {
             line-height: 1.2;
-            margin: 8px 0px
+            margin: 8px 0px;
         }
         #logocontainer {
           z-index: 999;
@@ -789,12 +790,12 @@
             document.getElementById('defbody').style.marginRight = '280px';
 
             if (supportsHTML5Storage()) {
-              const h = window.localStorage.getItem('history2');
+              const h = window.localStorage.getItem('history3');
               if (w4 && h && h.length > 0) {
                 w4.refreshWithRows(h);
               }
             } else {
-              document.getElementById('defbody').style.marginRight = '10px';
+              document.getElementById('defbody').style.marginRight = '1rem';
             }
             setLocalStorageKey('historylist', '1');
             onResize();
@@ -804,15 +805,15 @@
         function historyChooserOnSelect (lexicon, cols) {
           // col2 is the lexicon # from history
           let lex;
-          if (cols[2] === 0) {
+          if (cols[2] === '0') {
             lex = 'lsj';
-          } else if (cols[2] === 1) {
+          } else if (cols[2] === '1') {
             lex = 'slater';
           } else {
             lex = 'ls';
           }
 
-          getDef(cols[1], lex, '', true, true);
+          getDef(cols[0], lex, '', true, true);
         }
 
         let historyOpen = false;
@@ -882,7 +883,7 @@
 
         function onClickRow (lexicon, cols) {
           // console.log("get def: " + cols[1] + ", " + lexicon);
-          getDef(cols[1], lexicon, '', false, true);
+          getDef(cols[0], lexicon, '', false, true);
         }
 
         document.onkeydown = globalKeyDown;
@@ -958,11 +959,8 @@
           }
 
           const showHist = getLocalStorageKey('historylist');
-          if (showHist && showHist === 1) {
+          if (showHist && showHist === '1') {
             toggleHistoryChooser();
-            document.getElementById('defbody').style.marginRight = '310px';
-          } else {
-            document.getElementById('defbody').style.marginRight = '1rem';
           }
 
           // add event listeners
@@ -1245,7 +1243,7 @@
         // for saving history to database
         let lastId = -1;
         function setWord (json, status) {
-          let data;
+          let data = null;
           // str = resp2;
           // alert(json);
           try {
@@ -1362,7 +1360,7 @@
               let lexi = 0;
               if (lexicon === globalLexica[0]) { lexi = 0; } else if (lexicon === globalLexica[1]) { lexi = 1; } else { lexi = 2; }
 
-              const hist = window.localStorage.getItem('history2');
+              const hist = window.localStorage.getItem('history3');
               let tree = null;
               if (hist && hist.length > 0) {
                 tree = JSON.parse(hist);
@@ -1382,8 +1380,8 @@
                 };
               }
 
-              if (tree.arrOptions.length < 1 || id !== tree.arrOptions[0][1]) {
-                tree.arrOptions.splice(0, 0, [word, id, lexi]);
+              if (tree.arrOptions.length < 1 || id !== tree.arrOptions[0][0]) {
+                tree.arrOptions.splice(0, 0, [id, word, lexi]);
               }
 
               const max = 500;
@@ -1394,7 +1392,7 @@
 
               const h = JSON.stringify(tree);
 
-              window.localStorage.setItem('history2', h);
+              window.localStorage.setItem('history3', h);
               if (w4) {
                 w4.refreshWithRows(h);
               }
@@ -1902,7 +1900,7 @@
                 }
                 if (key === 68) { // d
                   if (typeof wt.onDeleteWord === 'function' && wt.selectedRow) {
-                    wt.onDeleteWord(getColumnValues(wt.selectedRow)[1], getColumnValues(wt.selectedRow)[2], wt.params.tag_id);
+                    wt.onDeleteWord(getColumnValues(wt.selectedRow)[0], getColumnValues(wt.selectedRow)[1], wt.params.tag_id);
                     ev.returnValue = false;
                     ev.preventDefault();
                   }
@@ -2099,9 +2097,6 @@
 
             eventually lexicon, query, and tag_id will be put into a single field for requests
             */
-          // a two column response
-          // let resp2 = '{"wtprefix":"test1","container":"test1Container","requestTime":"99999","selectId":"0","page":"0","lastPage":"0","lastPageUp":"1","scroll":"top","query":"a","cols":"2","arrOptions":[{"i":1,"r":["Α","abc"]},{"i":5,"r":["ἃ","abc"]},{"i":2,"r":["ἀ1","abc"]},{"i":20395,"r":["α1","abc"]},{"i":3,"r":["ἀ2","abc"]},{"i":102761,"r":["α2","abc"]},{"i":4,"r":["ἆ3","abc"]},{"i":6,"r":["ἄα","abc"]},{"i":8,"r":["ἀάβακτοι","abc"]},{"i":9,"r":["ἀαγής","abc"]}]}';
-          // let resp2 = '{"error":"","wtprefix":"test1","nocache":"0","container":"test1Container","requestTime":"1631672832851","selectId":"0","page":"0","lastPage":"0","lastPageUp":"1","scroll":"top","query":"","arrOptions":[{"i":0,"r":["Α α",0,0]},{"i":1,"r":["ἀ-",1,0]},{"i":2,"r":["ἀ-",2,0]},{"i":3,"r":["ἆ",3,0]},{"i":4,"r":["ἃ ἃ",4,0]},{"i":5,"r":["ἄα",5,0]},{"i":6,"r":["ἀάατος",6,0]},{"i":7,"r":["ἀάβακτοι",7,0]},{"i":8,"r":["ἀαγής",8,0]},{"i":9,"r":["ἄαδα",9,0]},{"i":10,"r":["ἀάζω",10,0]},{"i":11,"r":["ἄαθι",11,0]},{"i":12,"r":["ἀάκατος",12,0]},{"i":13,"r":["ἀακίδωτος",13,0]},{"i":14,"r":["ἀάλιον",14,0]},{"i":15,"r":["ἀανές",15,0]},{"i":16,"r":["ἄανθα",16,0]},{"i":17,"r":["ἀάπλετος",17,0]},{"i":18,"r":["ἄαπτος",18,0]},{"i":19,"r":["ἄας",19,0]},{"i":20,"r":["ἀασιφόρος",20,0]},{"i":21,"r":["ἀασιφρονία",21,0]},{"i":22,"r":["ἀασιφροσύνη",22,0]},{"i":23,"r":["ἀάσκει",23,0]},{"i":24,"r":["ἀασμός",24,0]},{"i":25,"r":["ἀάσπετος",25,0]},{"i":26,"r":["ἀάστονα",26,0]},{"i":27,"r":["ἀατήρ",27,0]},{"i":28,"r":["ἄατος",28,0]},{"i":29,"r":["ἄατος",29,0]},{"i":30,"r":["ἀάτυλον",30,0]},{"i":31,"r":["ἀάω",31,0]},{"i":32,"r":["ἄβα",32,0]},{"i":33,"r":["ἄβαγνα",33,0]},{"i":34,"r":["ἀβαθής",34,0]},{"i":35,"r":["ἄβαθρος",35,0]},{"i":36,"r":["ἀβαίνω",36,0]},{"i":37,"r":["ἀβακέω",37,0]},{"i":38,"r":["ἀβακηνούς",38,0]},{"i":39,"r":["ἀβακής",39,0]},{"i":40,"r":["ἀβάκητον",40,0]},{"i":41,"r":["ἀβακίζομαι",41,0]},{"i":42,"r":["ἀβάκιον",42,0]},{"i":43,"r":["ἀβακίσκος",43,0]},{"i":44,"r":["ἀβακλή",44,0]},{"i":45,"r":["ἀβακοειδής",45,0]},{"i":46,"r":["ἄβακτον",46,0]},{"i":47,"r":["ἀβάκχευτος",47,0]},{"i":48,"r":["ἀβακχίωτος",48,0]},{"i":49,"r":["ἄβαλε",49,0]},{"i":50,"r":["ἀβαμβάκευτος",50,0]},{"i":51,"r":["ἄβαξ",51,0]},{"i":52,"r":["ἀβάπτιστος",52,0]},{"i":53,"r":["ἄβαπτος",53,0]},{"i":54,"r":["ἀβαρβάριστος",54,0]},{"i":55,"r":["ἀβαρής",55,0]},{"i":56,"r":["ἄβαρις",56,0]},{"i":57,"r":["ἀβασάνιστος",57,0]},{"i":58,"r":["ἀβασίλευτος",58,0]},{"i":59,"r":["ἀβασκάνιστος",59,0]},{"i":60,"r":["ἀβάσκανος",60,0]},{"i":61,"r":["ἀβάσκαντος",61,0]},{"i":62,"r":["ἀβάστακτος",62,0]},{"i":63,"r":["ἄβαστον",63,0]},{"i":64,"r":["ἀβατόομαι",64,0]},{"i":65,"r":["ἄβατος",65,0]},{"i":66,"r":["ἀβαφής",66,0]},{"i":67,"r":["ἄβδελον",67,0]},{"i":68,"r":["ἀβδέλυκτος",68,0]},{"i":69,"r":["Ἀβδηρίτης",69,0]},{"i":70,"r":["ἄβδης",70,0]},{"i":71,"r":["ἀβέβαιος",71,0]},{"i":72,"r":["ἀβεβαιότης",72,0]},{"i":73,"r":["ἀβέβηλος",73,0]},{"i":74,"r":["ἄβεις",74,0]},{"i":75,"r":["ἄβελλον",75,0]},{"i":76,"r":["ἀβελτέρειος",76,0]},{"i":77,"r":["ἀβελτερεύομαι",77,0]},{"i":78,"r":["ἀβελτερία",78,0]},{"i":79,"r":["ἀβελτεροκόκκυξ",79,0]},{"i":80,"r":["ἀβέλτερος",80,0]},{"i":81,"r":["ἀβέρβηλον",81,0]},{"i":82,"r":["ἀβηδών",82,0]},{"i":83,"r":["ἀβήρελ",83,0]},{"i":84,"r":["ἀβηροῦσιν",84,0]},{"i":85,"r":["ἀβίαστος",85,0]},{"i":86,"r":["ἀβίβαστος",86,0]},{"i":87,"r":["ἀβίβλης",87,0]},{"i":88,"r":["ἄβιδα",88,0]},{"i":89,"r":["ἄβιν",89,0]},{"i":90,"r":["ἄβιος",90,0]},{"i":91,"r":["ἄβιος",91,0]},{"i":92,"r":["ἀβίοτος",92,0]},{"i":93,"r":["ἀβίυκτον",93,0]},{"i":94,"r":["ἀβιωτοποιός",94,0]},{"i":95,"r":["ἀβίωτος",95,0]},{"i":96,"r":["ἀβλάβεια",96,0]},{"i":97,"r":["ἀβλαβής",97,0]},{"i":98,"r":["ἀβλαβία",98,0]},{"i":99,"r":["ἀβλαβύνιον",99,0]},{"i":100,"r":["ἄβλαπτος",100,0]}]}';
 
           function procResponse (str, status) {
             let returnObj = null;
@@ -2263,7 +2258,6 @@
                   wt.centerSelectedRow();
                 }
               }
-
               if (returnedPage < 0) {
                 // to keep scrollTop in same place as before when paging up.
                 wt.con.scrollTop += (wt.con.scrollHeight - saveHeight);
@@ -2281,8 +2275,9 @@
             function printRow (wt, fragment, rowItem, level, insertAtTop, topLevelTreeRow, selectedId) {
               const node = document.createElement('div');
               node.classList.add('nodestyle');
-              node.setAttribute('rowid', wt.rowCount + wt.idPrefix);
-              node.id = wt.rowCount++ + wt.idPrefix;
+              node.setAttribute('rowid', rowItem[0]); // idx 0 is the id
+              node.id = rowItem[0] + wt.idPrefix;
+              wt.rowCount++;
 
               node.onclick = onSelect;
 
@@ -2295,15 +2290,15 @@
 
               // for each column
               const rowLen = rowItem.length;
-              for (let c = 0; c < rowLen; c++) {
+              for (let c = 1; c < rowLen; c++) { // col 0 is the id, so start with col 1
                 const d2 = document.createElement('div');
                 d2.classList.add('nodestylecol');
 
-                if (c !== 0 && wt.columnOffsets[c] === 0) { d2.style.display = 'none'; } else { d2.style.left = wt.columnOffsets[c] + 'px'; }
+                if (c !== 1 && wt.columnOffsets[c] === 0) { d2.style.display = 'none'; } else { d2.style.left = wt.columnOffsets[c] + 'px'; }
 
                 if (level === 0) { d2.style.paddingLeft = 1 + (!rowItem.h && topLevelTreeRow ? 15 : 3) + 'px'; } else { d2.style.paddingLeft = (level * wt.indentWidth) + (rowItem.h ? 3 : 15) + 'px'; }
 
-                if (c === 0 && rowItem.h) { // only for column 1
+                if (c === 1 && rowItem.h) { // only for column 1
                   const img = document.createElement('img');
                   if (!rowItem.o) { img.src = wt.closedNodeImg; } else { img.src = wt.openNodeImg; }
                   img.style.display = 'inline';
@@ -2319,7 +2314,7 @@
                 node.appendChild(d2);
               }
 
-              if (rowItem[1] === selectedId) {
+              if (rowItem[0] === selectedId) {
                 wt.selectedRowId = node.id;
               }
 
@@ -2440,7 +2435,7 @@
 
               if (imgNode.parentNode.parentNode.nextSibling) { wt.con.insertBefore(childrenCon, imgNode.parentNode.parentNode.nextSibling); } else { wt.con.appendChild(childrenCon); }
 
-              wt.params.root_id = parseInt(getColumnValues(document.getElementById(nodeid))[1]);
+              wt.params.root_id = parseInt(getColumnValues(document.getElementById(nodeid))[0]);
 
               if (wt.selectedRow) { wt.params.selectedid = wt.selectedRow.id; } // maybe this should just be nodeid?
               let query = wt.makeQuery(wt.params);
@@ -2611,17 +2606,19 @@
           return r;
         }
 
+        // idx 0 is the id
         function getColumnValues (row) {
           const values = [];
+          const id = row.getAttribute('rowid');
+          values.push(id);
           let col = row.firstChild;
 
-          let i = 0;
-          for (; col; i++) {
+          while (col) {
             const match = /.*Img/.exec(col.firstChild.id); // in case it has a + or - image
             if (match) {
-              values[i] = col.firstChild.nextSibling.nodeValue;
+              values.push(col.firstChild.nextSibling.nodeValue);
             } else {
-              values[i] = col.firstChild.nodeValue;
+              values.push(col.firstChild.nodeValue);
             }
             col = col.nextSibling;
           }

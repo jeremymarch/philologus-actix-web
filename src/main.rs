@@ -74,14 +74,14 @@ struct QueryResponse {
     lastpage_up: u8,
     query: String,
     #[serde(rename(serialize = "arrOptions"), rename(deserialize = "arrOptions"))]
-    arr_options: Vec<(String, u32)>,
+    arr_options: Vec<(u32, String,)>,
 }
 
 struct QueryResult {
     seq: u32,
     vlast_page_up: u8,
     vlast_page: u8,
-    rows: Vec<(String, u32)>,
+    rows: Vec<(u32, String,)>,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -356,7 +356,7 @@ async fn query_words(
         .concat()
         .into_iter()
         .map(|mut row| {
-            row.0 = re.replace_all(&row.0, "").to_string();
+            row.1 = re.replace_all(&row.1, "").to_string();
             row
         })
         .collect();
@@ -1037,8 +1037,8 @@ mod tests {
         let result: QueryResponse = test::read_body_json(resp).await;
         assert_eq!(result.arr_options.len(), 5);
 
-        assert_eq!(result.arr_options[0].1, 1);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 5);
+        assert_eq!(result.arr_options[0].0, 1);
+        assert_eq!(result.arr_options[result.arr_options.len() - 1].0, 5);
         assert_eq!(result.lastpage_up, 1);
         assert_eq!(result.last_page, 0);
         assert_eq!(result.page, 0);
@@ -1065,8 +1065,8 @@ mod tests {
         let result: QueryResponse = test::read_body_json(resp).await;
         assert_eq!(result.arr_options.len(), 5);
 
-        assert_eq!(result.arr_options[0].1, 1);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 5);
+        assert_eq!(result.arr_options[0].0, 1);
+        assert_eq!(result.arr_options[result.arr_options.len() - 1].0, 5);
         assert_eq!(result.lastpage_up, 1);
         assert_eq!(result.last_page, 0);
         assert_eq!(result.page, 0);
@@ -1093,8 +1093,8 @@ mod tests {
         let result: QueryResponse = test::read_body_json(resp).await;
         assert_eq!(result.arr_options.len(), 5);
 
-        assert_eq!(result.arr_options[0].1, 1);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 5);
+        assert_eq!(result.arr_options[0].0, 1);
+        assert_eq!(result.arr_options[result.arr_options.len() - 1].0, 5);
         assert_eq!(result.lastpage_up, 1);
         assert_eq!(result.last_page, 1);
         assert_eq!(result.page, 0);
@@ -1121,8 +1121,8 @@ mod tests {
         let result: QueryResponse = test::read_body_json(resp).await;
         assert_eq!(result.arr_options.len(), 5);
 
-        assert_eq!(result.arr_options[0].1, 1);
-        assert_eq!(result.arr_options[result.arr_options.len() - 1].1, 5);
+        assert_eq!(result.arr_options[0].0, 1);
+        assert_eq!(result.arr_options[result.arr_options.len() - 1].0, 5);
         assert_eq!(result.lastpage_up, 1);
         assert_eq!(result.last_page, 1);
         assert_eq!(result.page, 0);

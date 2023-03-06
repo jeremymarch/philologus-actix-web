@@ -56,8 +56,11 @@
             z-index: 999;
         }
         #hamburgercontainer {
-          padding-top:1rem;
-          padding-right:1rem;
+          position:absolute;
+          padding:0px;
+          margin:0px;
+          right:1rem;
+          bottom:0px;
         }
         #hamburger {
             z-index: 999;
@@ -78,6 +81,7 @@
             font-family: helvetica, arial;
             /*WebNewAthenaUnicode;*/
             font-size: 11pt;
+            padding: 12px 6px;
         }
         :root {
             --author-color: #ac1b1b;
@@ -336,21 +340,22 @@
             margin: 8px 0px
         }
         #logocontainer {
+          z-index: 999;
           position:absolute;
           top:0px;
           right:0px;
-          height:48px;
-          text-align:center;
-          letter-spacing:normal;
-          display:flex;
+          height:52px;
+          width:243px;
+          margin:0px;
+          padding:0px;
         }
         #logo {
             color: black;
-            z-index: 999;
-            padding: 0rem 1rem;
-            text-align:center;
-            position:relative;
-            top:0.75rem;
+            margin:0px;
+            padding:0px;
+            position:absolute;
+            bottom:0px;
+            left:0px;
             font-size:28pt;
             font-family:helvetica,arial,sans-serif;
         }
@@ -628,6 +633,9 @@
         .dark LABEL {
             color: white;
         }
+        * {
+            box-sizing: border-box;
+          }
     </style>
 </head>
 

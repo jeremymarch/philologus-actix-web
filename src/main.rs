@@ -112,6 +112,7 @@ struct DefResponse {
 #[derive(Deserialize)]
 pub struct FullTextQueryRequest {
     pub q: String,
+    pub p: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -127,6 +128,8 @@ struct FullTextResponse {
     ftresults: Vec<LexEntry>,
     error: String,
     count: usize,
+    page: usize,
+    limit: usize,
 }
 
 #[derive(Deserialize)]
@@ -192,6 +195,9 @@ async fn full_text_query(
     let db = req.app_data::<SqlitePool>().unwrap();
     let index = req.app_data::<tantivy::Index>().unwrap();
 
+    let limit = 20;
+    let offset = info.p * 20;
+
     // let word_id_field = index.schema().get_field("word_id").unwrap();
     // let lemma_field = index.schema().get_field("lemma").unwrap();
     let lexicon_field = index.schema().get_field("lexicon").unwrap();
@@ -214,13 +220,15 @@ async fn full_text_query(
         ftresults: vec![],
         error: String::from(""),
         count: 0,
+        page: info.p,
+        limit,
     };
 
     // full-text index should be all lowercase, but use uppercase for AND and OR
     let mut ft_query = info.q.to_lowercase();
     ft_query = ft_query.replace(" and ", " AND ").replace(" or ", " OR ");
 
-    let my_collector = (Count, TopDocs::with_limit(10));
+    let my_collector = (Count, TopDocs::with_limit(limit).and_offset(offset));
     match query_parser.parse_query(&ft_query) {
         //"carry AND (lexicon:slater OR lexicon:lewisshort)") {
         Ok(query) => match searcher.search(&query, &my_collector) {
@@ -247,7 +255,6 @@ async fn full_text_query(
                                     _ => continue,
                                 }
                             }
-
                             // skip entry if these values aren't found
                             // this shouldn't happen
                             if word_id_value == 0 || lexicon_value.is_empty() {

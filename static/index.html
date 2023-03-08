@@ -105,6 +105,7 @@
         }
         .ftrowheaderlink {
             color: blue;
+            cursor: pointer;
         }
         .dark .ftrowheaderlink {
             color: #03a5fc;
@@ -643,7 +644,7 @@
           color:blue;
           cursor: pointer;
         }
-        .dark #ftPrev, #ftNext {
+        .dark #ftPrev, .dark #ftNext {
           color: blue;
           color: var(--foreign-color-dark, blue);
         }
@@ -801,9 +802,9 @@
             lex = responseObj.ftresults[i].lex;
           }
 
-          rows += "<div class='ftrow'><p class='ftrowhead'>" + (i + firstResult) + ". <a class='ftrowheaderlink' href='javascript:getDef(" +
-            responseObj.ftresults[i].id + ', "' + lex.toLowerCase() + "\", false, true)'>" +
-            lex + ': ' + responseObj.ftresults[i].lemma + '</a></p>' + responseObj.ftresults[i].def + '</div>';
+          rows += "<div class='ftrow'><p class='ftrowhead'>" + (i + firstResult) + ". <span id='" +
+            lex.toLowerCase() + responseObj.ftresults[i].id + "' class='ftrowheaderlink'>" +
+            lex + ': ' + responseObj.ftresults[i].lemma + '</span></p>' + responseObj.ftresults[i].def + '</div>';
         }
 
         let prevLink = '';
@@ -827,6 +828,24 @@
         }
         if (lastResult < totalCount) {
           document.getElementById('ftNext').addEventListener('click', nextFT, false);
+        }
+
+        // add links
+        i = 0;
+        for (; i < responseObj.ftresults.length; i++) {
+          let lex = '';
+          if (responseObj.ftresults[i].lex === 'greatscott') {
+            lex = 'LSJ';
+          } else if (responseObj.ftresults[i].lex === 'latindico') {
+            lex = 'LS';
+          } else if (responseObj.ftresults[i].lex === 'pindar_dico') {
+            lex = 'Slater';
+          } else {
+            lex = responseObj.ftresults[i].lex;
+          }
+          const wordId = responseObj.ftresults[i].id;
+          document.getElementById(lex.toLowerCase() + wordId)
+            .addEventListener('click', function () { getDef(wordId, lex.toLowerCase(), false, true); }, false);
         }
 
         con.scrollTo(0, 0);

@@ -53,9 +53,6 @@
         BUTTON {
             border-style: none;
         }
-        #test1Entry {
-            z-index: 999;
-        }
         #hamburgercontainer {
           position:absolute;
           padding:0px;
@@ -361,19 +358,21 @@
             font-family:helvetica,arial,sans-serif;
         }
         .nodestyle {
-            line-height: 32px;
+            /*
             margin: 0px;
             position: relative;
-            height: 30px;
             width: calc(100% - 10px);
-            white-space: nowrap;
             background-color: white;
+            */
+            line-height: 32px;
+            height: 30px;
+            white-space: nowrap;
             overflow: hidden;
+            padding-left:6px;
         }
-        .nodestylecol {
-            position: absolute;
-            top: 0px;
-        }
+        /* .nodestylecol {
+
+        } */
         .selectedRowClass {
             background-color: #31408e;
             color: white;
@@ -572,7 +571,7 @@
         .dark #leftlist {
             background-color: #202124;
         }
-        #defbody {
+        #outerbody {
           background-color: white;
             transition: .75s;
             border-radius: 14px;
@@ -585,11 +584,11 @@
             height: calc(100% - 84px);
             text-align: left;
         }
-        .dark #defbody {
+        .dark #outerbody {
             color: white;
             background-color: #202124;
         }
-        #lsjdef {
+        #innerbody {
             transition: .75s;
             position: relative;
             z-index: 2;
@@ -598,36 +597,38 @@
             overflow: auto;
             height: calc(100% - 20px);
         }
-        .fulltext #defbody {
+        .fulltext #outerbody {
             transition: .75s;
             margin-left: 10px;
             top: -10px;
             height: calc(100% - 18px);
         }
-        .fulltext #lsjdef {
+        .fulltext #innerbody {
             transition: .75s;
             top: 62px;
             height: calc(100% - 100px);
         }
-        #test1Entry {
+        /*
+        #lemmataEntry {
             transition: .75s;
             width: 193px;
         }
-        #test1Loading {
+        #lemmataLoading {
             transition: .75s;
             right: 35px;
         }
-        .fulltext #test1Loading {
+        .fulltext #lemmataLoading {
             transition: .75s;
             right: -51px;
         }
-        .fulltext #test1Entry {
+        .fulltext #lemmataEntry {
             transition: .75s;
             width: 256px;
         }
-        #test1FTCheck {
+        #lemmataFTCheck {
             z-index: 999;
         }
+        */
         LABEL {
             color: black;
         }
@@ -639,12 +640,11 @@
           }
     </style>
 </head>
-
 <body>
     <div id="leftlist"></div>
     <div id="rightlist"></div>
-    <div id="defbody">
-        <div id="lsjdef" ontouchstart="onTouch(event)"></div>
+    <div id="outerbody">
+        <div id="innerbody"></div>
     </div>
     <div id="logocontainer">
         <div id="logo">philolog.us</div>
@@ -661,7 +661,23 @@
     <script nonce="2726c7f26c" type="text/javascript">
         'use strict';
 
+        const debug = false;
+        const globalLexica = ['lsj', 'slater', 'ls'];
+        const lemmaWT = 'lemmata';
+        const historyWT = 'test4';
+        let historyOpen = false;
+        let w4;
+        let fullText = false;
+        const forceLowercase = true;
+
         window.addEventListener('load', start, false);
+        window.addEventListener('popstate', function (e) {
+          // exclude from history, else we push it back on at same time as popping.
+          // see defjson.js: end of setWord.
+          if (e.state && e.state.length > 1) {
+            getDef(e.state[0], e.state[1], '', true, false);
+          }
+        }, false);
 
         const setURLToWordId = true;
         // https://github.com/le717/microajax
@@ -704,29 +720,28 @@
           request.onerror = options.error;
         }
 
-        window.addEventListener('popstate', function (e) {
-          // exclude from history, else we push it back on at same time as popping.
-          // see defjson.js: end of setWord.
-          if (e.state && e.state.length > 1) {
-            getDef(e.state[0], e.state[1], '', true, false);
-          }
-        }, false);
-
-        const globalLexica = ['lsj', 'slater', 'ls'];
-
         function closeHistoryChooser () {
           historyOpen = false;
-          const hist = lookupWT('test4');
+          const hist = lookupWT(historyWT);
           if (!hist) {
             return;
           }
 
           hist.close();
-          document.getElementById('test1Entry').focus();
+          document.getElementById(lemmaWT + 'Entry').focus();
         }
 
-        function fullTextRequest (query) {
-          const ftURL = 'ft/?q=' + query;
+        function fullTextRequest (query, lexicon) {
+          let ftLexicon = '';
+          if (lexicon === 'ls') {
+            ftLexicon = 'lexicon:lewisshort AND ';
+          } else if (lexicon === 'slater') {
+            ftLexicon = 'lexicon:slater AND ';
+          } else {
+            ftLexicon = 'lexicon:lsj AND ';
+          }
+          const ftURL = 'ft/?q=' + ftLexicon + query;
+          console.log(ftURL);
           microAjax({
             url: ftURL,
             method: 'GET',
@@ -737,7 +752,7 @@
         }
 
         function procFTResponse (str, status) {
-          const wt = lookupWT('test1');
+          const wt = lookupWT(lemmaWT);
           wt.loading.style.display = 'none';
           let responseObj = null;
           try {
@@ -767,25 +782,25 @@
               lex + ': ' + responseObj.ftresults[i].lemma + '</a></p>' + responseObj.ftresults[i].def + '</div>';
           }
 
-          const con = document.getElementById('lsjdef');
-          con.innerHTML = "<div id='lsj222' style='padding:10px 18px;'><div style='font-size:14pt;margin-top:6px;margin-bottom:4px;'>Full-text search results: </div><div style='margin-bottom:24px;'></div>" + rows + '</div>'; // the firstChild is the CDATA node
+          const con = document.getElementById('innerbody');
+          con.innerHTML = "<div id='itembody' style='padding:10px 18px;'><div style='font-size:14pt;margin-top:6px;margin-bottom:4px;'>Full-text search results: </div><div style='margin-bottom:24px;'></div>" + rows + '</div>'; // the firstChild is the CDATA node
           con.scrollTo(0, 0);
         }
 
         function procFTResponseError (str) {
-          const wt = lookupWT('test1');
+          const wt = lookupWT(lemmaWT);
           wt.loading.style.display = 'none';
         }
 
         function toggleHistoryChooser () {
           if (historyOpen) {
             closeHistoryChooser();
-            document.getElementById('defbody').style.marginRight = '1rem';
+            document.getElementById('outerbody').style.marginRight = '1rem';
 
             setLocalStorageKey('historylist', '0');
           } else {
             historyChooser();
-            document.getElementById('defbody').style.marginRight = '280px';
+            document.getElementById('outerbody').style.marginRight = '280px';
 
             if (supportsHTML5Storage()) {
               const h = window.localStorage.getItem('history3');
@@ -793,7 +808,7 @@
                 w4.refreshWithRows(h);
               }
             } else {
-              document.getElementById('defbody').style.marginRight = '1rem';
+              document.getElementById('outerbody').style.marginRight = '1rem';
             }
             setLocalStorageKey('historylist', '1');
             onResize();
@@ -814,9 +829,6 @@
           getDef(cols[0], lex, '', true, true);
         }
 
-        let historyOpen = false;
-        let w4;
-
         function historyChooser () {
           if (historyOpen) {
             return;
@@ -825,7 +837,7 @@
           const h = getViewportHeight(window);
 
           historyOpen = true;
-          w4 = new Wordtree('test4', 260, h - 20);
+          w4 = new Wordtree(historyWT, 260, h - 20);
           w4.conTopOffset = 38;
           w4.con.style.top = w4.conTopOffset + 'px';
           w4.setHeight(w4.height);
@@ -848,7 +860,7 @@
           const key = ev.keyCode;
           if (!ev.metaKey && !ev.ctrlKey && !ev.shiftKey && !ev.altKey) {
             if (key === 27) { // esc
-              const wt = lookupWT('test1');
+              const wt = lookupWT(lemmaWT);
               wt.entry.focus();
               ev.returnValue = false;
               ev.preventDefault();
@@ -896,7 +908,7 @@
             setLocalStorageKey('filter', 'red:bold:blue:blue:green:orange');
           }
 
-          const wt = new Wordtree('test1', 280, winHeight - 36);
+          const wt = new Wordtree(lemmaWT, 280, winHeight - 36);
           wt.show(document.getElementById('leftlist'));
 
           wt.cache = [];
@@ -975,6 +987,7 @@
 
           document.onkeydown = globalKeyDown;
           document.onkeyup = globalKeyUp;
+          document.getElementById('innerbody').ontouchstart = onTouch;
 
           window.onresize = onResize;
           onResize();
@@ -983,24 +996,22 @@
         function onResize () {
           const height = getViewportHeight(window);
 
-          const wt = lookupWT('test1');
+          const wt = lookupWT(lemmaWT);
           wt.setHeight(height - 24);
 
           const rl = document.getElementById('rightlist');
           if (rl) {
             rl.style.height = (height - 58) + 'px';
           }
-          const historyList = lookupWT('test4');
+          const historyList = lookupWT(historyWT);
           if (historyList) {
             historyList.setHeight(height - 74);
           }
         }
 
-        let fullText = false;
-
         function switchSearch (num) {
-          document.getElementById('lsjdef').innerHTML = '';
-          const wt = lookupWT('test1');
+          document.getElementById('innerbody').innerHTML = '';
+          const wt = lookupWT(lemmaWT);
           wt.entry.value = '';
 
           highlightSearch(num);
@@ -1027,7 +1038,7 @@
         }
 
         function switchLex (num) {
-          const wt = lookupWT('test1');
+          const wt = lookupWT(lemmaWT);
           if (wt) {
             wt.entry.value = '';
             wt.params.lexicon = globalLexica[num];
@@ -1054,12 +1065,12 @@
 
         function contact () {
           const about = "Philolog.us first launched in June 2005 shortly after the Perseus Digital Library began offering access to its collections via web services. One of the primary aims has been to offer a streamlined, user-friendly interface to the lexica in the Perseus library.<br/><br/><br/>Thanks to the <a class='storelink' href='http://www.perseus.tufts.edu'>Perseus Digital Library</a> for digitizing and make available these texts.    Thanks also to <a class='storelink' href='https://logeion.uchicago.edu'>Logeion</a> for making many corrections and improvements to them. <br/><br/>Jeremy March<br/><a class='storelink' href='mailto:jmarch@gradcenter.cuny.edu'>jmarch@gradcenter.cuny.edu</a>";
-          document.getElementById('lsjdef').innerHTML = "<div style='text-align:left;margin:10px;'>" + about + '</div>';
+          document.getElementById('innerbody').innerHTML = "<div style='text-align:left;margin:10px;'>" + about + '</div>';
         }
 
         function showiPhone () {
           const news = "Available for iPhone/iPad app in the <a href='https://itunes.apple.com/us/app/philolog.us/id622324932?mt=8' class='storelink'>App store</a>.<br><br><br>Available for Android in the <a href='https://play.google.com/store/apps/details?id=com.philolog.philologus&hl=en' class='storelink'>Google Play store</a>.";
-          document.getElementById('lsjdef').innerHTML = "<div style='text-align:center;font-size:16pt;padding-top:60px;'>" + news + '</div>';
+          document.getElementById('innerbody').innerHTML = "<div style='text-align:center;font-size:16pt;padding-top:60px;'>" + news + '</div>';
         }
 
         // eslint-disable-next-line no-unused-vars
@@ -1069,7 +1080,6 @@
 
         const la = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
         const gr = ['α', 'β', 'ψ', 'δ', 'ε', 'φ', 'γ', 'η', 'ι', 'ξ', 'κ', 'λ', 'μ', 'ν', 'ο', 'π', '', 'ρ', 'σ', 'τ', 'θ', 'ω', 'ς', 'χ', 'υ', 'ζ', 'Α', 'Β', 'Ψ', 'Δ', 'Ε', 'Φ', 'Γ', 'Η', 'Ι', 'Ξ', 'Κ', 'Λ', 'Μ', 'Ν', 'Ο', 'Π', '', 'Ρ', 'Σ', 'Τ', 'Θ', 'Ω', 'Σ', 'Χ', 'Υ', 'Ζ'];
-        const forceLowercase = true;
         function transliterate (char) {
           const theChar = (forceLowercase) ? char.toLowerCase() : char;
           const idx = la.indexOf(theChar);
@@ -1210,7 +1220,7 @@
           if (!useDefCache || !defCheckCache(lexicon, id)) {
             loadXMLDoc(url);
           }
-          // document.getElementById("lsjdef").innerHTML = "<center>Loading...</center>";
+          // document.getElementById("innerbody").innerHTML = "<center>Loading...</center>";
         }
 
         function getDefFromWordid (wordid, lexicon, word, excludeFromHistory, pushToBackHistory) {
@@ -1227,7 +1237,7 @@
           // if (!useDefCache || !defCheckCache(lexicon, id))
           loadXMLDoc(encodeURI(url));
 
-          // document.getElementById("lsjdef").innerHTML = "<center>Loading...</center>";
+          // document.getElementById("innerbody").innerHTML = "<center>Loading...</center>";
         }
 
         // for saving history to database
@@ -1245,10 +1255,10 @@
             return;
           }
 
-          const con = document.getElementById('lsjdef');
+          const con = document.getElementById('innerbody');
 
           if (data.errorMesg) {
-            con.innerHTML = "<div id='lsj222' style='padding:40px 18px;text-align:center;'>" + data.errorMesg + '</div>';
+            con.innerHTML = "<div id='itembody' style='padding:40px 18px;text-align:center;'>" + data.errorMesg + '</div>';
             return;
           }
 
@@ -1283,7 +1293,7 @@
           attr += '</div>';
           // attr += "</div>";
 
-          con.innerHTML = "<div id='lsj222' style='padding:10px 18px;'><div style='font-size:20pt;margin-bottom:16px;'>" + word + "</div><div style='margin-bottom:24px;'>" + pps + '</div>' + def + attr + '</div>'; // the firstChild is the CDATA node
+          con.innerHTML = "<div id='itembody' style='padding:10px 18px;'><div style='font-size:20pt;margin-bottom:16px;'>" + word + "</div><div style='margin-bottom:24px;'>" + pps + '</div>' + def + attr + '</div>'; // the firstChild is the CDATA node
           con.scrollTo(0, 0);
 
           if (useDefCache) {
@@ -1349,8 +1359,8 @@
               } else {
                 tree = {
                   error: '',
-                  wtprefix: 'test4',
-                  container: 'test4Container',
+                  wtprefix: historyWT,
+                  container: historyWT + 'Container',
                   requestTime: '1427555297518',
                   selectId: '-1',
                   page: '0',
@@ -1439,7 +1449,6 @@
         /* global */
         const keyDelay = 350; // to prevent each key press from triggering a query for fast typers
         const cacheLimit = 500;
-        const debug = false;
         // const mouseWheelSpeedFactor = 10; // between 4 and 12 seem to work best
         const keyScrollAccel = 4;
 
@@ -1458,6 +1467,15 @@
           const p = this.div.parentNode;
           p.removeChild(this.div);
           delete globalWordTrees[this.idPrefix];
+        }
+
+        function onTouch (e) {
+          const wt = lookupWT(lemmaWT);
+          if (!wt) { return; }
+
+          if (!wt.autofocus) {
+            wt.entry.blur();
+          }
         }
 
         function Wordtree (idPrefix, width, height) {
@@ -1690,15 +1708,17 @@
 
           function refreshWordTree () {
             this.loading.style.display = 'block';
-
-            if (checkCache(this)) { return; }
-
-            if (this.entry) { this.params.w = this.entry.value; }
-            let query = JSON.stringify(this.params);
-            query = encodeURIComponent(query);
             if (fullText) {
-              fullTextRequest(this.entry.value);
+              if (this.entry.value.trim() === '') {
+                this.loading.style.display = 'none';
+                return;
+              }
+              fullTextRequest(this.entry.value, this.params.lexicon);
             } else {
+              if (checkCache(this)) { return; }
+              if (this.entry) { this.params.w = this.entry.value; }
+              let query = JSON.stringify(this.params);
+              query = encodeURIComponent(query);
               this.page = 0;
               const url = this.makeQueryURL(0, query);
               requestRows(url);
@@ -1725,17 +1745,6 @@
 
           function wordtreeShow (parent) {
             parent.appendChild(this.div);
-          }
-
-          function onTouch (e) {
-            const wt = lookupWT('test1');
-            if (!wt) {
-              return;
-            }
-
-            if (!wt.autofocus) {
-              wt.entry.blur();
-            }
           }
 
           function conOnScroll (e) {
@@ -1848,7 +1857,7 @@
                 move(1, wt, wt.step);
                 // accelerate
                 if (!wt.downkey) {
-                  wt.accelTimeout = setTimeout(function () { const a = lookupWT(wt.idPrefix); a.step = 2; a.accelTimeout = setTimeout(function () { lookupWT('test1').step = keyScrollAccel; }, 2000); }, 2000);
+                  wt.accelTimeout = setTimeout(function () { const a = lookupWT(wt.idPrefix); a.step = 2; a.accelTimeout = setTimeout(function () { lookupWT(lemmaWT).step = keyScrollAccel; }, 2000); }, 2000);
                 }
               }
             } else if (key === 40) {
@@ -1862,7 +1871,7 @@
                 move(-1, wt, wt.step);
                 // accelerate
                 if (!wt.downkey) {
-                  wt.accelTimeout = setTimeout(function () { const a = lookupWT(wt.idPrefix); a.step = 2; a.accelTimeout = setTimeout(function () { lookupWT('test1').step = keyScrollAccel; }, 2000); }, 2000);
+                  wt.accelTimeout = setTimeout(function () { const a = lookupWT(wt.idPrefix); a.step = 2; a.accelTimeout = setTimeout(function () { lookupWT(lemmaWT).step = keyScrollAccel; }, 2000); }, 2000);
                 }
               }
             }
@@ -2255,7 +2264,7 @@
               const node = document.createElement('div');
               node.classList.add('nodestyle');
               node.setAttribute('rowid', rowItem[0]); // idx 0 is the id
-              node.id = rowItem[0] + wt.idPrefix;
+              node.id = wt.idPrefix + '-' + rowItem[0]; // ids must start with letter
               wt.rowCount++;
 
               node.onclick = onSelect;
@@ -2267,30 +2276,36 @@
                 node.addEventListener('drop', wt.dropFunc, false);
               }
 
-              // for each column
-              const rowLen = rowItem.length;
-              for (let c = 1; c < rowLen; c++) { // col 0 is the id, so start with col 1
-                const d2 = document.createElement('div');
-                d2.classList.add('nodestylecol');
+              // if length === 2, then just one column: put value directly in node
+              // otherwise put values in child divs for each column
+              if (rowItem.length === 2) {
+                node.innerText = rowItem[1];
+              } else {
+                // for each column
+                const rowLen = rowItem.length;
+                for (let c = 1; c < rowLen; c++) { // col 0 is the id, so start with col 1
+                  const d2 = document.createElement('div');
+                  d2.classList.add('nodestylecol');
 
-                if (c !== 1 && wt.columnOffsets[c] === 0) { d2.style.display = 'none'; } else { d2.style.left = wt.columnOffsets[c] + 'px'; }
+                  // if (c !== 1 && wt.columnOffsets[c] === 0) { d2.style.display = 'none'; } else { d2.style.left = wt.columnOffsets[c] + 'px'; }
 
-                if (level === 0) { d2.style.paddingLeft = 1 + (!rowItem.h && topLevelTreeRow ? 15 : 3) + 'px'; } else { d2.style.paddingLeft = (level * wt.indentWidth) + (rowItem.h ? 3 : 15) + 'px'; }
+                  // if (level === 0) { d2.style.paddingLeft = 1 + (!rowItem.h && topLevelTreeRow ? 15 : 3) + 'px'; } else { d2.style.paddingLeft = (level * wt.indentWidth) + (rowItem.h ? 3 : 15) + 'px'; }
 
-                if (c === 1 && rowItem.h) { // only for column 1
-                  const img = document.createElement('img');
-                  if (!rowItem.o) { img.src = wt.closedNodeImg; } else { img.src = wt.openNodeImg; }
-                  img.style.display = 'inline';
-                  img.style.paddingRight = '4px';
-                  img.style.cursor = 'pointer';
-                  img.id = node.id + 'Img';
-                  img.onclick = openCloseCon;
-                  d2.appendChild(img);
+                  if (c === 1 && rowItem.h) { // only for column 1
+                    const img = document.createElement('img');
+                    if (!rowItem.o) { img.src = wt.closedNodeImg; } else { img.src = wt.openNodeImg; }
+                    img.style.display = 'inline';
+                    img.style.paddingRight = '4px';
+                    img.style.cursor = 'pointer';
+                    img.id = node.id + 'Img';
+                    img.onclick = openCloseCon;
+                    d2.appendChild(img);
+                  }
+
+                  const text = document.createTextNode(rowItem[c]);
+                  d2.appendChild(text);
+                  node.appendChild(d2);
                 }
-
-                const text = document.createTextNode(rowItem[c]);
-                d2.appendChild(text);
-                node.appendChild(d2);
               }
 
               if (rowItem[0] === selectedId) {
@@ -2568,11 +2583,11 @@
         */
         function parseNodeId (id) {
           let r = null;
-          const match = /([0-9]+)(.*)/.exec(id);
+          const match = /(.*)-([0-9]+)/.exec(id);
           if (match) {
             r = {};
-            r.id = match[1];
-            r.wtPrefix = match[2];
+            r.wtPrefix = match[1];
+            r.id = match[2];
           }
           return r;
         }
@@ -2595,14 +2610,20 @@
           values.push(id);
           let col = row.firstChild;
 
-          while (col) {
-            const match = /.*Img/.exec(col.firstChild.id); // in case it has a + or - image
-            if (match) {
-              values.push(col.firstChild.nextSibling.nodeValue);
-            } else {
-              values.push(col.firstChild.nodeValue);
+          // if firstChild is an element then this row has multiple columns contained in child divs,
+          // otherwise just one, so get value from row's innerText
+          if (col.nodeType === Node.ELEMENT_NODE) {
+            while (col) {
+              const match = /.*Img/.exec(col.firstChild.id); // in case it has a + or - image
+              if (match) {
+                values.push(col.firstChild.nextSibling.nodeValue);
+              } else {
+                values.push(col.firstChild.nodeValue);
+              }
+              col = col.nextSibling;
             }
-            col = col.nextSibling;
+          } else {
+            values.push(row.innerText);
           }
           return values;
         }

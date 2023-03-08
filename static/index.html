@@ -749,7 +749,6 @@
           ftLexicon = 'lexicon:lsj AND ';
         }
         const ftURL = 'ft/?p=' + page + '&q=' + ftLexicon + query;
-        console.log(ftURL);
         microAjax({
           url: ftURL,
           method: 'GET',
@@ -816,8 +815,12 @@
           nextLink = '<span id="ftNext">next</span>';
         }
 
+        let counts = 0;
+        if (totalCount > 0) {
+          counts = prevLink + ' ' + firstResult + '-' + lastResult + ' of ' + totalCount + ' ' + nextLink;
+        }
         const con = document.getElementById('innerbody');
-        con.innerHTML = "<div id='itembody' style='padding:10px 18px;'><div style='font-size:14pt;margin-top:6px;margin-bottom:4px;'>Full-text search results: " + prevLink + ' ' + firstResult + '-' + lastResult + ' of ' + totalCount + ' ' + nextLink + "</div><div style='margin-bottom:24px;'></div>" + rows + '</div>'; // the firstChild is the CDATA node
+        con.innerHTML = "<div id='itembody' style='padding:10px 18px;'><div style='font-size:14pt;margin-top:6px;margin-bottom:4px;'>Full-text search results: " + counts + "</div><div style='margin-bottom:24px;'></div>" + rows + '</div>'; // the firstChild is the CDATA node
 
         if (fullTextPage > 0) {
           document.getElementById('ftPrev').addEventListener('click', prevFT, false);

@@ -78,7 +78,7 @@
           bottom:10px;
         }
         BODY {
-            font-family: NewAthenaUnicode, WebNewAthenaUnicode, helvetica, san-serif;
+            font-family: NewAthenaUnicode, WebNewAthenaUnicode, helvetica, arial, san-serif;
             background-color: #eee;
             padding: 0px;
             margin: 0px;
@@ -89,6 +89,9 @@
         }
         .dark BODY {
             background-color: black;
+        }
+        BUTTON.lexitem {
+          cursor: pointer;
         }
         BUTTON {
             border-style: none;
@@ -117,7 +120,6 @@
         }
         .wordtree input {
             font-family: helvetica, arial;
-            /*WebNewAthenaUnicode;*/
             font-size: 11pt;
             padding: 12px 6px;
         }
@@ -247,8 +249,26 @@
         #hamburger rect {
             fill: black;
         }
+        .historytitle {
+            text-align: center;
+            background-color: #444;
+            color: white;
+            height: 20px;
+            border-radius: 4px;
+            font-size: 9pt;
+            font-family: helvetica, arial, sans-serif;
+            flex-grow: 1;
+            flex-basis: auto;
+            margin: 0px 2px;
+            margin-bottom: 0px;
+            margin-bottom: 2px;
+            line-height: 1.6;
+        }
+        .dark .historytitle {
+          background-color: white;
+            color: black;
+        }
         .lexitem {
-            cursor: pointer;
             text-align: center;
             background-color: white;
             color: black;
@@ -363,7 +383,6 @@
             overflow: hidden;
             width: 100%;
             height: 100%;
-            /* font-family: NewAthenaUnicode, WebNewAthenaUnicode; */
         }
         body,html {
             position: fixed;
@@ -993,7 +1012,7 @@
         w4.div.style.margin = '10px';
         w4.div.style.marginTop = '0px';
 
-        w4.title.innerHTML = '<div class="titlerow"><div class="lexitem">History</div></div>';
+        w4.title.innerHTML = '<div class="titlerow"><div class="historytitle">History</div></div>';
         w4.url = '';
         w4.entry.style.left = '-4000px';
         w4.onSelectionChanged = historyChooserOnSelect;
@@ -1296,20 +1315,19 @@
         if (document.body.classList.contains('settingsOn')) {
           document.body.classList.remove('settingsOn');
         } else {
+          const mode = window.localStorage.getItem('mode');
+          switch (mode) {
+            case 'dark':
+              document.querySelector('#darkModeDark').checked = true;
+              break;
+            case 'light':
+              document.querySelector('#darkModeLight').checked = true;
+              break;
+            default:
+              document.querySelector('#darkModeSystem').checked = true;
+              break;
+          }
           document.body.classList.add('settingsOn');
-        }
-
-        const mode = window.localStorage.getItem('mode');
-        switch (mode) {
-          case 'dark':
-            document.querySelector('#darkModeDark').checked = true;
-            break;
-          case 'light':
-            document.querySelector('#darkModeLight').checked = true;
-            break;
-          default:
-            document.querySelector('#darkModeSystem').checked = true;
-            break;
         }
       }
 
@@ -2470,7 +2488,6 @@
             if (!res) { return; }
 
             const idPrefix = res.wtPrefix;
-
             const wt = lookupWT(idPrefix);
 
             if (wt.selectedRow) {

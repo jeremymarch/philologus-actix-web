@@ -22,11 +22,33 @@
         }
         setTheme();
     </script>
-    <style>
+    <style nonce="2726c7f26c">
         @font-face {
             font-family: 'WebNewAthenaUnicode';
             src: url('/newathu5_8.woff') format('woff'),
                 url('/newathu5_8.ttf') format('ttf');
+        }
+        .fulltextresultheading {
+          font-size:14pt;
+          margin-top:6px;
+          margin-bottom:4px;
+        }
+        #attrib {
+          text-align:center;
+        }
+        .wordLemma {
+          font-size:20pt;
+          margin-bottom:16px;
+        }
+        .wordPPS {
+          margin-bottom:24px;
+        }
+        #itembody {
+          padding:10px 18px;
+        }
+        .titlerow {
+          width:100%;
+          display:flex;
         }
         #mesg { 
           display:none;
@@ -82,11 +104,11 @@
             padding: 12px 6px;
         }
         :root {
-            --author-color: #ac1b1b;
+            --author-color: #b10b0b;
             --bib-color: #0c640c;
             --author-color-dark: #f45757;
             --bib-color-dark: #3dd171;
-            --ref-color: #8b22a0;
+            --ref-color: #9407b0;
             --ref-color-dark:darkorange;
             --gloss-color: black;
             --foreign-color: blue;
@@ -212,9 +234,14 @@
             text-align: center;
             background-color: white;
             color: black;
-            padding: 3px 0px;
-            font-size: 8pt;
+            height:20px;
+            border-radius:4px;
+            font-size: 9pt;
             font-family: helvetica, arial, sans-serif;
+            flex-grow:1;
+            flex-basis: auto;
+            margin: 0px 2px;
+            margin-bottom:2px;
         }
         .lexselected,
         .searchselected {
@@ -309,7 +336,7 @@
             overflow: hidden;
             width: 100%;
             height: 100%;
-            font-family: NewAthenaUnicode, WebNewAthenaUnicode;
+            /* font-family: NewAthenaUnicode, WebNewAthenaUnicode; */
         }
         body,html {
             position: fixed;
@@ -743,11 +770,11 @@
       function fullTextRequest (query, lexicon, page) {
         let ftLexicon = '';
         if (lexicon === 'ls') {
-          ftLexicon = 'lexicon:lewisshort AND ';
+          ftLexicon = 'lexicon:lewisshort ';
         } else if (lexicon === 'slater') {
-          ftLexicon = 'lexicon:slater AND ';
+          ftLexicon = 'lexicon:slater ';
         } else {
-          ftLexicon = 'lexicon:lsj AND ';
+          ftLexicon = 'lexicon:lsj ';
         }
         const ftURL = 'ft/?p=' + page + '&q=' + ftLexicon + query;
         microAjax({
@@ -821,7 +848,7 @@
           counts = prevLink + ' ' + firstResult + '-' + lastResult + ' of ' + totalCount + ' ' + nextLink;
         }
         const con = document.getElementById('innerbody');
-        con.innerHTML = "<div id='itembody' style='padding:10px 18px;'><div style='font-size:14pt;margin-top:6px;margin-bottom:4px;'>Full-text search results: " + counts + "</div><div style='margin-bottom:24px;'></div>" + rows + '</div>'; // the firstChild is the CDATA node
+        con.innerHTML = "<div id='itembody'><div class='fulltextresultheading'>Full-text search results: " + counts + '</div>' + rows + '</div>'; // the firstChild is the CDATA node
 
         if (fullTextPage > 0) {
           document.getElementById('ftPrev').addEventListener('click', prevFT, false);
@@ -911,7 +938,7 @@
         w4.div.style.margin = '10px';
         w4.div.style.marginTop = '0px';
 
-        w4.title.innerHTML = '<div style="width:' + (w4.width - 14) + 'px;"><div class="lexitem">History</div></div>';
+        w4.title.innerHTML = '<div class="titlerow"><div class="lexitem">History</div></div>';
         w4.url = '';
         w4.entry.style.left = '-4000px';
         w4.onSelectionChanged = historyChooserOnSelect;
@@ -984,7 +1011,8 @@
         wt.con.style.top = wt.conTopOffset + 'px';
         wt.entry.focus();
 
-        wt.title.innerHTML = '<div style="margin-left:4px;width:' + (wt.width - 18) + 'px;display:flex;"><BUTTON id="lexlabel0" class="lexitem" style="width:31%;">LSJ</BUTTON><BUTTON id="lexlabel1" class="lexitem" style="width:33%;">Slater</BUTTON><BUTTON id="lexlabel2" class="lexitem" style="width:36%;">Lewis &amp; Short</BUTTON></div><div style="margin-top:2px;margin-left:4px;width:' + (wt.width - 18) + 'px;display:flex;"><BUTTON id="searchlabel0" class="lexitem" style="width:50%;">Lemma</BUTTON><BUTTON id="searchlabel1" class="lexitem" style="width:50%;">Full-text</BUTTON></div>';
+        wt.title.innerHTML = '<div class="titlerow"><BUTTON id="lexlabel0" class="lexitem">LSJ</BUTTON><BUTTON id="lexlabel1" class="lexitem">Slater</BUTTON><BUTTON id="lexlabel2" class="lexitem">Lewis &amp; Short</BUTTON></div>';
+        wt.title.innerHTML += '<div class="titlerow"><BUTTON id="searchlabel0" class="lexitem">Lemma</BUTTON><BUTTON id="searchlabel1" class="lexitem">Full-text</BUTTON></div>';
 
         // https://stackoverflow.com/questions/16242980/making-radio-buttons-look-like-buttons-instead
         // let title = '<div style="margin-left:4px;width:' + (w.width - 18) + 'px;display:flex;">\
@@ -1322,7 +1350,7 @@
         const con = document.getElementById('innerbody');
 
         if (data.errorMesg) {
-          con.innerHTML = "<div id='itembody' style='padding:40px 18px;text-align:center;'>" + data.errorMesg + '</div>';
+          con.innerHTML = "<div id='itembody'>" + data.errorMesg + '</div>';
           return;
         }
 
@@ -1340,7 +1368,7 @@
 
         const perseusLink = "<a href='http://www.perseus.tufts.edu/hopper/text.jsp?doc=Perseus:text:";
 
-        let attr = "<br/><br/><div id='attrib' style='text-align:center;'>";
+        let attr = "<br/><br/><div id='attrib'>";
         if (lexicon === 'lsj') {
           attr += perseusLink + "1999.04.0057' class='attrlink'>Liddell, Scott, and Jones</a> ";
           attr += perseusLink + '1999.04.0057%3Aentry%3D';
@@ -1357,7 +1385,7 @@
         attr += '</div>';
         // attr += "</div>";
 
-        con.innerHTML = "<div id='itembody' style='padding:10px 18px;'><div style='font-size:20pt;margin-bottom:16px;'>" + word + "</div><div style='margin-bottom:24px;'>" + pps + '</div>' + def + attr + '</div>'; // the firstChild is the CDATA node
+        con.innerHTML = "<div id='itembody'><div class='wordLemma'>" + word + "</div><div class='wordPPS'>" + pps + '</div>' + def + attr + '</div>'; // the firstChild is the CDATA node
         con.scrollTo(0, 0);
 
         if (useDefCache) {
@@ -1597,8 +1625,8 @@
         const ti = document.createElement('div');
         ti.style.position = 'absolute';
         ti.style.top = '17px';
-        ti.style.left = '6px';
-        ti.style.width = this.width - 33 + 'px';
+        ti.style.left = '10px';
+        ti.style.width = 'calc(100% - 20px)';
         ti.innerHTML = 'Title';
         this.title = ti;
 

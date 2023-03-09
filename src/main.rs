@@ -210,11 +210,12 @@ async fn full_text_query(
         .unwrap();
 
     let searcher = reader.searcher();
-    let query_parser = QueryParser::for_index(
+    let mut query_parser = QueryParser::for_index(
         index,
         //this vector contains default fields used if field is not specified in query
         vec![lexicon_field, definition_field],
     );
+    query_parser.set_conjunction_by_default(); // AND by default
 
     let mut res = FullTextResponse {
         ftresults: vec![],

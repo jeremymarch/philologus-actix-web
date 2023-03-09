@@ -28,6 +28,24 @@
             src: url('/newathu5_8.woff') format('woff'),
                 url('/newathu5_8.ttf') format('ttf');
         }
+        .contactAbout {
+          text-align:left;
+          margin:10px;
+        }
+        .iosAbout {
+          text-align:center;
+          font-size:16pt;
+          padding-top:60px;
+        }
+        .settingsDarkMode {
+          text-align:right;
+          float:right;
+          padding:0px;
+          border:none;
+        }
+        #settingsDarkMode {
+          height:70px;
+        }
         .fulltextresultheading {
           font-size:14pt;
           margin-top:6px;
@@ -282,7 +300,10 @@
         .dark .menulink:active {
             color: white;
         }
-        #settingsdiv div {
+        #settingsdiv {
+          display:none;
+        }
+        #settingsdiv .settingsItem {
             background-color: white;
             color: black;
             display: block;
@@ -290,14 +311,14 @@
             cursor: pointer;
             border: 2px solid white;
         }
-        #settingsdiv div:hover {
+        #settingsdiv .settingsItem:hover {
             border: 2px solid black;
         }
         #settingsdiv div:focus {
             border: 2px solid black;
             outline: 0px solid black;
         }
-        .dark #settingsdiv div {
+        .dark #settingsdiv .settingsItem {
             background-color: black;
             color: white;
             display: block;
@@ -305,12 +326,18 @@
             cursor: pointer;
             border: 2px solid black;
         }
-        .dark #settingsdiv div:hover {
+        .dark #settingsdiv .settingsItem:hover {
             border: 2px solid white;
         }
         .dark #settingsdiv div:focus {
             border: 2px solid white;
             outline: 0px solid white;
+        }
+        .settingsOn #settingsdiv {
+          display:block;
+        }
+        .settingsOn #backdrop {
+          display:block;
         }
         .menucell {
             text-align: center;
@@ -578,6 +605,7 @@
             width: 100%;
             height: 100%;
             z-index: 900;
+            display:none;
         }
         #rightlist {
           position:absolute;
@@ -693,7 +721,34 @@
             </svg>
         </div>
     </div>
+    <div id="settingsdiv" class="settings">
+      Settings<br>
+      <ul>
+        <li>
+          <div id='aboutButton' tabindex='0' class='menulink settingsItem'>about</div>
+        </li>
+        <li>
+          <div id='iOSButton' tabindex='0' class='menulink settingsItem'>iOS/Android app</div>
+        </li>
+        <!--<li><div id='configureButton' tabindex='0' class='menulink settingsItem'>configure</div></li>-->
+        <li>
+          <div id='toggleHistoryButton' tabindex='0' class='menulink settingsItem'>show/hide history</div>
+        </li>
+        <li>
+          <div id="settingsDarkMode" tabindex='0' class="settingsItem">dark mode:
+            <div class='settingsDarkMode'>
+              <label for='darkModeSystem'>system</label> 
+              <input id='darkModeSystem' type='radio' name='darkmode' value='system'/><br>
+              <label for='darkModeDark'>dark</label> 
+              <input id='darkModeDark' type='radio' name='darkmode' value='dark'/><br>
+              <label for='darkModeLight'>light</label><input id='darkModeLight' type='radio' name='darkmode' value='light'/>
+            </div>
+          </div>
+        </li>
+      </ul>
+    </div>
     <div id="mesg"></div>
+    <div id="backdrop"></div>
     <script nonce="2726c7f26c" type="text/javascript">
       'use strict';
 
@@ -1081,6 +1136,15 @@
         document.onkeyup = globalKeyUp;
         document.getElementById('innerbody').ontouchstart = onTouch;
 
+        document.getElementById('aboutButton').addEventListener('click', contact, false);
+        document.getElementById('iOSButton').addEventListener('click', showiPhone, false);
+        // document.getElementById('configureButton').addEventListener('click', config, false);
+        document.getElementById('toggleHistoryButton').addEventListener('click', toggleHistoryChooser, false);
+        document.getElementById('darkModeSystem').addEventListener('click', darkModeClick, false);
+        document.getElementById('darkModeDark').addEventListener('click', darkModeClick, false);
+        document.getElementById('darkModeLight').addEventListener('click', darkModeClick, false);
+        document.getElementById('backdrop').addEventListener('click', toggleSettings, false);
+
         window.onresize = onResize;
         onResize();
       }
@@ -1157,12 +1221,12 @@
 
       function contact () {
         const about = "Philolog.us first launched in June 2005 shortly after the Perseus Digital Library began offering access to its collections via web services. One of the primary aims has been to offer a streamlined, user-friendly interface to the lexica in the Perseus library.<br/><br/><br/>Thanks to the <a class='storelink' href='http://www.perseus.tufts.edu'>Perseus Digital Library</a> for digitizing and make available these texts.    Thanks also to <a class='storelink' href='https://logeion.uchicago.edu'>Logeion</a> for making many corrections and improvements to them. <br/><br/>Jeremy March<br/><a class='storelink' href='mailto:jmarch@gradcenter.cuny.edu'>jmarch@gradcenter.cuny.edu</a>";
-        document.getElementById('innerbody').innerHTML = "<div style='text-align:left;margin:10px;'>" + about + '</div>';
+        document.getElementById('innerbody').innerHTML = "<div class='contactAbout'>" + about + '</div>';
       }
 
       function showiPhone () {
         const news = "Available for iPhone/iPad app in the <a href='https://itunes.apple.com/us/app/philolog.us/id622324932?mt=8' class='storelink'>App store</a>.<br><br><br>Available for Android in the <a href='https://play.google.com/store/apps/details?id=com.philolog.philologus&hl=en' class='storelink'>Google Play store</a>.";
-        document.getElementById('innerbody').innerHTML = "<div style='text-align:center;font-size:16pt;padding-top:60px;'>" + news + '</div>';
+        document.getElementById('innerbody').innerHTML = "<div class='iosAbout'>" + news + '</div>';
       }
 
       // eslint-disable-next-line no-unused-vars
@@ -1229,35 +1293,10 @@
       }
 
       function toggleSettings () {
-        let settingsDiv = document.getElementById('settingsdiv');
-        if (!settingsDiv) {
-          settingsDiv = document.createElement('div');
-          settingsDiv.id = 'settingsdiv';
-          settingsDiv.classList.add('settings');
-          settingsDiv.style.display = 'block';
-          settingsDiv.innerHTML = "Settings<br><ul><li><div id='aboutButton' tabindex='0' class='menulink'>about</div></li><li><div id='iOSButton' tabindex='0' class='menulink'>iOS/Android app</div></li><!--<li><div id='configureButton' tabindex='0' class='menulink'>configure</div></li>--><li><div id='toggleHistoryButton' tabindex='0' class='menulink'>show/hide history</div></li><li><div tabindex='0' style='height:70px;'>dark mode: <div style='text-align:right;float:right;padding:0px;border:none;'><label for='darkModeSystem'>system</label> <input id='darkModeSystem' type='radio' name='darkmode' value='system'/><br><label for='darkModeDark'>dark</label> <input id='darkModeDark' type='radio' name='darkmode' value='dark'/><br><label for='darkModeLight'>light</label><input id='darkModeLight' type='radio' name='darkmode' value='light'/></div></div></li></ul>";
-          const noclick = document.createElement('div');
-          noclick.id = 'backdrop';
-          noclick.onclick = function () {
-            document.querySelector('#backdrop').style.display = 'none';
-            toggleSettings();
-          };
-          document.body.appendChild(noclick);
-          document.body.appendChild(settingsDiv);
-
-          document.getElementById('aboutButton').addEventListener('click', contact, false);
-          document.getElementById('iOSButton').addEventListener('click', showiPhone, false);
-          // document.getElementById('configureButton').addEventListener('click', config, false);
-          document.getElementById('toggleHistoryButton').addEventListener('click', toggleHistoryChooser, false);
-          document.getElementById('darkModeSystem').addEventListener('click', darkModeClick, false);
-          document.getElementById('darkModeDark').addEventListener('click', darkModeClick, false);
-          document.getElementById('darkModeLight').addEventListener('click', darkModeClick, false);
-        } else if (settingsDiv.style.display === 'block') {
-          document.querySelector('#backdrop').style.display = 'none';
-          settingsDiv.style.display = 'none';
+        if (document.body.classList.contains('settingsOn')) {
+          document.body.classList.remove('settingsOn');
         } else {
-          document.querySelector('#backdrop').style.display = 'block';
-          settingsDiv.style.display = 'block';
+          document.body.classList.add('settingsOn');
         }
 
         const mode = window.localStorage.getItem('mode');

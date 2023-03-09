@@ -759,7 +759,7 @@ async fn main() -> io::Result<()> {
                 async {
                     let mut res = fut.await?;
                     res.headers_mut()
-                        .insert(CONTENT_SECURITY_POLICY, HeaderValue::from_static("script-src 'nonce-2726c7f26c' 'unsafe-inline'; object-src 'none'; base-uri 'none'"));
+                        .insert(CONTENT_SECURITY_POLICY, HeaderValue::from_static("style-src 'nonce-2726c7f26c'; script-src 'nonce-2726c7f26c' 'unsafe-inline'; object-src 'none'; base-uri 'none'"));
                     Ok(res)
                 }
             })

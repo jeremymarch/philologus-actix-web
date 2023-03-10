@@ -28,6 +28,7 @@
             src: url('/newathu5_8.woff') format('woff'),
                 url('/newathu5_8.ttf') format('ttf');
         }
+
         .contactAbout {
           text-align:left;
           margin:10px;
@@ -626,13 +627,6 @@
             z-index: 900;
             display:none;
         }
-        #rightlist {
-          position:absolute;
-          top:69px;
-          right:20px;
-          width:260px;
-          height:500px;
-        }
         #leftlist {
             background-color: white;
             position:absolute;
@@ -648,7 +642,6 @@
         }
         #outerbody {
           background-color: white;
-            transition: .75s;
             border-radius: 14px;
             position: relative;
             z-index: 1;
@@ -664,7 +657,6 @@
             background-color: #202124;
         }
         #innerbody {
-            transition: .75s;
             position: relative;
             z-index: 2;
             margin: 0px;
@@ -672,38 +664,6 @@
             overflow: auto;
             height: calc(100% - 20px);
         }
-        .fulltext #outerbody {
-            transition: .75s;
-            margin-left: 10px;
-            top: -10px;
-            height: calc(100% - 18px);
-        }
-        .fulltext #innerbody {
-            transition: .75s;
-            top: 62px;
-            height: calc(100% - 100px);
-        }
-        /*
-        #lemmataEntry {
-            transition: .75s;
-            width: 193px;
-        }
-        #lemmataLoading {
-            transition: .75s;
-            right: 35px;
-        }
-        .fulltext #lemmataLoading {
-            transition: .75s;
-            right: -51px;
-        }
-        .fulltext #lemmataEntry {
-            transition: .75s;
-            width: 256px;
-        }
-        #lemmataFTCheck {
-            z-index: 999;
-        }
-        */
         LABEL {
             color: black;
         }
@@ -721,6 +681,26 @@
         .dark #ftPrev, .dark #ftNext {
           color: blue;
           color: var(--foreign-color-dark, blue);
+        }
+        #rightlist {
+          position:absolute;
+          top:69px;
+          width:260px;
+          height:500px;
+          transition: .5s;
+          right:-260px;
+        }
+        .showHistory #rightlist {
+          transition: .5s;
+          right:20px;
+        }
+        #outerbody {
+          transition: .5s;
+          margin-right: 1rem;
+        }
+        .showHistory #outerbody {
+          transition: .5s;
+          margin-right: 282px;
         }
     </style>
 </head>
@@ -774,9 +754,9 @@
       const debug = false;
       const globalLexica = ['lsj', 'slater', 'ls'];
       const lemmaWT = 'lemmata';
-      const historyWT = 'test4';
+      const historyWTPrefix = 'test4';
       let historyOpen = false;
-      let w4;
+      let historyWT;
       let fullText = false;
       const forceLowercase = true;
 
@@ -832,7 +812,7 @@
 
       function closeHistoryChooser () {
         historyOpen = false;
-        const hist = lookupWT(historyWT);
+        const hist = lookupWT(historyWTPrefix);
         if (!hist) {
           return;
         }
@@ -842,15 +822,9 @@
       }
 
       function fullTextRequest (query, lexicon, page) {
-        let ftLexicon = '';
-        if (lexicon === 'ls') {
-          ftLexicon = 'lexicon:lewisshort ';
-        } else if (lexicon === 'slater') {
-          ftLexicon = 'lexicon:slater ';
-        } else {
-          ftLexicon = 'lexicon:lsj ';
-        }
-        const ftURL = 'ft/?p=' + page + '&q=' + ftLexicon + query;
+        // limit fulltext query by lexicon
+        const ftLexicon = 'lexicon:' + lexNameToFTLex(lexicon);
+        const ftURL = 'ft/?p=' + page + '&q=' + ftLexicon + ' ' + query;
         microAjax({
           url: ftURL,
           method: 'GET',
@@ -868,6 +842,42 @@
       function prevFT (page) {
         const wt = lookupWT(lemmaWT);
         fullTextRequest(wt.entry.value, wt.params.lexicon, fullTextPage - 1);
+      }
+
+      function lexNameToFTLex (lexName) {
+        let ftLexicon = '';
+        if (lexName === 'ls') {
+          ftLexicon = 'lewisshort';
+        } else if (lexName === 'slater') {
+          ftLexicon = 'slater';
+        } else if (lexName === 'lsj') {
+          ftLexicon = 'lsj';
+        }
+        return ftLexicon;
+      }
+
+      function ftLexToLexName (ftLex) {
+        let lex = '';
+        if (ftLex === 'lsj') {
+          lex = 'LSJ';
+        } else if (ftLex === 'lewisshort') {
+          lex = 'LS';
+        } else if (ftLex === 'slater') {
+          lex = 'Slater';
+        }
+        return lex;
+      }
+
+      function lexNumToLexName (lexNum) {
+        let lex = '';
+        if (lexNum === '0') {
+          lex = 'lsj';
+        } else if (lexNum === '1') {
+          lex = 'slater';
+        } else if (lexNum === '2') {
+          lex = 'ls';
+        }
+        return lex;
       }
 
       let fullTextPage = 0;
@@ -892,16 +902,7 @@
         const lastResult = Math.min(responseObj.limit + (responseObj.page * responseObj.limit), totalCount);
 
         for (; i < responseObj.ftresults.length; i++) {
-          let lex = '';
-          if (responseObj.ftresults[i].lex === 'greatscott') {
-            lex = 'LSJ';
-          } else if (responseObj.ftresults[i].lex === 'latindico') {
-            lex = 'LS';
-          } else if (responseObj.ftresults[i].lex === 'pindar_dico') {
-            lex = 'Slater';
-          } else {
-            lex = responseObj.ftresults[i].lex;
-          }
+          const lex = ftLexToLexName(responseObj.ftresults[i].lex);
 
           rows += "<div class='ftrow'><p class='ftrowhead'>" + (i + firstResult) + ". <span id='" +
             lex.toLowerCase() + responseObj.ftresults[i].id + "' class='ftrowheaderlink'>" +
@@ -917,12 +918,12 @@
           nextLink = '<span id="ftNext">next</span>';
         }
 
-        let counts = 0;
+        let resultCounts = 0;
         if (totalCount > 0) {
-          counts = prevLink + ' ' + firstResult + '-' + lastResult + ' of ' + totalCount + ' ' + nextLink;
+          resultCounts = prevLink + ' ' + firstResult + '-' + lastResult + ' of ' + totalCount + ' ' + nextLink;
         }
         const con = document.getElementById('innerbody');
-        con.innerHTML = "<div id='itembody'><div class='fulltextresultheading'>Full-text search results: " + counts + '</div>' + rows + '</div>'; // the firstChild is the CDATA node
+        con.innerHTML = "<div id='itembody'><div class='fulltextresultheading'>Full-text search results: " + resultCounts + '</div>' + rows + '</div>'; // the firstChild is the CDATA node
 
         if (fullTextPage > 0) {
           document.getElementById('ftPrev').addEventListener('click', prevFT, false);
@@ -934,16 +935,7 @@
         // add links
         i = 0;
         for (; i < responseObj.ftresults.length; i++) {
-          let lex = '';
-          if (responseObj.ftresults[i].lex === 'greatscott') {
-            lex = 'LSJ';
-          } else if (responseObj.ftresults[i].lex === 'latindico') {
-            lex = 'LS';
-          } else if (responseObj.ftresults[i].lex === 'pindar_dico') {
-            lex = 'Slater';
-          } else {
-            lex = responseObj.ftresults[i].lex;
-          }
+          const lex = ftLexToLexName(responseObj.ftresults[i].lex);
           const wordId = responseObj.ftresults[i].id;
           document.getElementById(lex.toLowerCase() + wordId)
             .addEventListener('click', function () { getDef(wordId, lex.toLowerCase(), false, true); }, false);
@@ -959,38 +951,30 @@
 
       function toggleHistoryChooser () {
         if (historyOpen) {
-          closeHistoryChooser();
-          document.getElementById('outerbody').style.marginRight = '1rem';
+          // closeHistoryChooser();
+          historyOpen = false;
+          document.body.classList.remove('showHistory');
 
           setLocalStorageKey('historylist', '0');
         } else {
           historyChooser();
-          document.getElementById('outerbody').style.marginRight = '280px';
-
           if (supportsHTML5Storage()) {
             const h = window.localStorage.getItem('history3');
-            if (w4 && h && h.length > 0) {
-              w4.refreshWithRows(h);
+            if (historyWT && h && h.length > 0) {
+              historyWT.refreshWithRows(h);
             }
           } else {
             document.getElementById('outerbody').style.marginRight = '1rem';
           }
           setLocalStorageKey('historylist', '1');
+          document.body.classList.add('showHistory');
           onResize();
         }
       }
 
       function historyChooserOnSelect (lexicon, cols) {
-        // col2 is the lexicon # from history
-        let lex;
-        if (cols[2] === '0') {
-          lex = 'lsj';
-        } else if (cols[2] === '1') {
-          lex = 'slater';
-        } else {
-          lex = 'ls';
-        }
-
+        // col0 is the id, col2 is the lexicon # from history
+        const lex = lexNumToLexName(cols[2]);
         getDef(cols[0], lex, '', true, true);
       }
 
@@ -998,27 +982,25 @@
         if (historyOpen) {
           return;
         }
-
+        historyOpen = true;
         const h = getViewportHeight(window);
 
-        historyOpen = true;
-        w4 = new Wordtree(historyWT, 260, h - 20);
-        w4.conTopOffset = 38;
-        w4.con.style.top = w4.conTopOffset + 'px';
-        w4.setHeight(w4.height);
-        w4.div.style.zIndex = 800;
+        historyWT = new Wordtree(historyWTPrefix, 260, h - 20);
+        historyWT.conTopOffset = 38;
+        historyWT.con.style.top = historyWT.conTopOffset + 'px';
+        historyWT.setHeight(historyWT.height);
+        historyWT.div.style.zIndex = 800;
 
-        w4.div.style.borderRadius = '14px';
-        w4.div.style.margin = '10px';
-        w4.div.style.marginTop = '0px';
+        historyWT.div.style.margin = '10px';
+        historyWT.div.style.marginTop = '0px';
 
-        w4.title.innerHTML = '<div class="titlerow"><div class="historytitle">History</div></div>';
-        w4.url = '';
-        w4.entry.style.left = '-4000px';
-        w4.onSelectionChanged = historyChooserOnSelect;
-        w4.onClickActivate = historyChooserOnSelect;
+        historyWT.title.innerHTML = '<div class="titlerow"><div class="historytitle">History</div></div>';
+        historyWT.url = '';
+        historyWT.entry.style.left = '-4000px';
+        historyWT.onSelectionChanged = historyChooserOnSelect;
+        historyWT.onClickActivate = historyChooserOnSelect;
 
-        w4.show(document.getElementById('rightlist'));
+        historyWT.show(document.getElementById('rightlist'));
       }
 
       function globalKeyUp (ev) {
@@ -1178,7 +1160,7 @@
         if (rl) {
           rl.style.height = (height - 58) + 'px';
         }
-        const historyList = lookupWT(historyWT);
+        const historyList = lookupWT(historyWTPrefix);
         if (historyList) {
           historyList.setHeight(height - 74);
         }
@@ -1508,8 +1490,8 @@
             } else {
               tree = {
                 error: '',
-                wtprefix: historyWT,
-                container: historyWT + 'Container',
+                wtprefix: historyWTPrefix,
+                container: historyWTPrefix + 'Container',
                 requestTime: '1427555297518',
                 selectId: '-1',
                 page: '0',
@@ -1534,8 +1516,8 @@
             const h = JSON.stringify(tree);
 
             window.localStorage.setItem('history3', h);
-            if (w4) {
-              w4.refreshWithRows(h);
+            if (historyWT) {
+              historyWT.refreshWithRows(h);
             }
           }
         }
@@ -1703,27 +1685,6 @@
         input.id = idPrefix + 'Entry';
         this.entry = input;
 
-        const ftcheck = document.createElement('input');
-        ftcheck.type = 'checkbox';
-        ftcheck.ariaLabel = 'full-text toggle';
-        ftcheck.style.position = 'absolute';
-        ftcheck.style.top = '42px';
-        ftcheck.style.left = '231px';
-        ftcheck.style.display = 'none';
-        ftcheck.id = idPrefix + 'FTCheck';
-        // ftcheck.onclick = ftclicked;
-        this.ft = ftcheck;
-
-        const ftlabel = document.createElement('label');
-        ftlabel.setAttribute('for', idPrefix + 'FTCheck');
-        ftlabel.style.position = 'absolute';
-        ftlabel.style.top = '46px';
-        ftlabel.style.left = '213px';
-        ftlabel.innerHTML = 'FT';
-        ftlabel.style.display = 'none';
-        ftlabel.style.fontFamily = 'helvetica, arial, sans-serif';
-        ftlabel.style.zIndex = 999;
-
         const loading = document.createElement('div');
         loading.id = this.idPrefix + 'Loading';
         // loading.src = "images/loading2.gif";
@@ -1734,8 +1695,6 @@
         loading.style.height = '18px';
         loading.style.width = '18px';
         loading.style.zIndex = 999;
-        // let loading = document.createElement("div");
-        // loading.innerHTML = '<svg class="spinner" viewBox="0 0 50 50"><circle class="path" cx="25" cy="25" r="20" fill="none" stroke-width="10"></circle></svg>';
         loading.innerHTML = '<div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>';
 
         this.loading = loading;
@@ -1746,8 +1705,6 @@
         input.onkeydown = wordtreeOnDown;
         input.onkeyup = wordtreeOnUp;
 
-        this.div.appendChild(ftcheck);
-        this.div.appendChild(ftlabel);
         this.div.appendChild(input);
         this.div.appendChild(loading);
 
@@ -2490,12 +2447,9 @@
             const idPrefix = res.wtPrefix;
             const wt = lookupWT(idPrefix);
 
-            if (wt.selectedRow) {
-              wt.selectedRow.setAttribute('draggable', false);
-
-              if (wt.selectedRow.classList.contains('selectedRowClass')) {
-                wt.selectedRow.classList.remove('selectedRowClass');
-              }
+            const r = wt.con.querySelectorAll('.selectedRowClass');
+            for (let i = 0; i < r.length; i++) {
+              r[i].classList.remove('selectedRowClass');
             }
 
             this.classList.add('selectedRowClass');
@@ -2752,7 +2706,8 @@
         return r;
       }
 
-      // idx 0 is the id
+      // returns an array of row values: idx 0 is the id (rowid attribute),
+      // the rest come from the columns
       function getColumnValues (row) {
         const values = [];
         const id = row.getAttribute('rowid');

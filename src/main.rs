@@ -23,6 +23,7 @@ use tracing_actix_web::TracingLogger;
 
 use actix_files as fs;
 use actix_files::NamedFile;
+use actix_web::http::header::{HeaderValue, CONTENT_SECURITY_POLICY, STRICT_TRANSPORT_SECURITY};
 use actix_web::{
     http::StatusCode, middleware, web, App, Error as AWError, HttpRequest, HttpResponse,
     HttpServer, ResponseError, Result,
@@ -675,15 +676,12 @@ async fn hc(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 //     }
 // }
 
-use actix_web::dev::Service;
-use actix_web::http::header::{HeaderValue, CONTENT_SECURITY_POLICY};
-
 #[actix_web::main]
 async fn main() -> io::Result<()> {
     std::env::set_var("RUST_LOG", "trace");
     // env_logger::init();
 
-    //e.g. export PHILOLOGUS_DB_PATH=sqlite://philolog_us_local.sqlite?mode=ro
+    //e.g. export PHILOLOGUS_DB_PATH=sqlite://db.sqlite?mode=ro
     //e.g. export PHILOLOGUS_LOG_DB_PATH=sqlite://log.sqlite?mode=rwc
     //e.g. export TANTIVY_INDEX_PATH=/Users/jeremy/Documents/code/tantivy-test/tantivy-data
     //e.g. export TRACING_LOG_PATH=/Users/jeremy/Documents/code/phlogs
@@ -746,6 +744,13 @@ async fn main() -> io::Result<()> {
             .app_data(db_pool.clone())
             .app_data(db_log_pool.clone())
             //.wrap(middleware::Logger::default())
+            .wrap(middleware::DefaultHeaders::new()
+                .add((CONTENT_SECURITY_POLICY,
+                    HeaderValue::from_static("style-src 'nonce-2726c7f26c';\
+                        script-src 'nonce-2726c7f26c' 'unsafe-inline'; object-src 'none'; base-uri 'none'")))
+                .add((STRICT_TRANSPORT_SECURITY,
+                    HeaderValue::from_static("31536000" /* 1 year */ )))
+            )
             .wrap(TracingLogger::default())
             .wrap(middleware::Compress::default())
             // .app_data(
@@ -754,20 +759,11 @@ async fn main() -> io::Result<()> {
             //         .limit(262_144),
             // )
             .app_data(web::PayloadConfig::default().limit(262_144))
-            .wrap_fn(|req, srv| {
-                let fut = srv.call(req);
-                async {
-                    let mut res = fut.await?;
-                    res.headers_mut()
-                        .insert(CONTENT_SECURITY_POLICY, HeaderValue::from_static("style-src 'nonce-2726c7f26c'; script-src 'nonce-2726c7f26c' 'unsafe-inline'; object-src 'none'; base-uri 'none'"));
-                    Ok(res)
-                }
-            })
             //.wrap(error_handlers)
             .service(web::resource("/{lex}/query").route(web::get().to(philologus_words)))
             .service(web::resource("/{lex}/item").route(web::get().to(philologus_defs)))
             .service(web::resource("/{lex}/ft/").route(web::get().to(full_text_query)))
-            .service(web::resource("/{lex}/{word}").route(web::get().to(index))) //requesting page from a word link, order of services matters
+            .service(web::resource("/{lex}/{word}").route(web::get().to(index))) // requesting page from a word link, order of services matters
             .service(web::resource("/ft").route(web::get().to(full_text_query)))
             .service(web::resource("/item").route(web::get().to(philologus_defs)))
             .service(web::resource("/query").route(web::get().to(philologus_words)))

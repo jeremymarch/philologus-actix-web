@@ -49,6 +49,8 @@ use tantivy::collector::{Count, TopDocs};
 use tantivy::query::QueryParser;
 use tantivy::{Index, ReloadPolicy};
 
+use polytonic_greek::hgk_strip_diacritics;
+
 /*
 {"error":"","wtprefix":"test1","nocache":"1","container":"test1Container","requestTime":"1635643672625","selectId":"32","page":"0","lastPage":"0","lastPageUp":"1","scroll":"32","query":"","arrOptions":[{"i":1,"r":["Α α",1,0]},{"i":2,"r":["ἀ-",2,0]},{"i":3,"r":["ἀ-",3,0]},{"i":4,"r":["ἆ",4,0]}...
 */
@@ -228,7 +230,7 @@ async fn full_text_query(
 
     // full-text index should be all lowercase, but use uppercase for AND and OR
     let mut ft_query = info.q.to_lowercase();
-    ft_query = ft_query.replace(" and ", " AND ").replace(" or ", " OR ");
+    ft_query = hgk_strip_diacritics(ft_query.replace(" and ", " AND ").replace(" or ", " OR ").as_str(), 0xFFFFFFFF);
 
     let my_collector = (Count, TopDocs::with_limit(limit).and_offset(offset));
     match query_parser.parse_query(&ft_query) {

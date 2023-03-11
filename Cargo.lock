@@ -1608,6 +1608,7 @@ dependencies = [
  "chrono",
  "env_logger",
  "percent-encoding",
+ "polytonic-greek",
  "regex",
  "serde",
  "serde_json",
@@ -1681,6 +1682,14 @@ name = "pkg-config"
 version = "0.3.25"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1df8c4ec4b0627e53bdf214615ad287367e482558cf84b109250b37464dc03ae"
+
+[[package]]
+name = "polytonic-greek"
+version = "0.4.6"
+source = "git+https://github.com/jeremymarch/polytonic-greek#7ca9195ca0d27ee70be4a12fb4923868b8a9989f"
+dependencies = [
+ "unicode-normalization",
+]
 
 [[package]]
 name = "ppv-lite86"

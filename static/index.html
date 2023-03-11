@@ -34,7 +34,7 @@
           color: black;
           position: absolute;
           background-color: #444;
-          width: 28px;
+          width: 27px;
           height: 24px;
           top: 68px;
           left: 196px;
@@ -866,16 +866,16 @@
         request.onerror = options.error;
       }
 
-      function closeHistoryChooser () {
-        historyOpen = false;
-        const hist = lookupWT(historyWTPrefix);
-        if (!hist) {
-          return;
-        }
+      // function closeHistoryChooser () {
+      //   historyOpen = false;
+      //   const hist = lookupWT(historyWTPrefix);
+      //   if (!hist) {
+      //     return;
+      //   }
 
-        hist.close();
-        document.getElementById(lemmaWT + 'Entry').focus();
-      }
+      //   hist.close();
+      //   document.getElementById(lemmaWT + 'Entry').focus();
+      // }
 
       function fullTextRequest (query, lexicon, page) {
         // limit fulltext query by lexicon
@@ -1947,6 +1947,9 @@
         }
 
         function requestNextPage () {
+          if (this.url === '') {
+            return;
+          }
           this.loading.style.display = 'block';
           if (this.entry) { this.params.w = this.entry.value; }
           let query = JSON.stringify(this.params);
@@ -1956,6 +1959,9 @@
         }
 
         function requestPrevPage () {
+          if (this.url === '') {
+            return;
+          }
           this.loading.style.display = 'block';
           if (this.entry) { this.params.w = this.entry.value; }
           let query = JSON.stringify(this.params);

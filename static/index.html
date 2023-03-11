@@ -29,6 +29,38 @@
                 url('/newathu5_8.ttf') format('ttf');
         }
 
+        #lemmataLangBtn {
+          font-family: helvetica, arial, sans-serif;
+          color: black;
+          position: absolute;
+          background-color: #444;
+          width: 28px;
+          height: 24px;
+          top: 68px;
+          left: 196px;
+          border-radius: 0px 10px 10px 0px;
+          text-align: center;
+          border-left: 2px solid black;
+          cursor: pointer;
+          line-height: 1.3;
+        }
+        .greekOn #lemmataLangBtn {
+          color:white;
+          border-left: 2px solid white;
+          background-color: red;
+        }
+        .dark #lemmataLangBtn {
+          color:black;
+          border-left: 2px solid white;
+          background-color: #444;
+          
+        }
+        .dark.greekOn #lemmataLangBtn {
+          color:white;
+          border-left: 2px solid white;
+          background-color: red;
+        }
+
         .contactAbout {
           text-align:left;
           margin:10px;
@@ -682,6 +714,27 @@
           color: blue;
           color: var(--foreign-color-dark, blue);
         }
+        #rightlistHandleInner {
+          color:black;
+        }
+        .dark #rightlistHandleInner {
+          color:white;
+        }
+        #rightlistHandle {
+          height: 40px;
+          width: 1rem;
+          border-left: 1px solid #444;
+          border-top: 1px solid #444;
+          border-bottom: 1px solid #444;
+          border-radius: 6px;
+          cursor: pointer;
+          position: absolute;
+          top: 50%;
+          right: -3px;
+          z-index: 999;
+          display: flex;
+          align-items: center;
+        }
         #rightlist {
           position:absolute;
           top:69px;
@@ -706,6 +759,9 @@
 </head>
 <body>
     <div id="leftlist"></div>
+    <div id="rightlistHandle" tabIndex="0">
+      <div id="rightlistHandleInner">&lt;</div>
+    </div>
     <div id="rightlist"></div>
     <div id="outerbody">
         <div id="innerbody"></div>
@@ -950,7 +1006,10 @@
       }
 
       function toggleHistoryChooser () {
+        toggleSettingsOff();
         if (historyOpen) {
+          document.getElementById('rightlistHandleInner').innerText = '<';
+          document.getElementById(historyWTPrefix + 'Entry').tabIndex = -1;
           // closeHistoryChooser();
           historyOpen = false;
           document.body.classList.remove('showHistory');
@@ -958,6 +1017,9 @@
           setLocalStorageKey('historylist', '0');
         } else {
           historyChooser();
+          document.getElementById('rightlistHandleInner').innerText = '>';
+          document.getElementById(historyWTPrefix + 'Entry').tabIndex = 0;
+          historyOpen = true;
           if (supportsHTML5Storage()) {
             const h = window.localStorage.getItem('history3');
             if (historyWT && h && h.length > 0) {
@@ -979,9 +1041,10 @@
       }
 
       function historyChooser () {
-        if (historyOpen) {
+        if (document.getElementById(historyWTPrefix)) {
           return;
         }
+
         historyOpen = true;
         const h = getViewportHeight(window);
 
@@ -1105,10 +1168,11 @@
           }
         }
 
-        const showHist = getLocalStorageKey('historylist');
-        if (showHist && showHist === '1') {
-          toggleHistoryChooser();
-        }
+        // always start with history closed
+        // const showHist = getLocalStorageKey('historylist');
+        // if (showHist && showHist === '1') {
+        //   toggleHistoryChooser();
+        // }
 
         // add event listeners
 
@@ -1145,6 +1209,7 @@
         document.getElementById('darkModeDark').addEventListener('click', darkModeClick, false);
         document.getElementById('darkModeLight').addEventListener('click', darkModeClick, false);
         document.getElementById('backdrop').addEventListener('click', toggleSettings, false);
+        document.getElementById('rightlistHandle').addEventListener('click', toggleHistoryChooser, false);
 
         window.onresize = onResize;
         onResize();
@@ -1171,6 +1236,14 @@
         const wt = lookupWT(lemmaWT);
         wt.entry.value = '';
 
+        if (num === 1) {
+          setTransliterateGreek(false);
+        } else if (num === 0 && wt.params.lexicon === 'ls') {
+          setTransliterateGreek(false);
+        } else if (num === 0) {
+          setTransliterateGreek(true);
+        }
+
         highlightSearch(num);
 
         if (num === 0) {
@@ -1194,11 +1267,35 @@
         }
       }
 
+      let greekOn = false;
+      function onLangBtnClick () {
+        if (fullText) { // only change if in fullText mode
+          setTransliterateGreek(!greekOn);
+        }
+      }
+
+      function setTransliterateGreek (transliterate) {
+        if (transliterate) {
+          document.querySelector('HTML').classList.add('greekOn');
+          greekOn = true;
+        } else {
+          document.querySelector('HTML').classList.remove('greekOn');
+          greekOn = false;
+        }
+      }
+
       function switchLex (num) {
         const wt = lookupWT(lemmaWT);
         if (wt) {
           wt.entry.value = '';
           wt.params.lexicon = globalLexica[num];
+          if (!fullText) { // don't change transliterate when in fullText mode
+            if (num === 0 || num === 1) {
+              setTransliterateGreek(true);
+            } else {
+              setTransliterateGreek(false);
+            }
+          }
           wt.refresh();
 
           if (wt.entry) {
@@ -1223,11 +1320,13 @@
       function contact () {
         const about = "Philolog.us first launched in June 2005 shortly after the Perseus Digital Library began offering access to its collections via web services. One of the primary aims has been to offer a streamlined, user-friendly interface to the lexica in the Perseus library.<br/><br/><br/>Thanks to the <a class='storelink' href='http://www.perseus.tufts.edu'>Perseus Digital Library</a> for digitizing and make available these texts.    Thanks also to <a class='storelink' href='https://logeion.uchicago.edu'>Logeion</a> for making many corrections and improvements to them. <br/><br/>Jeremy March<br/><a class='storelink' href='mailto:jmarch@gradcenter.cuny.edu'>jmarch@gradcenter.cuny.edu</a>";
         document.getElementById('innerbody').innerHTML = "<div class='contactAbout'>" + about + '</div>';
+        toggleSettingsOff();
       }
 
       function showiPhone () {
         const news = "Available for iPhone/iPad app in the <a href='https://itunes.apple.com/us/app/philolog.us/id622324932?mt=8' class='storelink'>App store</a>.<br><br><br>Available for Android in the <a href='https://play.google.com/store/apps/details?id=com.philolog.philologus&hl=en' class='storelink'>Google Play store</a>.";
         document.getElementById('innerbody').innerHTML = "<div class='iosAbout'>" + news + '</div>';
+        toggleSettingsOff();
       }
 
       // eslint-disable-next-line no-unused-vars
@@ -1252,7 +1351,7 @@
         const val = source.value;
         const charCode = typeof (ev.which) === 'number' ? ev.which : ev.keyCode;
 
-        if (charCode && charCode > 64 && charCode < 123 && !fullText) { // letter
+        if (charCode && charCode > 64 && charCode < 123) { // letter
           const start = source.selectionStart;
           const end = source.selectionEnd;
           const key = String.fromCharCode(charCode);
@@ -1293,9 +1392,16 @@
         return null;
       }
 
+      function toggleSettingsOn () {
+        document.body.classList.add('settingsOn');
+      }
+      function toggleSettingsOff () {
+        document.body.classList.remove('settingsOn');
+      }
+
       function toggleSettings () {
         if (document.body.classList.contains('settingsOn')) {
-          document.body.classList.remove('settingsOn');
+          toggleSettingsOff();
         } else {
           const mode = window.localStorage.getItem('mode');
           switch (mode) {
@@ -1309,7 +1415,7 @@
               document.querySelector('#darkModeSystem').checked = true;
               break;
           }
-          document.body.classList.add('settingsOn');
+          toggleSettingsOn();
         }
       }
 
@@ -1683,7 +1789,13 @@
         input.setAttribute('spellcheck', 'false');
         // input.setAttribute("lang", "gr");
         input.id = idPrefix + 'Entry';
+        input.tabIndex = 0;
         this.entry = input;
+
+        const langBtn = document.createElement('div');
+        langBtn.id = this.idPrefix + 'LangBtn';
+        langBtn.innerHTML = 'gr';
+        langBtn.onclick = onLangBtnClick;
 
         const loading = document.createElement('div');
         loading.id = this.idPrefix + 'Loading';
@@ -1706,6 +1818,7 @@
         input.onkeyup = wordtreeOnUp;
 
         this.div.appendChild(input);
+        this.div.appendChild(langBtn);
         this.div.appendChild(loading);
 
         const con = document.createElement('div');
@@ -1813,8 +1926,8 @@
         }
 
         function refreshWordTree () {
-          this.loading.style.display = 'block';
           if (fullText) {
+            this.loading.style.display = 'block';
             if (this.entry.value.trim() === '') {
               this.loading.style.display = 'none';
               return;
@@ -1822,6 +1935,7 @@
             const page = 0;
             fullTextRequest(this.entry.value, this.params.lexicon, page);
           } else {
+            this.loading.style.display = 'block';
             if (checkCache(this)) { return; }
             if (this.entry) { this.params.w = this.entry.value; }
             let query = JSON.stringify(this.params);
@@ -2040,7 +2154,7 @@
           }
 
           wt.downkey = true;
-          if (!ev.ctrlKey && !ev.metaKey && (wt.params.lexicon === 'lsj' || wt.params.lexicon === 'slater')) {
+          if (!ev.ctrlKey && !ev.metaKey && greekOn) {
             return transliterateKey(ev);
           } else {
             return true;

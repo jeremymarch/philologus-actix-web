@@ -230,7 +230,13 @@ async fn full_text_query(
 
     // full-text index should be all lowercase, but use uppercase for AND and OR
     let mut ft_query = info.q.to_lowercase();
-    ft_query = hgk_strip_diacritics(ft_query.replace(" and ", " AND ").replace(" or ", " OR ").as_str(), 0xFFFFFFFF);
+    ft_query = hgk_strip_diacritics(
+        ft_query
+            .replace(" and ", " AND ")
+            .replace(" or ", " OR ")
+            .as_str(),
+        0xFFFFFFFF,
+    );
 
     let my_collector = (Count, TopDocs::with_limit(limit).and_offset(offset));
     match query_parser.parse_query(&ft_query) {

@@ -10,3 +10,5 @@ A truncated sample database is provided for testing.
 
 
 To run eslint on Javascript code: ./node_modules/.bin/eslint --ext .html .
+
+Load lexica into the sqlite db and tantivy full-text index with [philologus-lex-loader](https://github.com/jeremymarch/philologus-lex-loader).

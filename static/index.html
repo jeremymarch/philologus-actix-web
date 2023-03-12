@@ -23,11 +23,13 @@
         setTheme();
     </script>
     <style nonce="2726c7f26c">
+        /*
         @font-face {
             font-family: 'WebNewAthenaUnicode';
             src: url('/newathu5_8.woff') format('woff'),
                 url('/newathu5_8.ttf') format('ttf');
         }
+        */
         #lemmataLangBtn {
           font-family: helvetica, arial, sans-serif;
           font-size: 11pt;
@@ -115,7 +117,7 @@
           bottom:10px;
         }
         BODY {
-            font-family: NewAthenaUnicode, WebNewAthenaUnicode, helvetica, arial, san-serif;
+            font-family: /* NewAthenaUnicode, WebNewAthenaUnicode,*/ helvetica, arial, san-serif;
             background-color: #eee;
             padding: 0px;
             margin: 0px;
@@ -1326,7 +1328,7 @@
       }
 
       function contact () {
-        const about = "Philolog.us first launched in June 2005 shortly after the Perseus Digital Library began offering access to its collections via web services. One of the primary aims has been to offer a streamlined, user-friendly interface to the lexica in the Perseus library.<br/><br/><br/>Thanks to the <a class='storelink' href='http://www.perseus.tufts.edu'>Perseus Digital Library</a> for digitizing and make available these texts.    Thanks also to <a class='storelink' href='https://logeion.uchicago.edu'>Logeion</a> for making many corrections and improvements to them. <br/><br/>Jeremy March<br/><a class='storelink' href='mailto:jmarch@gradcenter.cuny.edu'>jmarch@gradcenter.cuny.edu</a>";
+        const about = "philolog.us first launched in June 2005 shortly after the Perseus Digital Library began offering access to its collections via web services. One of the primary aims has been to offer a streamlined, accessible, user-friendly interface to the lexica in the Perseus library.<br/><br/><br/>Thanks to the <a class='storelink' href='http://www.perseus.tufts.edu'>Perseus Digital Library</a> for digitizing these texts and making them available. Thanks also to <a class='storelink' href='https://logeion.uchicago.edu'>Logeion</a> for making many corrections and improvements to them. <br/><br/>Jeremy March<br/><a class='storelink' href='mailto:jmarch@gradcenter.cuny.edu'>jmarch@gradcenter.cuny.edu</a>";
         document.getElementById('innerbody').innerHTML = "<div class='contactAbout'>" + about + '</div>';
         toggleSettingsOff();
       }

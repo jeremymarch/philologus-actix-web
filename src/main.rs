@@ -757,7 +757,7 @@ async fn main() -> io::Result<()> {
                     HeaderValue::from_static("style-src 'nonce-2726c7f26c';\
                         script-src 'nonce-2726c7f26c' 'unsafe-inline'; object-src 'none'; base-uri 'none'")))
                 .add((STRICT_TRANSPORT_SECURITY,
-                    HeaderValue::from_static("31536000" /* 1 year */ )))
+                    HeaderValue::from_static("max-age=31536000" /* 1 year */ )))
             )
             .wrap(TracingLogger::default())
             .wrap(middleware::Compress::default())

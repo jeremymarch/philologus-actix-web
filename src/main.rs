@@ -691,7 +691,7 @@ async fn main() -> io::Result<()> {
 
     //e.g. export PHILOLOGUS_DB_PATH=sqlite://db.sqlite?mode=ro
     //e.g. export PHILOLOGUS_LOG_DB_PATH=sqlite://log.sqlite?mode=rwc
-    //e.g. export TANTIVY_INDEX_PATH=/Users/jeremy/Documents/code/tantivy-test/tantivy-data
+    //e.g. export TANTIVY_INDEX_PATH=/Users/jeremy/Documents/code/philologus-lex-loader/tantivy-data
     //e.g. export TRACING_LOG_PATH=/Users/jeremy/Documents/code/phlogs
     let db_path = std::env::var("PHILOLOGUS_DB_PATH").unwrap_or_else(|_| {
         panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH.")
@@ -707,7 +707,7 @@ async fn main() -> io::Result<()> {
     });
 
     // Log all events to a rolling log file.
-    let logfile = tracing_appender::rolling::never(tracing_log_path, "philo-logs");
+    let logfile = tracing_appender::rolling::daily(tracing_log_path, "philo-logs");
     let (non_blocking, _guard) = tracing_appender::non_blocking(logfile);
     // Log `INFO` and above to stdout.
     let stdout = std::io::stdout.with_max_level(tracing::Level::INFO);

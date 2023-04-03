@@ -23,11 +23,13 @@
         setTheme();
     </script>
     <style nonce="2726c7f26c">
-        
+        /* try to use local NewAthenaUnicode before downloading from server; 
+        does not work in Safari https://stackoverflow.com/questions/59986432/safari-user-installed-fonts-dont-render */
         @font-face {
-            font-family: 'WebNewAthenaUnicode';
-            src: url('/newathu5_8.woff') format('woff'),
-                url('/newathu5_8.ttf') format('ttf');
+          font-family: 'WebNewAthenaUnicode';
+          src: local('NewAthenaUnicode'),
+            url('/newathu5_8.woff') format('woff'),
+            url('/newathu5_8.ttf') format('ttf');
         }
         
         #lemmataLangBtn {

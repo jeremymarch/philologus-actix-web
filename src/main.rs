@@ -755,7 +755,7 @@ async fn main() -> io::Result<()> {
             .wrap(middleware::DefaultHeaders::new()
                 .add((CONTENT_SECURITY_POLICY,
                     HeaderValue::from_static("style-src 'nonce-2726c7f26c';\
-                        script-src 'nonce-2726c7f26c' 'unsafe-inline'; object-src 'none'; base-uri 'none'")))
+                        script-src 'nonce-2726c7f26c' 'wasm-unsafe-eval' 'unsafe-inline'; object-src 'none'; base-uri 'none'")))
                 .add((STRICT_TRANSPORT_SECURITY,
                     HeaderValue::from_static("max-age=31536000" /* 1 year */ )))
             )

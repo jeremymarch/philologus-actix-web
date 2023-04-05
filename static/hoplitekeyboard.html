@@ -3,24 +3,24 @@
 <head>
 <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
 <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <title>Hoplite Polytonic Greek Keyboard</title>
+  <title>Hoplite Polytonic Greek Keyboard</title>
   <meta name="description" content="The Hoplite Polytonic Greek Keyboard facilitates typing polytonic Greek diacritics.  It is available for iOS, Android, and as a LibreOffice extension." />
   <meta name="keywords" content="polytonic Greek, ancient Greek, keyboard, Classics, Greek diacritics, Greek accents, iOS, Android, LibreOffice, Greek Unicode" />
-    <style type="text/css">
-    @font-face {
-          font-family: 'WebNewAthenaUnicode';
-          src: url('/newathu5_8.ttf') format('truetype');
-    }
-    BODY { width:600px;margin:24px auto;background-color:#323233;color:white;font-family:helvetica neue,helvetica, arial, sans-serif;line-height:1.3; }
-        a:visited { color:#dd6644; }
-        a { color:#6677dd; }
+  <style type="text/css" nonce="2726c7f26c">
+@font-face {
+  font-family: 'WebNewAthenaUnicode';
+  src: local('NewAthenaUnicode'), url('/newathu5_8.ttf') format('truetype');
+}
+* { box-sizing: border-box; }
+BODY { width:600px;margin:24px auto;background-color:#323233;color:white;font-family:helvetica neue,helvetica, arial, sans-serif;line-height:1.3; }
+a:visited { color:#dd6644; }
+a { color:#6677dd; }
+li { margin: 0 0 6px 0; }
+ul { margin-top: 4px; }
+h2 {margin-bottom: 2px; }
 
-        li { margin: 0 0 6px 0; }
-        ul { margin-top: 4px; }
-        h2 {margin-bottom: 2px; }
-
-        .gkinput, .gkinputnontyping {
-    font-family: WebNewAthenaUnicode,NewAthenaUnicode, helvetica,arial;
+.gkinput, .gkinputnontyping {
+    font-family: NewAthenaUnicode,WebNewAthenaUnicode, helvetica,arial;
 }
 .rotate { 
     transform: rotate(-42deg);
@@ -52,164 +52,68 @@
 .gkinput:focus, .gkinputcodes:focus, .gkinputnontyping:focus{
     outline:2px solid #6677dd;
 }
+#hop-image {
+  border: 4px solid black; 
+  margin: 0px; 
+  width: 150px; 
+  height: 150px;
+  position:relative;
+  left:-30px;
+  float:left;
+}
+#hop-list {
+  padding-left: 0px;
+}
+#hop-textarea {
+  height:120px;
+  width:100%;
+  padding:10px;
+  font-size:24pt;
+}
+.tophelp table {
+  width:100%;
+}
+#legend-rough {
+  left: 20px;
+}
+#legend-smooth {
+  left: 28px;
+}
+#legend-acute {
+  left: 33px;
+}
+#legend-grave {
+  left: 45px;
+}
+#legend-circumflex {
+  left: 55px;
+  top: -4px;
+}
+#legend-macron {
+  left: 45px;
+}
+#legend-breve {
+  left: 50px;
+}
+#legend-subscript {
+  left: 55px;
+  top: -13px;
+}
+#legend-diaeresis {
+  left: 24px;
+}
+#legend-underdot {
+  left: 20px;
+}
 </style>
-<script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
-<script>
-    /* global $ */
-    // Check for wasm support.
-    if (!('WebAssembly' in window)) {
-      alert('you need a browser with wasm support enabled :(');
-    }
-    
-    function loadWebAssembly (filename, imports) {
-      return fetch(filename)
-        .then(response => response.arrayBuffer())
-        .then(buffer => WebAssembly.compile(buffer))
-        .then(module => {
-          return WebAssembly.instantiate(module);
-        });
-    }
-    
-    let wasmBuffer0;
-    let accentSyllableWASM;
-    let transliterateWASM;
-    
-    const wasmBufferLength = 256;
-    let memory;
-    loadWebAssembly('hoplitekb.wasm', { js: { mem: memory } })
-      .then(instance => {
-        const exports = instance.exports;
-        accentSyllableWASM = exports.accentSyllable2;
-        transliterateWASM = exports.transliterate;
-        memory = exports.memory;
-
-        console.log('memory: ' + memory.buffer.byteLength);
-
-        // https://rob-blackbourn.github.io/blog/webassembly/wasm/array/arrays/javascript/c/2020/06/07/wasm-arrays.html
-        // offset is in bytes, length is in array elements
-        // https://stackoverflow.com/questions/15417310/why-typed-array-constructors-require-offset-to-be-multiple-of-underlying-type-si
-        const offset = 2; // don't set start at zero (null), use 2 for proper alignment
-        wasmBuffer0 = new Uint16Array(memory.buffer, offset, wasmBufferLength);
-        console.log('offset0: ' + offset + ', ' + wasmBuffer0.byteOffset + ', ' + wasmBuffer0.length);
-  }
-  );
-    
-    // eslint-disable-next-line no-unused-vars
-    function strToCodePoints (str) {
-      let a = '';
-      for (let i = 0; i < str.length; i++) {
-        a += str.codePointAt(i).toString(16).padStart(4, '0').toUpperCase() + ' ';
-      }
-      return a.trim();
-    }
-    
-    // eslint-disable-next-line no-unused-vars
-    function start () {
-      const supported = (() => {
-        try {
-          if (typeof WebAssembly === 'object' &&
-            typeof WebAssembly.instantiate === 'function') {
-            const module = new WebAssembly.Module(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
-            if (module instanceof WebAssembly.Module) { return new WebAssembly.Instance(module) instanceof WebAssembly.Instance; }
-          }
-        } catch (e) {
-        }
-        return false;
-  })();
-  console.log(supported ? 'WebAssembly is supported' : 'WebAssembly is not supported');
-    
-      $('.gkinput').keypress(handleKey);
-      $('#inp').focus();
-    }
-    
-    // const forceLowercase = false;
-    
-    function accentSyllable (origChars, key) {
-      let len = origChars.length;
-      // add letter and any combining diacritics to the buffer as code points
-      let i = 0;
-      for (; i < len && i < wasmBufferLength; i++) {
-        wasmBuffer0[i] = origChars.codePointAt(i);
-        console.log('accent1: ' + origChars.codePointAt(i));
-      }
-      console.log('accent1a: ' + len + ', ' + key);
-      len = accentSyllableWASM(wasmBuffer0.byteOffset, len, key, 1, parseInt(unicodeMode));
-    
-      // transform the returned code points back to a string
-      let newLetter = '';
-      let j = 0;
-      for (; j < len && j < wasmBufferLength; j++) {
-        newLetter += String.fromCodePoint(wasmBuffer0[j]);
-        console.log('accent2: ' + String.fromCodePoint(wasmBuffer0[j]));
-      }
-      /*
-        for (var i = 0; i < 10; i++) {
-            wasmBuffer0[i] = 0;
-        } */
-      console.log('ptr2: ' + wasmBuffer0.byteOffset + ', ' + wasmBuffer0.length);
-      // let win1251decoder = new TextDecoder('utf-16le');
-      return newLetter;
-    }
-    
-    let unicodeMode = 0;
-    function handleKey (e) {
-      const val = this.value;
-      e = e || event;
-      if (typeof (this.selectionStart) === 'number' && typeof (this.selectionEnd) === 'number') {
-        const start = this.selectionStart;
-        const end = this.selectionEnd;
-        let newLetter = '';
-        let replacing = 0;
-        const charCode = typeof (e.which) === 'number' ? e.which : e.keyCode;
-        console.log('handlekey1: ' + charCode);
-        const key = String.fromCharCode(charCode);
-    
-        if (charCode && charCode > 64 && charCode < 123) { // transliterate letter
-          // newLetter = accentSyllable("", key.codePointAt(0));
-          newLetter = String.fromCharCode(transliterateWASM(key.codePointAt(0)));
-          console.log('new: ' + newLetter);
-        } else if (charCode && charCode > 47 && charCode < 58) { // number: 0-9 are 48-57
-          // underdot,rough,smooth,acute,grave,circ,macron,breve,iotasub,diaeresis
-          const diacriticKeys = [11, 5, 6, 1, 3, 2, 4, 10, 7, 9];
-          const hckey = diacriticKeys[parseInt(key)];
-    
-          const combining = [0x0300, 0x0301, 0x0304, 0x0306, 0x0308, 0x0313, 0x0314, 0x0323, 0x0342, 0x0345];
-          let offset = 1;
-          for (let i = start; i > -1; i--) {
-            if (combining.indexOf(val.codePointAt(i - 1)) > -1) {
-              offset++;
-            } else {
-              break;
-            }
-          }
-    
-          unicodeMode = 0;// $("input:radio[name='unicodeMode']:checked").val();
-    
-          newLetter = accentSyllable(val.slice(start - offset, start), hckey);
-          replacing = start - (start - offset);
-        }
-    
-        if (newLetter.length > 0) {
-          // update the input/textarea
-          this.value = val.slice(0, start - replacing) + newLetter + val.slice(end);
-          // Move the caret
-          this.selectionStart = this.selectionEnd = (start - replacing) + newLetter.length;
-          return false;
-        }
-      }
-      return true; // this allows most punctuation to pass through
-    }
-    </script>
 </head>
-<body onload="start()">
+<body>
 <h1>Hoplite Polytonic Greek Keyboard</h1>
-
-
-    <img alt="" src="hopicon7-400.gif" style="border: 4px solid black; margin-top: 14px; width: 150px; height: 150px;position:relative;left:-30px;" align="left" />
+    <img alt="" src="hopicon7-400.gif" id="hop-image" />
 <p>
 <br> 
 The Hoplite Polytonic Greek Keyboard facilitates the typing of polytonic Greek diacritics.  
-<ul style="padding-left: 0px;"><li>On iOS and Android, the Hoplite Keyboard can be installed as an alternate keyboard system-wide and used in any application.</li>
+<ul id="hop-list"><li>On iOS and Android, the Hoplite Keyboard can be installed as an alternate keyboard system-wide and used in any application.</li>
     <li>On Mac, Windows, and Linux the Hoplite Keyboard can be used as a LibreOffice extension: type base letters with the Greek keyboard provided by your operating system and toggle on/off diacritics with the Hoplite Keyboard's hot keys.</li>
 </ul>
     </p>
@@ -221,15 +125,15 @@ The Hoplite Polytonic Greek Keyboard facilitates the typing of polytonic Greek d
 <li>Contrasting diacritics will replace each other</li>
 </ul>
 <div class="tophelp">
-    <table style="width:100%;" cellspacing="0" cellpadding="0">
-        <tbody><tr><td class="rotate" style="left: 20px;">rough</td><td class="rotate" style="left: 28px;">smooth</td><td class="rotate" style="left: 33px;">acute</td><td class="rotate" style="left: 45px;">grave</td><td class="rotate" style="left: 55px;top: -4px;">circumflex</td><td class="rotate" style="left: 45px;">macron</td><td class="rotate" style="left: 50px;">breve</td><td class="rotate" style="left: 55px;top: -13px;">iota subscript</td><td class="rotate" style="left: 24px;">diaeresis</td><td class="rotate" style="left: 20px;">underdot</td></tr>
+    <table cellspacing="0" cellpadding="0">
+        <tbody><tr><td class="rotate" id="legend-rough">rough</td><td class="rotate" id="legend-smooth">smooth</td><td class="rotate" id="legend-acute">acute</td><td class="rotate" id="legend-grave">grave</td><td class="rotate" id="legend-circumflex">circumflex</td><td class="rotate" id="legend-macron">macron</td><td class="rotate" id="legend-breve">breve</td><td class="rotate" id="legend-subscript">iota subscript</td><td class="rotate" id="legend-diaeresis">diaeresis</td><td class="rotate" id="legend-underdot">underdot</td></tr>
     </tbody></table>	
-    <table cellpadding=0 cellspacing=0 style="width:100%;">
+    <table cellpadding=0 cellspacing=0>
         <tr><td class="dnum">1</td><td class="dnum">2</td><td class="dnum">3</td><td class="dnum">4</td><td class="dnum">5</td><td class="dnum">6</td><td class="dnum">7</td><td class="dnum">8</td><td class="dnum">9</td><td class="dnum">0</td></tr>
     </table>
 </div>
 <!--<input class="gkinput" type="text" id="inp" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false"/>-->
-<textarea class="gkinput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false" style="height:120px;width:100%;padding:10px;font-size:24pt;">
+<textarea id="hop-textarea" class="gkinput" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
 ᾱ̓́ͅσομαι</textarea>
 <br><br>
 <h2>Available for:</h2>
@@ -238,10 +142,9 @@ The Hoplite Polytonic Greek Keyboard facilitates the typing of polytonic Greek d
     <li><a href="https://play.google.com/store/apps/details?id=com.philolog.hoplitekeyboard">Android</a></li>
     <!--<li><a href="https://extensions.libreoffice.org/extensions/hoplite-polytonic-greek-keyboard">LibreOffice Extension</a> for Mac, Windows, and Linux</li>-->
     <!--<li><a href="https://github.com/jeremymarch/hopliteKB-LibreOffice/releases/latest/download/hoplitekb.oxt">LibreOffice Extension (latest)</a> for Mac, Windows, and Linux</li>-->
-    <li><a href="https://github.com/jeremymarch/hopliteKB-LibreOffice/releases/download/v2.1/hoplitekb.oxt">LibreOffice Extension v2.1</a> for Mac, Windows, and Linux</li>
+    <li><a href="https://github.com/jeremymarch/hopliteKB-LibreOffice/releases/download/v2.2/hoplitekb.oxt">LibreOffice Extension v2.2</a> for Mac, Windows, and Linux</li>
     <li><a href="https://github.com/jeremymarch/hopliteKB-LibreOffice/releases/download/v1.0.1/hoplitekb.oxt">LibreOffice Extension v1.0.1</a> for Mac, Windows, and Linux</li>
 </ul>
-
 <h2>Features:</h2>
 <ul>
     <li>One key per diacritic</li>
@@ -287,5 +190,95 @@ The Hoplite Polytonic Greek Keyboard facilitates the typing of polytonic Greek d
     <li><a href="https://github.com/jeremymarch/HopliteKB-Android">Android</a></li>
     <li><a href="https://github.com/jeremymarch/HopliteKB-LibreOffice">LibreOffice</a></li>
 </ul>
+<script nonce="2726c7f26c" type="module">
+  // eslint-disable-next-line import/no-named-default
+  import { toggle, translit, default as init } from './hoplitekb_wasm_rs.js';
+
+  async function run () {
+    await init('./hoplitekb_wasm_rs_bg.wasm');
+    // make the function available to the browser
+    window.toggle = toggle;
+    window.translit = translit;
+  }
+  run();
+</script>
+<script nonce="2726c7f26c">
+    // Check for wasm support.
+    if (!('WebAssembly' in window)) {
+      alert('you need a browser with wasm support enabled :(');
+    }
+
+    // eslint-disable-next-line no-unused-vars
+    function strToCodePoints (str) {
+      let a = '';
+      for (let i = 0; i < str.length; i++) {
+        a += str.codePointAt(i).toString(16).padStart(4, '0').toUpperCase() + ' ';
+      }
+      return a.trim();
+    }
+    
+    function start () {
+      const supported = (() => {
+        try {
+          if (typeof WebAssembly === 'object' &&
+            typeof WebAssembly.instantiate === 'function') {
+            const module = new WebAssembly.Module(Uint8Array.of(0x0, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00));
+            if (module instanceof WebAssembly.Module) { return new WebAssembly.Instance(module) instanceof WebAssembly.Instance; }
+          }
+        } catch (e) { }
+        return false;
+      })();
+      console.log(supported ? 'WebAssembly is supported' : 'WebAssembly is not supported');
+    
+      document.getElementById('hop-textarea').addEventListener('keypress', handleKey, false);
+      // document.getElementById('inp').focus();
+    }
+    const unicodeMode = 0;
+    function toggleDiacritic (str, pos, diacritic, unicodeMode) {
+      if (pos < 0 || pos > str.length) {
+        return { str, pos: str.length };
+      }
+      const maxCombiningChars = 10;
+      const replaceLen = Math.min(maxCombiningChars + 1, pos);
+      const s = str.slice(pos - replaceLen, pos);
+      // eslint-disable-next-line no-undef
+      const res = toggle(s, parseInt(diacritic), false, parseInt(unicodeMode));
+
+      const newPos = (pos - replaceLen) + res.length;
+
+      return { str: str.slice(0, pos - replaceLen) + res + str.slice(pos), pos: newPos };
+    }
+
+    function handleKey (e) {
+      if (typeof (this.selectionStart) === 'number' && typeof (this.selectionEnd) === 'number') {
+        const text = this.value;
+        const start = this.selectionStart;
+        const key = e.key; // .toLowerCase(); // force lower case
+
+        if (key === 'enter') { // enter key
+          // submitClicked();
+          return false;
+        } else if (!isNaN(parseInt(key))) {
+          const res = toggleDiacritic(text, start, key, unicodeMode);
+          this.value = res.str;
+          this.selectionStart = this.selectionEnd = res.pos;
+          e.preventDefault();
+          return false;
+        } else if (key.length === 1) { // len == 1 to exclude keys like "ENTER", etc.
+          // eslint-disable-next-line no-undef
+          const greekLetter = translit(key); // returns \0 if the character cannot be transliterated
+          if (greekLetter !== '\0') {
+            const end = this.selectionEnd;
+            this.value = text.slice(0, start) + greekLetter + text.slice(end);
+            this.selectionStart = this.selectionEnd = start + 1;
+            e.preventDefault();
+            return false;
+          }
+        }
+      }
+      return true; // true allows most punctuation, etc. pass through
+    }
+    window.addEventListener('load', start, false);
+    </script>
 </body>
 </html>

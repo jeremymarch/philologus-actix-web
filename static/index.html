@@ -1887,9 +1887,13 @@
         this.makeQueryURL = makeQueryURL;
 
         function clearWordTree () {
-          const con = this.con;
-          while (con.hasChildNodes()) {
-            con.removeChild(con.lastChild);
+          if (typeof (document.replaceChildren) === 'function') {
+            this.con.replaceChildren();
+          } else {
+            const con = this.con;
+            while (con.hasChildNodes()) {
+              con.removeChild(con.lastChild);
+            }
           }
           this.selectedRow = null;
           this.rowCount = 0;
@@ -2437,11 +2441,6 @@
             if (returnObj.lastPageUp === 1) { wt.lastPageUp = true; }
             if (returnObj.lastPageUp === 0) { wt.lastPageUp = false; }
 
-            // delete old rows if this is page 0 and this isn't a tree
-            if (returnedPage === 0 && !returnObj.parentid) {
-              wt.clearWordTree();
-            }
-
             const fragment = document.createDocumentFragment();
             let insertBefore = false;
             if (returnedPage < 0) {
@@ -2454,7 +2453,15 @@
             if (insertBefore) {
               con.prepend(fragment);
             } else {
-              con.append(fragment);
+              if (returnedPage === 0 && !returnObj.parentid && typeof (document.replaceChildren) === 'function') {
+                con.replaceChildren(fragment);
+              } else {
+                if (returnedPage === 0 && !returnObj.parentid) {
+                  // delete old rows if this is page 0 and this isn't a tree and replaceChildren() does not exist
+                  wt.clearWordTree();
+                }
+                con.append(fragment);
+              }
             }
 
             if (wt && returnObj.selectId === 0) {

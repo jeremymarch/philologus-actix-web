@@ -536,7 +536,7 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     Ok(HttpResponse::Ok().finish()) //send 200 with empty body
 }
 
-async fn synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
+async fn greek_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
 
     let list = get_synopsis_list(&db2.0).await.map_err(map_sqlx_error)?;
@@ -561,7 +561,7 @@ async fn synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
     Ok(HttpResponse::Ok().content_type("text/html").body(res))
 }
 
-async fn synopsis_result(
+async fn greek_synopsis_result(
     (info, req): (web::Query<SynopsisResultRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
@@ -590,7 +590,7 @@ async fn synopsis_result(
     Ok(HttpResponse::Ok().content_type("text/html").body(res))
 }
 
-async fn synopsis_saver(
+async fn greek_synopsis_saver(
     (info, req): (web::Json<SynopsisSaverRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
@@ -624,7 +624,7 @@ async fn synopsis_saver(
     Ok(HttpResponse::Ok().json(1))
 }
 
-async fn synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> {
+async fn greek_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     let mut template = include_str!("synopsis.html").to_string();
 
     let mut rows = String::from("");
@@ -776,10 +776,10 @@ async fn main() -> io::Result<()> {
             .service(web::resource("/item").route(web::get().to(philologus_defs)))
             .service(web::resource("/query").route(web::get().to(philologus_words)))
             .service(web::resource("/healthzzz").route(web::get().to(health_check)))
-            .service(web::resource("/synopsisresult").route(web::get().to(synopsis_result)))
-            .service(web::resource("/synopsislist").route(web::get().to(synopsis_list)))
-            .service(web::resource("/synopsissaver").route(web::post().to(synopsis_saver)))
-            .service(web::resource("/synopsis").route(web::get().to(synopsis)))
+            .service(web::resource("/greek-synopsis-result").route(web::get().to(greek_synopsis_result)))
+            .service(web::resource("/greek-synopsis-list").route(web::get().to(greek_synopsis_list)))
+            .service(web::resource("/greek-synopsis-saver").route(web::post().to(greek_synopsis_saver)))
+            .service(web::resource("/greek-synopsis").route(web::get().to(greek_synopsis)))
             .service(web::resource("/hc.php").route(web::get().to(hc)))
             .service(
                 fs::Files::new("/", "./static")

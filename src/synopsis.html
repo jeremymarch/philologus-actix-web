@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-<title>Synopsis</title>
+<title>Greek Synopsis</title>
 <script nonce="2726c7f26c" src="https://code.jquery.com/jquery-3.7.0.min.js" 
   integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" 
   crossorigin="anonymous"></script>
@@ -89,7 +89,7 @@ function submitSynopsis () {
 
   // console.log(json);
   $.ajax({
-    url: 'synopsissaver',
+    url: 'greek-synopsis-saver',
     type: 'POST',
     data: JSON.stringify(json),
     contentType: 'application/json',
@@ -337,6 +337,11 @@ day22	u16
 #td1 {
   text-align:left;
 }
+#legendtoggle {
+  color:blue;
+  cursor: pointer;
+  text-decoration: underline;
+}
 </style>
 </head>
 <body>
@@ -348,7 +353,7 @@ day22	u16
             <tr><td class="dnum">1</td><td class="dnum">2</td><td class="dnum">3</td><td class="dnum">4</td><td class="dnum">5</td><td class="dnum">6</td><td class="dnum">7</td><td class="dnum">8</td><td class="dnum">9</td><td class="dnum">0</td></tr>
         </table>
     </div>-->
-    <div id="legendlink"><a tabindex="-1" id="legendtoggle" href="#">keys</a></div>
+    <div id="legendlink"><span tabindex="-1" id="legendtoggle">keys</span></div>
     <button id="clearbutton" tabindex="-1">Clear</button>
     <table id="table1" cellpadding=0 cellspacing=0>
         <tr>

@@ -4,10 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>Synopsis</title>
-<script src="https://code.jquery.com/jquery-1.12.4.min.js"
+<!-- <script nonce="2726c7f26c" src="https://code.jquery.com/jquery-1.12.4.min.js"
 integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
-crossorigin="anonymous"></script>
-<script>
+crossorigin="anonymous"></script> -->
+
+<script nonce="2726c7f26c" src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous"></script>
+
+<script nonce="2726c7f26c">
 /* global $ */
 // https://wasmbyexample.dev/examples/strings/strings.c.en-us.html
 // emcc -std=gnu99 -s STANDALONE_WASM -s EXPORTED_FUNCTIONS="['_accentSyllable2']" -Wl,--no-entry "utilities.c" "accent.c" -o "accent.wasm"
@@ -212,6 +215,10 @@ function start () {
   $('.gkinput').blur(savefields);
   $('#submitbutton').click(submitSynopsis);
 
+  document.getElementById('clearbutton').addEventListener('click', clearForm);
+  document.getElementById('unitfilter').addEventListener('change', setunit);
+  document.getElementById('legendtoggle').addEventListener('click', togglelegend);
+
   retrievefields();
 }
 
@@ -309,8 +316,10 @@ function togglelegend () {
     setCookie('legend', 'hidden', 365);
   }
 }
+
+window.addEventListener('load', start, false);
 </script>
-<style>
+<style nonce="2726c7f26c">
 @font-face {
   font-family: 'WebNewAthenaUnicode';
   src: url('/newathu5_8.ttf') format('truetype');
@@ -408,10 +417,18 @@ day22	u16
     right:20px;
     top:50px;
 }
-
+#table1 {
+  width:100%;margin:0px auto;
+}
+#table2 {
+  border:1px solid #666;width:100%;color:#666;
+}
+#td1 {
+  text-align:left;
+}
 </style>
 </head>
-<body onload="start()">
+<body>
     <!--<div class="tophelp">
         <table style="width:100%;" cellspacing="0" cellpadding="0">
             <tbody><tr><td class="rotate" style="left: 20px;">rough</td><td class="rotate" style="left: 28px;">smooth</td><td class="rotate" style="left: 33px;">acute</td><td class="rotate" style="left: 45px;">grave</td><td class="rotate" style="left: 55px;top: -4px;">circumflex</td><td class="rotate" style="left: 45px;">macron</td><td class="rotate" style="left: 50px;">breve</td><td class="rotate" style="left: 55px;top: -13px;">iota subscript</td><td class="rotate" style="left: 24px;">diaeresis</td><td class="rotate" style="left: 20px;">underdot</td></tr>
@@ -420,14 +437,14 @@ day22	u16
             <tr><td class="dnum">1</td><td class="dnum">2</td><td class="dnum">3</td><td class="dnum">4</td><td class="dnum">5</td><td class="dnum">6</td><td class="dnum">7</td><td class="dnum">8</td><td class="dnum">9</td><td class="dnum">0</td></tr>
         </table>
     </div>-->
-    <div id="legendlink"><a tabindex="-1" href="javascript:togglelegend()">keys</a></div>
-    <button id="clearbutton" tabindex="-1" onclick="clearForm()">Clear</button>
-    <table cellpadding=0 cellspacing=0 style="width:100%;margin:0px auto;">
+    <div id="legendlink"><a tabindex="-1" id="legendtoggle" href="#">keys</a></div>
+    <button id="clearbutton" tabindex="-1">Clear</button>
+    <table id="table1" cellpadding=0 cellspacing=0>
         <tr>
             <td colspan="4">
-<table class="tophelp" cellpadding=0 cellspacing=0 style="border:1px solid #666;width:100%;color:#666;">
+<table class="tophelp" cellpadding=0 cellspacing=0>
     <tr>
-        <td colspan="9" style="text-align:left;">Diacritic Keys</td>
+        <td colspan="9">Diacritic Keys</td>
     </tr>
     <tr>
         <td>rough breathing</td><td>smooth breathing</td><td>acute</td><td>grave</td><td>circumflex</td><td>macron</td><td>breve</td><td>iota subscript</td><td>diaeresis</td>
@@ -440,7 +457,7 @@ day22	u16
         <tr>
             <td align="left" colspan="4">
                 <table cellpadding=0 cellspacing=0>
-                    <tr><td width="50%"><select tabindex="-1" id="unitfilter" onchange="setunit()">
+                    <tr><td width="50%"><select tabindex="-1" id="unitfilter">
                         <option value="2">Unit 2</option>
                         <option value="5">Unit 5</option>
                         <option value="7">Unit 7</option>

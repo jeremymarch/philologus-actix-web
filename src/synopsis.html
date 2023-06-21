@@ -1,161 +1,72 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>Synopsis</title>
-<!-- <script nonce="2726c7f26c" src="https://code.jquery.com/jquery-1.12.4.min.js"
-integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ="
-crossorigin="anonymous"></script> -->
+<script nonce="2726c7f26c" src="https://code.jquery.com/jquery-3.7.0.min.js" 
+  integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" 
+  crossorigin="anonymous"></script>
+<script nonce="2726c7f26c" type="module">
+  // eslint-disable-next-line import/no-named-default
+  import { toggle, translit, default as init } from './hoplitekb_wasm_rs.js';
 
-<script nonce="2726c7f26c" src="https://code.jquery.com/jquery-3.7.0.min.js" integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" crossorigin="anonymous"></script>
-
+  async function run () {
+    await init('./hoplitekb_wasm_rs_bg.wasm');
+    // make the function available to the browser
+    window.toggle = toggle;
+    window.translit = translit;
+  }
+  run();
+</script>
 <script nonce="2726c7f26c">
 /* global $ */
-// https://wasmbyexample.dev/examples/strings/strings.c.en-us.html
-// emcc -std=gnu99 -s STANDALONE_WASM -s EXPORTED_FUNCTIONS="['_accentSyllable2']" -Wl,--no-entry "utilities.c" "accent.c" -o "accent.wasm"
-// https://stackoverflow.com/questions/3923089/can-i-conditionally-change-the-character-entered-into-an-input-on-keypress/3923320#3923320
-// https://gist.github.com/kripken/59c67556dc03bb6d57052fedef1e61ab
+const unicodeMode = 0;
+function toggleDiacritic (str, pos, diacritic, unicodeMode) {
+  if (pos < 0 || pos > str.length) {
+    return { str, pos: str.length };
+  }
+  const maxCombiningChars = 10;
+  const replaceLen = Math.min(maxCombiningChars + 1, pos);
+  const s = str.slice(pos - replaceLen, pos);
+  // eslint-disable-next-line no-undef
+  const res = toggle(s, parseInt(diacritic), false, parseInt(unicodeMode));
 
-// Check for wasm support.
-if (!('WebAssembly' in window)) {
-  alert('you need a browser with wasm support enabled :(');
+  const newPos = (pos - replaceLen) + res.length;
+
+  return { str: str.slice(0, pos - replaceLen) + res + str.slice(pos), pos: newPos };
 }
 
-// Loads a WebAssembly dynamic library, returns a promise.
-// imports is an optional imports object
-function loadWebAssembly (filename, imports) {
-  return fetch(filename)
-    .then(response => response.arrayBuffer())
-    .then(buffer => WebAssembly.compile(buffer))
-    .then(module => {
-      return WebAssembly.instantiate(module, imports);
-    });
-}
-
-let wasmBuffer;
-let accentSyllableWASM;
-loadWebAssembly('hoplitekb.wasm')
-  .then(instance => {
-    const exports = instance.exports;
-    accentSyllableWASM = exports.accentSyllable2;
-    const memory = exports.memory;
-
-    wasmBuffer = new Uint16Array(memory.buffer, 0, 1024);
-  }
-  );
-
-const la = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-const gr = ['α', 'β', 'ψ', 'δ', 'ε', 'φ', 'γ', 'η', 'ι', 'ξ', 'κ', 'λ', 'μ', 'ν', 'ο', 'π', '', 'ρ', 'σ', 'τ', 'θ', 'ω', 'ς', 'χ', 'υ', 'ζ', 'Α', 'Β', 'Ψ', 'Δ', 'Ε', 'Φ', 'Γ', 'Η', 'Ι', 'Ξ', 'Κ', 'Λ', 'Μ', 'Ν', 'Ο', 'Π', '', 'Ρ', 'Σ', 'Τ', 'Θ', 'Ω', 'Σ', 'Χ', 'Υ', 'Ζ'];
-const forceLowercase = true;
-function transliterate (char) {
-  const theChar = (forceLowercase) ? char.toLowerCase() : char;
-  const idx = la.indexOf(theChar);
-  if (idx > -1) {
-    return gr[idx];
-  } else {
-    return char;
-  }
-}
-
-function accentSyllable (origChars, key) {
-  let len = origChars.length;
-  // add letter and any combining diacritics to the buffer as code points
-  let i = 0;
-  for (; i < len; i++) {
-    wasmBuffer[i] = origChars.codePointAt(i);
-  }
-
-  len = accentSyllableWASM(wasmBuffer.byteOffset, len, key, 1, 1);
-
-  // transform the returned code points back to a string
-  let newLetter = '';
-  let j = 0;
-  for (; j < len; j++) {
-    newLetter += String.fromCodePoint(wasmBuffer[j]);
-  }
-  return [len, newLetter];
-}
-
-function handleKey (evt) {
-  const val = this.value;
-  evt = evt || window.event;
-
-  const charCode = typeof (evt.which) === 'number' ? evt.which : evt.keyCode;
-
-  if (charCode && charCode > 64 && charCode < 123) { // letter
+function handleKey (e) {
+  if (typeof (this.selectionStart) === 'number' && typeof (this.selectionEnd) === 'number') {
+    const text = this.value;
     const start = this.selectionStart;
-    const end = this.selectionEnd;
-    const key = String.fromCharCode(charCode);
+    const key = e.key.toLowerCase(); // force lower case
 
-    const mappedChar = transliterate(key);
-    const charsToReplace = 0;
-    this.value = val.slice(0, start - charsToReplace) + mappedChar + val.slice(end);
-    // Move the caret
-    this.selectionStart = this.selectionEnd = start + 1 - charsToReplace;
-    return false;
-  } else if (charCode && charCode > 48 && charCode < 58) { // number: 0-9 are 48-57
-    const key = String.fromCharCode(charCode);
-    let hckey = 0;
-    switch (parseInt(key)) {
-      case 1:
-        hckey = 5; // rough
-        break;
-      case 2:
-        hckey = 6; // smooth
-        break;
-      case 3:
-        hckey = 1; // acute
-        break;
-      case 4:
-        hckey = 3; // grave
-        break;
-      case 5:
-        hckey = 2; // circumflex
-        break;
-      case 6:
-        hckey = 4; // macron
-        break;
-      case 7:
-        hckey = 10; // breve
-        break;
-      case 8:
-        hckey = 7; // iota subscript
-        break;
-      case 9:
-        hckey = 9; // diaeresis
-        break;
-    }
-    let start, end;
-    if (typeof (this.selectionStart) === 'number' && typeof (this.selectionEnd) === 'number') {
-      // Non-IE browsers and IE 9+
-      start = this.selectionStart;
-      end = this.selectionEnd;
-
-      const combining = [0x0300, 0x0301, 0x0304, 0x0306, 0x0308, 0x0313, 0x0314, 0x0323, 0x0342, 0x0345];
-      let off = 1;
-      let i = start;
-      for (; i > -1; i--) {
-        if (combining.indexOf(val.codePointAt(i - 1)) > -1) {
-          off++;
-        } else {
-          break;
-        }
+    if (key === 'enter') { // enter key
+      // submitClicked();
+      return false;
+    } else if (!isNaN(parseInt(key))) {
+      if (parseInt(key) > 0) {
+        const res = toggleDiacritic(text, start, key, unicodeMode);
+        this.value = res.str;
+        this.selectionStart = this.selectionEnd = res.pos;
       }
-      const ret = accentSyllable(val.slice(start - off, start), hckey.toString());
-      const newLetter = ret[1];
-      const charsToReplace = start - (start - off);
-
-      if (ret[0] > 0 && newLetter !== '') {
-        // update the input/textarea
-        this.value = val.slice(0, start - charsToReplace) + newLetter + val.slice(end);
-        // Move the caret
-        this.selectionStart = this.selectionEnd = (start - charsToReplace) + ret[0];
+      e.preventDefault();
+      return false;
+    } else if (key.length === 1) { // len == 1 to exclude keys like "ENTER", etc.
+      // eslint-disable-next-line no-undef
+      const greekLetter = translit(key); // returns \0 if the character cannot be transliterated
+      if (greekLetter !== '\0') {
+        const end = this.selectionEnd;
+        this.value = text.slice(0, start) + greekLetter + text.slice(end);
+        this.selectionStart = this.selectionEnd = start + 1;
+        e.preventDefault();
+        return false;
       }
     }
-    return false;
   }
-  return true;
+  return true; // true allows most punctuation, etc. pass through
 }
 
 function submitSynopsis () {

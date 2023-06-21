@@ -306,7 +306,7 @@ day22	u16
 /* .unit16 { } */
 
 #namecell { display:none;}
-#submitcell { display:none; }
+#submitcell { display:auto; }
 
 #selectedverb {width:250px;}
 
@@ -341,6 +341,14 @@ day22	u16
   color:blue;
   cursor: pointer;
   text-decoration: underline;
+}
+#paramcell {
+  position: relative;
+}
+#submitcell {
+  right:0px;
+  top: 30px;
+  position:absolute;
 }
 </style>
 </head>
@@ -384,7 +392,7 @@ day22	u16
                         Name: <input type="text" id="sname" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
 Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
                     </td></tr>
-                    <tr><td width="50%"><h3>Synopsis of: 
+                    <tr><td width="50%" id="paramcell"><h3>Synopsis of: 
                         <input type="text" id="selectedverb" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
                         <select id="person" class="verbparam">
                             <option value=""></option>
@@ -416,7 +424,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
                             <option value="acc">Accusative</option>
                         </select>
                             
-                    </h3></td><td align="right" colspan="2" id="submitcell"><button id="submitbutton">Submit</button></td></tr>
+                    <span align="right" colspan="2" id="submitcell"><button id="submitbutton">Submit</button></span></h3></td></tr>
         </table>
         </td>
         </tr>

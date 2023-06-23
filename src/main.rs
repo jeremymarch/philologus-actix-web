@@ -625,7 +625,7 @@ async fn greek_synopsis_saver(
 }
 
 async fn greek_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> {
-    let mut template = include_str!("synopsis.html").to_string();
+    let mut template = include_str!("greek-synopsis.html").to_string();
 
     let mut rows = String::from("");
     let mut count = 0;

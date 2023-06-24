@@ -39,8 +39,9 @@ use std::time::Duration;
 use thiserror::Error;
 use unicode_normalization::UnicodeNormalization;
 
-mod db;
+
 use crate::db::*;
+mod db;
 use serde::{Deserialize, Serialize};
 
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -539,7 +540,7 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 async fn greek_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
 
-    let list = get_synopsis_list(&db2.0).await.map_err(map_sqlx_error)?;
+    let list = greek_get_synopsis_list(&db2.0).await.map_err(map_sqlx_error)?;
 
     let mut res = String::from(
         r#"<!DOCTYPE html>
@@ -554,7 +555,7 @@ async fn greek_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> 
         let datetime = DateTime::<Local>::from(d);
         let timestamp_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
 
-        res.push_str(format!("<tr><td><a href='synopsisresult?sid={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
+        res.push_str(format!("<tr><td><a href='greek-synopsis-result?id={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
     }
     res.push_str("</table></body></html>");
 
@@ -566,7 +567,7 @@ async fn greek_synopsis_result(
 ) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
 
-    let list = get_synopsis_result(&db2.0, info.id)
+    let list = greek_get_synopsis_result(&db2.0, info.id)
         .await
         .map_err(map_sqlx_error)?;
 
@@ -583,7 +584,7 @@ async fn greek_synopsis_result(
         let datetime = DateTime::<Local>::from(d);
         let timestamp_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
 
-        res.push_str(format!("<tr><td><a href='synopsisresult?sid={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
+        res.push_str(format!("<tr><td><a href='greek-synopsis-result?id={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
     }
     res.push_str("</table></body></html>");
 
@@ -609,7 +610,7 @@ async fn greek_synopsis_saver(
         "".to_string()
     };
 
-    let _ = insert_synopsis(
+    let _ = greek_insert_synopsis(
         &db2.0,
         &info.into_inner(),
         time_stamp_ms,
@@ -653,6 +654,151 @@ async fn greek_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> {
         "Perfect Participle",
     ];
     let voices = vec!["Active", "Middle", "Passive"];
+    for l in rowlabels {
+        rows.push_str(format!(r#"<tr class="{}"><td>{}</td>"#, l.to_lowercase(), l).as_str());
+        for v in &voices {
+            rows.push_str(format!(
+            r#"<td class="formcell {}">
+                <div class="formcellInner">
+                <input type="text" id="gkform{}" class="gkinput formcellinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
+                </div>
+            </td>"#, 
+            v.to_lowercase(), count).as_str());
+            count += 1;
+        }
+        rows.push_str("</tr>");
+    }
+
+    template = template.replacen("%rows%", &rows, 1);
+
+    Ok(HttpResponse::Ok().content_type("text/html").body(template))
+}
+
+
+
+
+
+
+async fn latin_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
+    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+
+    let list = latin_get_synopsis_list(&db2.0).await.map_err(map_sqlx_error)?;
+
+    let mut res = String::from(
+        r#"<!DOCTYPE html>
+    <html>
+    <head>
+    <meta charset="UTF-8">
+    </head>
+    <body><table>"#,
+    );
+    for l in list {
+        let d = UNIX_EPOCH + Duration::from_millis(l.1.try_into().unwrap());
+        let datetime = DateTime::<Local>::from(d);
+        let timestamp_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+
+        res.push_str(format!("<tr><td><a href='latin-synopsis-result?id={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
+    }
+    res.push_str("</table></body></html>");
+
+    Ok(HttpResponse::Ok().content_type("text/html").body(res))
+}
+
+async fn latin_synopsis_result(
+    (info, req): (web::Query<SynopsisResultRequest>, HttpRequest),
+) -> Result<HttpResponse, AWError> {
+    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+
+    let list = latin_get_synopsis_result(&db2.0, info.id)
+        .await
+        .map_err(map_sqlx_error)?;
+
+    let mut res = String::from(
+        r#"<!DOCTYPE html>
+    <html>
+    <head>
+    <meta charset="UTF-8">
+    </head>
+    <body><table>"#,
+    );
+    for l in list {
+        let d = UNIX_EPOCH + Duration::from_millis(l.1.try_into().unwrap());
+        let datetime = DateTime::<Local>::from(d);
+        let timestamp_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+
+        res.push_str(format!("<tr><td><a href='latin-synopsis-result?id={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
+    }
+    res.push_str("</table></body></html>");
+
+    Ok(HttpResponse::Ok().content_type("text/html").body(res))
+}
+
+async fn latin_synopsis_saver(
+    (info, req): (web::Json<SynopsisSaverRequest>, HttpRequest),
+) -> Result<HttpResponse, AWError> {
+    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+
+    let time_stamp = SystemTime::now().duration_since(UNIX_EPOCH);
+    let time_stamp_ms = if time_stamp.is_ok() {
+        time_stamp.unwrap().as_millis()
+    } else {
+        0
+    };
+    let user_agent = get_user_agent(&req).unwrap_or("");
+    //https://stackoverflow.com/questions/66989780/how-to-retrieve-the-ip-address-of-the-client-from-httprequest-in-actix-web
+    let ip = if req.peer_addr().is_some() {
+        req.peer_addr().unwrap().ip().to_string()
+    } else {
+        "".to_string()
+    };
+
+    let _ = latin_insert_synopsis(
+        &db2.0,
+        &info.into_inner(),
+        time_stamp_ms,
+        ip.as_str(),
+        user_agent,
+    )
+    .await
+    .map_err(map_sqlx_error)?;
+
+    //Ok(HttpResponse::Ok().finish())
+    //let res = 1;
+    Ok(HttpResponse::Ok().json(1))
+}
+
+async fn latin_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> {
+    let mut template = include_str!("latin-synopsis.html").to_string();
+
+    let mut rows = String::from("");
+    let mut count = 0;
+    let rowlabels = vec![
+        "Indicative Present",
+        "Indicative Imperfect",
+        "Indicative Future",
+
+        "Subjunctive Present",
+        "Subjunctive Imperfect",
+
+        "Indicative Perfect",
+        "Indicative Pluperfect",
+        "Indicative Future Perfect ",
+
+        "Subjunctive Perfect",
+        "Subjunctive Pluperfect",
+
+        "Participle Present",
+        "Participle Perfect",  
+        "Participle Future", 
+
+        "Infinitive Present",
+        "Infinitive Perfect",
+        "Infinitive Future",
+
+        "Imperative Singular",
+        "Imperative Plural",
+    ];
+    let voices = vec!["Active", "Passive"];
     for l in rowlabels {
         rows.push_str(format!(r#"<tr class="{}"><td>{}</td>"#, l.to_lowercase(), l).as_str());
         for v in &voices {
@@ -780,6 +926,10 @@ async fn main() -> io::Result<()> {
             .service(web::resource("/greek-synopsis-list").route(web::get().to(greek_synopsis_list)))
             .service(web::resource("/greek-synopsis-saver").route(web::post().to(greek_synopsis_saver)))
             .service(web::resource("/greek-synopsis").route(web::get().to(greek_synopsis)))
+            .service(web::resource("/latin-synopsis-result").route(web::get().to(latin_synopsis_result)))
+            .service(web::resource("/latin-synopsis-list").route(web::get().to(latin_synopsis_list)))
+            .service(web::resource("/latin-synopsis-saver").route(web::post().to(latin_synopsis_saver)))
+            .service(web::resource("/latin-synopsis").route(web::get().to(latin_synopsis)))
             .service(web::resource("/hc.php").route(web::get().to(hc)))
             .service(
                 fs::Files::new("/", "./static")

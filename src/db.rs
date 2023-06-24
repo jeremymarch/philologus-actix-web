@@ -36,7 +36,7 @@ pub struct DefRow {
     pub seq: u32,
 }
 
-pub async fn get_synopsis_list(
+pub async fn greek_get_synopsis_list(
     pool: &SqlitePool,
 ) -> Result<Vec<(i64, i64, String, String, String)>, sqlx::Error> {
     let query =
@@ -47,7 +47,7 @@ pub async fn get_synopsis_list(
     Ok(res)
 }
 
-pub async fn get_synopsis_result(
+pub async fn greek_get_synopsis_result(
     pool: &SqlitePool,
     id: u32,
 ) -> Result<Vec<(i64, i64, String, String, String)>, sqlx::Error> {
@@ -58,7 +58,7 @@ pub async fn get_synopsis_result(
     Ok(res)
 }
 
-pub async fn insert_synopsis(
+pub async fn greek_insert_synopsis(
     pool: &SqlitePool,
     info: &SynopsisSaverRequest,
     accessed: u128,
@@ -66,6 +66,44 @@ pub async fn insert_synopsis(
     agent: &str,
 ) -> Result<u32, sqlx::Error> {
     let query = format!("INSERT INTO synopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')", 
+        accessed, info.sname, info.advisor, info.unit, info.verb, info.pp,
+        info.number, info.person, info.ptcgender, info.ptcnumber, info.ptccase, ip, agent,
+        info.r.join("', '"));
+    sqlx::query(&query).execute(pool).await?;
+
+    Ok(1)
+}
+
+pub async fn latin_get_synopsis_list(
+    pool: &SqlitePool,
+) -> Result<Vec<(i64, i64, String, String, String)>, sqlx::Error> {
+    let query =
+        "SELECT id, updated, sname, advisor, selectedverb FROM latinsynopsisresults ORDER BY updated DESC;";
+    let res: Vec<(i64, i64, String, String, String)> =
+        sqlx::query_as(query).fetch_all(pool).await?;
+
+    Ok(res)
+}
+
+pub async fn latin_get_synopsis_result(
+    pool: &SqlitePool,
+    id: u32,
+) -> Result<Vec<(i64, i64, String, String, String)>, sqlx::Error> {
+    let query = format!("SELECT id, updated, sname, advisor, selectedverb FROM latinsynopsisresults WHERE id={} ORDER BY updated DESC;", id);
+    let res: Vec<(i64, i64, String, String, String)> =
+        sqlx::query_as(&query).fetch_all(pool).await?;
+
+    Ok(res)
+}
+
+pub async fn latin_insert_synopsis(
+    pool: &SqlitePool,
+    info: &SynopsisSaverRequest,
+    accessed: u128,
+    ip: &str,
+    agent: &str,
+) -> Result<u32, sqlx::Error> {
+    let query = format!("INSERT INTO latinsynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')", 
         accessed, info.sname, info.advisor, info.unit, info.verb, info.pp,
         info.number, info.person, info.ptcgender, info.ptcnumber, info.ptccase, ip, agent,
         info.r.join("', '"));

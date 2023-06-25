@@ -183,6 +183,9 @@ window.addEventListener('load', start, false);
   font-family: 'WebNewAthenaUnicode';
   src: url('/newathu5_8.ttf') format('truetype');
 }  
+.formcelllabel {padding-left:40px;}
+.majorrowheader {font-weight: bold;height:40px;}
+.ppheader {font-weight:bold;}
 #ptccase {
     display:none;
 }
@@ -215,6 +218,7 @@ window.addEventListener('load', start, false);
 .colheader {
     text-align:center;
     padding-top:25px;
+    font-weight: bold;
 }
 BODY {
     font-family:helvetica,arial;
@@ -336,7 +340,7 @@ day22	u16
                     </tr>
                     <tr>
                         <td id="paramcell">
-                            <h3>Synopsis of: 
+                            <h3>Synopsis of
                                 <input type="text" id="selectedverb" class="gkinput" spellcheck="false" 
                                     autocapitalize="off" autocomplete="off"/>
                                 <select id="person" class="verbparam">
@@ -380,7 +384,7 @@ day22	u16
             </td>
         </tr>
         <tr>
-            <td>Principal Parts</td>
+            <td class="ppheader">Principal Parts</td>
             <td colspan="3" class="formcell">
                 <input type="text" id="pppppp0" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
             </td>

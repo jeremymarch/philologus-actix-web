@@ -913,28 +913,49 @@ async fn latin_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     let mut rows = String::from("");
     let mut count = 0;
     let rowlabels = vec![
-        "Indicative Present",
-        "Indicative Imperfect",
-        "Indicative Future",
-        "Subjunctive Present",
-        "Subjunctive Imperfect",
-        "Indicative Perfect",
-        "Indicative Pluperfect",
-        "Indicative Future Perfect ",
-        "Subjunctive Perfect",
-        "Subjunctive Pluperfect",
-        "Participle Present",
-        "Participle Perfect",
-        "Participle Future",
-        "Infinitive Present",
-        "Infinitive Perfect",
-        "Infinitive Future",
-        "Imperative Singular",
-        "Imperative Plural",
+        "Present",
+        "Imperfect",
+        "Future",
+        "Present",
+        "Imperfect",
+        "Perfect",
+        "Pluperfect",
+        "Future Perfect ",
+        "Perfect",
+        "Pluperfect",
+        "Present",
+        "Perfect",
+        "Future",
+        "Present",
+        "Perfect",
+        "Future",
+        "Singular",
+        "Plural",
     ];
     let voices = vec!["Active", "Passive"];
     for l in rowlabels {
-        rows.push_str(format!(r#"<tr class="{}"><td>{}</td>"#, l.to_lowercase(), l).as_str());
+        if count == 0 {
+            rows.push_str("<tr><td colspan='3' class='majorrowheader'>Indicative</td></tr>");
+        }
+        else if count == 6 {
+            rows.push_str("<tr><td colspan='3' class='majorrowheader'>Subjunctive</td></tr>");
+        }
+        else if count == 10 {
+            rows.push_str("<tr><td colspan='3' class='majorrowheader'>Indicative</td></tr>");
+        }
+        else if count == 16 {
+            rows.push_str("<tr><td colspan='3' class='majorrowheader'>Subjunctive</td></tr>");
+        }
+        else if count == 20 {
+            rows.push_str("<tr><td colspan='3' class='majorrowheader'>Participles</td></tr>");
+        }
+        else if count == 26 {
+            rows.push_str("<tr><td colspan='3' class='majorrowheader'>Infinitives</td></tr>");
+        }
+        else if count == 32 {
+            rows.push_str("<tr><td colspan='3' class='majorrowheader'>Imperatives</td></tr>");
+        }
+        rows.push_str(format!(r#"<tr class="{}"><td class='formcelllabel'>{}</td>"#, l.to_lowercase(), l).as_str());
         for v in &voices {
             rows.push_str(format!(
             r#"<td class="formcell {}">

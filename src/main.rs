@@ -936,26 +936,27 @@ async fn latin_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     for l in rowlabels {
         if count == 0 {
             rows.push_str("<tr><td colspan='3' class='majorrowheader'>Indicative</td></tr>");
-        }
-        else if count == 6 {
+        } else if count == 6 {
             rows.push_str("<tr><td colspan='3' class='majorrowheader'>Subjunctive</td></tr>");
-        }
-        else if count == 10 {
+        } else if count == 10 {
             rows.push_str("<tr><td colspan='3' class='majorrowheader'>Indicative</td></tr>");
-        }
-        else if count == 16 {
+        } else if count == 16 {
             rows.push_str("<tr><td colspan='3' class='majorrowheader'>Subjunctive</td></tr>");
-        }
-        else if count == 20 {
+        } else if count == 20 {
             rows.push_str("<tr><td colspan='3' class='majorrowheader'>Participles</td></tr>");
-        }
-        else if count == 26 {
+        } else if count == 26 {
             rows.push_str("<tr><td colspan='3' class='majorrowheader'>Infinitives</td></tr>");
-        }
-        else if count == 32 {
+        } else if count == 32 {
             rows.push_str("<tr><td colspan='3' class='majorrowheader'>Imperatives</td></tr>");
         }
-        rows.push_str(format!(r#"<tr class="{}"><td class='formcelllabel'>{}</td>"#, l.to_lowercase(), l).as_str());
+        rows.push_str(
+            format!(
+                r#"<tr class="{}"><td class='formcelllabel'>{}</td>"#,
+                l.to_lowercase(),
+                l
+            )
+            .as_str(),
+        );
         for v in &voices {
             rows.push_str(format!(
             r#"<td class="formcell {}">

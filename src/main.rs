@@ -39,7 +39,6 @@ use std::time::Duration;
 use thiserror::Error;
 use unicode_normalization::UnicodeNormalization;
 
-
 use crate::db::*;
 mod db;
 use serde::{Deserialize, Serialize};
@@ -111,6 +110,61 @@ struct DefResponse {
     lexicon: String,
     word_id: u32,
     method: String,
+}
+
+use sqlx::FromRow;
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
+pub struct LatinSynopsisResult {
+    pub id: i64,
+    pub updated: i64,
+    pub sname: String,
+    pub advisor: String,
+    pub sgiday: i64,
+    pub selectedverb: String,
+    pub pp: String,
+    pub verbnumber: String,
+    pub verbperson: String,
+    pub verbptcgender: String,
+    pub verbptcnumber: String,
+    pub verbptccase: String,
+    pub ip: String,
+    pub ua: String,
+    pub f0: String,
+    pub f1: String,
+    pub f2: String,
+    pub f3: String,
+    pub f4: String,
+    pub f5: String,
+    pub f6: String,
+    pub f7: String,
+    pub f8: String,
+    pub f9: String,
+    pub f10: String,
+    pub f11: String,
+    pub f12: String,
+    pub f13: String,
+    pub f14: String,
+    pub f15: String,
+    pub f16: String,
+    pub f17: String,
+    pub f18: String,
+    pub f19: String,
+    pub f20: String,
+    pub f21: String,
+    pub f22: String,
+    pub f23: String,
+    pub f24: String,
+    pub f25: String,
+    pub f26: String,
+    pub f27: String,
+    pub f28: String,
+    pub f29: String,
+    pub f30: String,
+    pub f31: String,
+    pub f32: String,
+    pub f33: String,
+    pub f34: String,
+    pub f35: String,
 }
 
 #[derive(Deserialize)]
@@ -540,7 +594,9 @@ async fn health_check(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 async fn greek_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
 
-    let list = greek_get_synopsis_list(&db2.0).await.map_err(map_sqlx_error)?;
+    let list = greek_get_synopsis_list(&db2.0)
+        .await
+        .map_err(map_sqlx_error)?;
 
     let mut res = String::from(
         r#"<!DOCTYPE html>
@@ -674,15 +730,12 @@ async fn greek_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     Ok(HttpResponse::Ok().content_type("text/html").body(template))
 }
 
-
-
-
-
-
 async fn latin_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
 
-    let list = latin_get_synopsis_list(&db2.0).await.map_err(map_sqlx_error)?;
+    let list = latin_get_synopsis_list(&db2.0)
+        .await
+        .map_err(map_sqlx_error)?;
 
     let mut res = String::from(
         r#"<!DOCTYPE html>
@@ -715,18 +768,92 @@ async fn latin_synopsis_result(
 
     let mut res = String::from(
         r#"<!DOCTYPE html>
-    <html>
+    <html lang='en'>
     <head>
     <meta charset="UTF-8">
+    <style nonce="2726c7f26c">
+    BODY {font-family:helvetica,arial}
+    .synTable { min-width:800px; font-size:16pt; border-spacing:0px;border-collapse: collapse; }
+    .synTable td {padding:2px 5px;}
+    .labelcol { width:25%;}
+    .label {font-weight:bold; }
+    .spacer { width:25%;}
+    .majorlabelrow { border-top:1px solid black;}
+    </style>
     </head>
-    <body><table>"#,
+    <body><table class='synTable'>"#,
     );
+
     for l in list {
-        let d = UNIX_EPOCH + Duration::from_millis(l.1.try_into().unwrap());
+        let d = UNIX_EPOCH + Duration::from_millis(l.updated.try_into().unwrap());
         let datetime = DateTime::<Local>::from(d);
         let timestamp_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
 
-        res.push_str(format!("<tr><td><a href='latin-synopsis-result?id={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
+        res.push_str(
+            format!(
+                "<tr><td class='label'>Name</td><td colspan='3'>{}</td></tr>",
+                l.sname
+            )
+            .as_str(),
+        );
+        res.push_str(
+            format!(
+                "<tr><td class='label'>Advisor</td><td colspan='3'>{}</td></tr>",
+                l.advisor
+            )
+            .as_str(),
+        );
+        res.push_str(
+            format!(
+                "<tr><td class='label'>Date</td><td colspan='3'>{}</td></tr>",
+                timestamp_str
+            )
+            .as_str(),
+        );
+        res.push_str(
+            format!(
+                "<tr><td class='label'>Pers. Num. Gen.</td><td colspan='3'>{} {} {}</td></tr>",
+                l.verbperson, l.verbnumber, l.verbptcgender
+            )
+            .as_str(),
+        );
+
+        res.push_str("<tr><td colspan='4'>&nbsp;</td></tr>");
+        res.push_str(
+            format!(
+                "<tr><td class='label'>Principal Parts</td><td colspan='3'>{}</td></tr>",
+                l.pp
+            )
+            .as_str(),
+        );
+
+        res.push_str("<tr><td class='spacer'><td></td></td><td class='label' align='left'>Active</td><td class='label' align='left'>Passive</td></tr>");
+
+        res.push_str("<tr><td class='label majorlabelrow' colspan='4'>Indicative</td></tr>");
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Present",  l.f0, l.f1).as_str());
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Imperfect",  l.f2, l.f3).as_str());
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Future",  l.f4, l.f5).as_str());
+        res.push_str("<tr><td class='label majorlabelrow' colspan='4'>Subjunctive</td></tr>");
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Present",  l.f6, l.f7).as_str());
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Imperfect",  l.f8, l.f9).as_str());
+        res.push_str("<tr><td class='label majorlabelrow' colspan='4'>Indicative</td></tr>");
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Perfect",  l.f10, l.f11).as_str());
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Pluperfect",  l.f12, l.f13).as_str());
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Future Perfect",  l.f14, l.f15).as_str());
+        res.push_str("<tr><td class='label majorlabelrow' colspan='4'>Subjunctive</td></tr>");
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Perfect",  l.f16, l.f17).as_str());
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Pluperfect",  l.f18, l.f19).as_str());
+        res.push_str("<tr><td class='label majorlabelrow' colspan='4'>Participles</td></tr>");
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Present",  l.f20, l.f21).as_str());
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Perfect",  l.f22, l.f23).as_str());
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Future",  l.f24, l.f25).as_str());
+        res.push_str("<tr><td class='label majorlabelrow' colspan='4'>Infintives</td></tr>");
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Present",  l.f26, l.f27).as_str());
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Perfect",  l.f28, l.f29).as_str());
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Future",  l.f30, l.f31).as_str());
+        res.push_str("<tr><td class='label majorlabelrow' colspan='4'>Imperatives</td></tr>");
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Singular",  l.f32, l.f33).as_str());
+        res.push_str(format!("<tr><td class='spacer'></td><td class='labelcol label'>{}</td><td>{}</td><td>{}</td></tr>", "Plural",  l.f34, l.f35).as_str());
     }
     res.push_str("</table></body></html>");
 
@@ -776,25 +903,19 @@ async fn latin_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> {
         "Indicative Present",
         "Indicative Imperfect",
         "Indicative Future",
-
         "Subjunctive Present",
         "Subjunctive Imperfect",
-
         "Indicative Perfect",
         "Indicative Pluperfect",
         "Indicative Future Perfect ",
-
         "Subjunctive Perfect",
         "Subjunctive Pluperfect",
-
         "Participle Present",
-        "Participle Perfect",  
-        "Participle Future", 
-
+        "Participle Perfect",
+        "Participle Future",
         "Infinitive Present",
         "Infinitive Perfect",
         "Infinitive Future",
-
         "Imperative Singular",
         "Imperative Plural",
     ];

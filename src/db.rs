@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 use tracing::info;
 
+use crate::LatinSynopsisResult;
 use crate::SynopsisSaverRequest;
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqliteRow;
@@ -88,13 +89,23 @@ pub async fn latin_get_synopsis_list(
 pub async fn latin_get_synopsis_result(
     pool: &SqlitePool,
     id: u32,
-) -> Result<Vec<(i64, i64, String, String, String)>, sqlx::Error> {
-    let query = format!("SELECT id, updated, sname, advisor, selectedverb FROM latinsynopsisresults WHERE id={} ORDER BY updated DESC;", id);
-    let res: Vec<(i64, i64, String, String, String)> =
-        sqlx::query_as(&query).fetch_all(pool).await?;
+) -> Result<Vec<LatinSynopsisResult>, sqlx::Error> {
+    let query = format!(
+        "SELECT * FROM latinsynopsisresults WHERE id={} ORDER BY updated DESC;",
+        id
+    );
+    let res: Vec<LatinSynopsisResult> = sqlx::query_as::<_, LatinSynopsisResult>(&query)
+        .fetch_all(pool)
+        .await?;
 
     Ok(res)
 }
+
+// let rec = sqlx::query_as::<_, DefRow>(query)
+//         .bind(word)
+//         .bind(table)
+//         .fetch_one(pool)
+//         .await?;
 
 pub async fn latin_insert_synopsis(
     pool: &SqlitePool,

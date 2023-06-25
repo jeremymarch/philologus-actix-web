@@ -17,7 +17,7 @@ function submitSynopsis () {
   json.verb = $('#selectedverb').val().trim();
   json.person = $('#person').val();
   json.number = $('#number').val();
-  // json.ptccase = $('#ptccase').val();
+  json.ptccase = ''; // $('#ptccase').val();
   json.ptcgender = $('#ptcgender').val();
   json.ptcnumber = '';
   const name = $('#sname').val().trim();
@@ -44,7 +44,8 @@ function submitSynopsis () {
       // procResponse(data, textStatus);
       // showToast("success: " + data);
       // alert(data);
-      // clearForm();
+      alert('Submitted!');
+      clearForm();
     },
     error: function (response) {
       // getwords(url); //redo request on error

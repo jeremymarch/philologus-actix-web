@@ -15,10 +15,10 @@ function submitSynopsis () {
   json.pp = $('#pppppp0').val().trim();
   json.unit = '0'; // $('#unitfilter').val().trim();
   json.verb = $('#selectedverb').val().trim();
-  json.person = $('#person').val().trim();
-  json.number = $('#number').val().trim();
-  json.ptccase = $('#ptccase').val().trim();
-  json.ptcgender = $('#ptcgender').val().trim();
+  json.person = $('#person').val();
+  json.number = $('#number').val();
+  // json.ptccase = $('#ptccase').val();
+  json.ptcgender = $('#ptcgender').val();
   json.ptcnumber = '';
   const name = $('#sname').val().trim();
   if (name.length < 1) {
@@ -90,7 +90,7 @@ function savefields () {
   });
   setCookie('person', $('#person').val(), 365);
   setCookie('number', $('#number').val(), 365);
-  setCookie('ptccase', $('#ptccase').val(), 365);
+  // setCookie('ptccase', $('#ptccase').val(), 365);
   setCookie('ptcgender', $('#ptcgender').val(), 365);
 }
 
@@ -104,7 +104,7 @@ function retrievefields () {
   }
   $('#person').val(localStorage.getItem('person'));
   $('#number').val(localStorage.getItem('number'));
-  $('#ptccase').val(localStorage.getItem('ptccase'));
+  // $('#ptccase').val(localStorage.getItem('ptccase'));
   $('#ptcgender').val(localStorage.getItem('ptcgender'));
 }
 
@@ -117,7 +117,7 @@ function clearForm () {
   });
   $('#person').val('');
   $('#number').val('');
-  $('#ptccase').val('');
+  // $('#ptccase').val('');
   $('#ptcgender').val('');
   setCookie('person', '', 365);
   setCookie('number', '', 365);

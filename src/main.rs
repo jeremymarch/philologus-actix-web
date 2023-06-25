@@ -939,10 +939,10 @@ async fn latin_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> {
             rows.push_str(format!(
             r#"<td class="formcell {}">
                 <div class="formcellInner">
-                <input type="text" id="gkform{}" class="gkinput formcellinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
+                <input type="text" id="gkform{}" class="gkinput formcellinput" spellcheck="false" autocapitalize="off" autocomplete="off" {}/>
                 </div>
-            </td>"#, 
-            v.to_lowercase(), count).as_str());
+            </td>"#,
+            v.to_lowercase(), count, if count == 21 || count == 22 {"disabled"} else {""}).as_str());
             count += 1;
         }
         rows.push_str("</tr>");

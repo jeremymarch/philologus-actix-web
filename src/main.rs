@@ -1016,7 +1016,7 @@ async fn main() -> io::Result<()> {
     tracing_subscriber::fmt()
         // Combine the stdout and log file `MakeWriter`s into one
         // `MakeWriter` that writes to both
-        .with_writer(stdout)//.and(non_blocking))
+        .with_writer(stdout) //.and(non_blocking))
         .init();
 
     let db_pool = SqlitePool::connect(&db_path)

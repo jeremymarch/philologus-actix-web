@@ -1004,19 +1004,19 @@ async fn main() -> io::Result<()> {
     let tantivy_index_path = std::env::var("TANTIVY_INDEX_PATH").unwrap_or_else(|_| {
         panic!("Environment variable for tantivy index path not set: TANTIVY_INDEX_PATH.")
     });
-    let tracing_log_path = std::env::var("TRACING_LOG_PATH").unwrap_or_else(|_| {
-        panic!("Environment variable for tracing log path not set: TRACING_LOG_PATH.")
-    });
+    // let tracing_log_path = std::env::var("TRACING_LOG_PATH").unwrap_or_else(|_| {
+    //     panic!("Environment variable for tracing log path not set: TRACING_LOG_PATH.")
+    // });
 
     // Log all events to a rolling log file.
-    let logfile = tracing_appender::rolling::daily(tracing_log_path, "philo-logs");
-    let (non_blocking, _guard) = tracing_appender::non_blocking(logfile);
+    //let logfile = tracing_appender::rolling::daily(tracing_log_path, "philo-logs");
+    //let (non_blocking, _guard) = tracing_appender::non_blocking(logfile);
     // Log `INFO` and above to stdout.
     let stdout = std::io::stdout.with_max_level(tracing::Level::INFO);
     tracing_subscriber::fmt()
         // Combine the stdout and log file `MakeWriter`s into one
         // `MakeWriter` that writes to both
-        .with_writer(stdout.and(non_blocking))
+        .with_writer(stdout)//.and(non_blocking))
         .init();
 
     let db_pool = SqlitePool::connect(&db_path)

@@ -114,9 +114,9 @@ pub async fn latin_insert_synopsis(
     ip: &str,
     agent: &str,
 ) -> Result<u32, sqlx::Error> {
-    let query = format!("INSERT INTO latinsynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')", 
+    let query = format!("INSERT INTO latinsynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')", 
         accessed, info.sname, info.advisor, info.unit, info.verb, info.pp,
-        info.number, info.person, info.ptcgender, info.ptcnumber, info.ptccase, ip, agent,
+        info.number, info.person, info.ptcgender, info.ptcnumber, info.ptccase, ip, agent, 1,
         info.r.join("', '"));
     sqlx::query(&query).execute(pool).await?;
 

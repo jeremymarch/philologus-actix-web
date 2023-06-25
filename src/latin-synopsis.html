@@ -20,7 +20,12 @@ function submitSynopsis () {
   json.ptccase = $('#ptccase').val().trim();
   json.ptcgender = $('#ptcgender').val().trim();
   json.ptcnumber = '';
-  json.sname = $('#sname').val().trim(); ;
+  const name = $('#sname').val().trim();
+  if (name.length < 1) {
+    alert('You must enter a name.');
+    return;
+  }
+  json.sname = name;
   json.advisor = $('#sadvisor').val().trim();
 
   json.r = [];
@@ -28,7 +33,7 @@ function submitSynopsis () {
     json.r[parseInt(this.id.substring(6))] = this.value.trim();
   });
 
-  console.log(json);
+  // console.log(json);
   $.ajax({
     url: 'latin-synopsis-saver',
     type: 'POST',
@@ -39,14 +44,16 @@ function submitSynopsis () {
       // procResponse(data, textStatus);
       // showToast("success: " + data);
       // alert(data);
+      // clearForm();
     },
     error: function (response) {
       // getwords(url); //redo request on error
       // showToast("error");
       // alert(response);
+      alert('There was an error submitting the synopsis. Check your internet connection and try submitting again.');
     }
   });
-  alert(JSON.stringify(json));
+  // alert(JSON.stringify(json));
 }
 
 // eslint-disable-next-line no-unused-vars
@@ -246,7 +253,7 @@ day22	u16
 }
 /* .unit16 { } */
 
-#namecell { display:none;}
+#namecell { }
 #submitcell { display:auto; }
 
 #selectedverb {width:250px;}
@@ -263,11 +270,12 @@ day22	u16
     right:20px;
     top:78px;
 }
-
-#clearbutton {
-    position:absolute;
-    right:20px;
-    top:50px;
+#submitbutton {
+    float: right;
+}
+#clearbutton { 
+    float: right;
+    clear: both;
 }
 #table1 {
   width:100%;margin:0px auto;
@@ -295,7 +303,7 @@ day22	u16
 </head>
 <body>
     <div id="legendlink"></div>
-    <button id="clearbutton" tabindex="-1">Clear</button>
+    
     <table id="table1" cellpadding=0 cellspacing=0>
         <tr>
             <td colspan="4">
@@ -305,64 +313,81 @@ day22	u16
         </tr>
         <tr>
             <td align="left" colspan="4">
-                <table cellpadding=0 cellspacing=0>
-                    <tr><td width="50%">
-                        <!-- <select tabindex="-1" id="unitfilter">
-                        <option value="2">Unit 2</option>
-                        <option value="5">Unit 5</option>
-                        <option value="7">Unit 7</option>
-                        <option value="8">Unit 8</option>
-                        <option value="11">Unit 11</option>
-                        <option value="16">Unit 16</option>
-                    </select> -->
-                </td><td align="right" id="namecell">
-                        Name: <input type="text" id="sname" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
-Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
-                    </td></tr>
-                    <tr><td width="50%" id="paramcell"><h3>Synopsis of: 
-                        <input type="text" id="selectedverb" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
-                        <select id="person" class="verbparam">
-                            <option value=""></option>
-                            <option value="1st">First Person</option>
-                            <option value="2nd">Second Person</option>
-                            <option value="3rd">Third Person</option>
+                <table cellpadding=0 cellspacing=0 width="100%">
+                    <tr>
+                        <!-- <td width="50%">
+                        <select tabindex="-1" id="unitfilter">
+                            <option value="2">Unit 2</option>
+                            <option value="5">Unit 5</option>
+                            <option value="7">Unit 7</option>
+                            <option value="8">Unit 8</option>
+                            <option value="11">Unit 11</option>
+                            <option value="16">Unit 16</option>
                         </select>
-                        <select id="number" class="verbparam">
-                            <option value=""></option>
-                            <option value="sing">Singular</option>
-                            <option value="pl">Plural</option>
-                        </select>
-                        <select id="ptcgender" class="verbparam">
-                            <option value=""></option>
-                            <option value="masc">Masculine</option>
-                            <option value="fem">Feminine</option>
-                            <option value="neut">Neuter</option>
-                        </select>
-                        <!--<select id="ptcnumber" class="verbparam">
-                            <option value=""></option>
-                            <option value="ptcsing">Singular</option>
-                            <option value="ptcpl">Plural</option>
-                        </select>-->
-                        <select id="ptccase" class="verbparam">
-                            <option value=""></option>
-                            <option value="nom">Nominative</option>
-                            <option value="gen">Genitive</option>
-                            <option value="dat">Dative</option>
-                            <option value="acc">Accusative</option>
-                            <option value="acc">Ablative</option>
-                        </select>
-                            
-                    <span align="right" colspan="2" id="submitcell"><button id="submitbutton">Submit</button></span></h3></td></tr>
-        </table>
-        </td>
+                        </td> -->
+                        <td align="right" id="namecell">
+                            Name: <input type="text" id="sname" class="" spellcheck="false" autocapitalize="off" 
+                                autocomplete="off"/>
+                            Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapitalize="off" 
+                                autocomplete="off"/>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td id="paramcell">
+                            <h3>Synopsis of: 
+                                <input type="text" id="selectedverb" class="gkinput" spellcheck="false" 
+                                    autocapitalize="off" autocomplete="off"/>
+                                <select id="person" class="verbparam">
+                                    <option value=""></option>
+                                    <option value="1st">First Person</option>
+                                    <option value="2nd">Second Person</option>
+                                    <option value="3rd">Third Person</option>
+                                </select>
+                                <select id="number" class="verbparam">
+                                    <option value=""></option>
+                                    <option value="sing">Singular</option>
+                                    <option value="pl">Plural</option>
+                                </select>
+                                <select id="ptcgender" class="verbparam">
+                                    <option value=""></option>
+                                    <option value="masc">Masculine</option>
+                                    <option value="fem">Feminine</option>
+                                    <option value="neut">Neuter</option>
+                                </select>
+                                <!--<select id="ptcnumber" class="verbparam">
+                                    <option value=""></option>
+                                    <option value="ptcsing">Singular</option>
+                                    <option value="ptcpl">Plural</option>
+                                </select>-->
+                                <select id="ptccase" class="verbparam">
+                                    <option value=""></option>
+                                    <option value="nom">Nominative</option>
+                                    <option value="gen">Genitive</option>
+                                    <option value="dat">Dative</option>
+                                    <option value="acc">Accusative</option>
+                                    <option value="acc">Ablative</option>
+                                </select>
+                                <span align="right" colspan="2" id="submitcell">
+                                    <button id="submitbutton">Submit</button>
+                                    <button id="clearbutton" tabindex="-1">Clear</button>
+                                </span>
+                            </h3>
+                        </td>
+                    </tr>
+                </table>
+            </td>
         </tr>
         <tr>
             <td>Principal Parts</td>
-            <td colspan=3  class="formcell">
+            <td colspan="3" class="formcell">
                 <input type="text" id="pppppp0" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
             </td>
         </tr>
-        <tr><td></td><td class="colheader active">Active</td><td class="colheader passive">Passive</td></tr>
+        <tr>
+            <td></td>
+            <td class="colheader active">Active</td>
+            <td class="colheader passive">Passive</td>
+        </tr>
 %rows%
 </table>
 </body>

@@ -129,6 +129,7 @@ pub struct LatinSynopsisResult {
     pub verbptccase: String,
     pub ip: String,
     pub ua: String,
+    pub status: i64,
     pub f0: String,
     pub f1: String,
     pub f2: String,
@@ -773,8 +774,8 @@ async fn latin_synopsis_result(
     <meta charset="UTF-8">
     <style nonce="2726c7f26c">
     BODY {font-family:helvetica,arial}
-    .synTable { min-width:800px; font-size:16pt; border-spacing:0px;border-collapse: collapse; }
-    .synTable td {padding:2px 5px;}
+    .synTable { min-width:800px; font-size:16pt; border-spacing:0px;border-collapse: collapse;margin: 0px auto; }
+    .synTable td {padding:4px 5px;}
     .labelcol { width:25%;}
     .label {font-weight:bold; }
     .spacer { width:25%;}
@@ -826,7 +827,7 @@ async fn latin_synopsis_result(
             )
             .as_str(),
         );
-
+        res.push_str("<tr><td colspan='4'>&nbsp;</td></tr>");
         res.push_str("<tr><td class='spacer'><td></td></td><td class='label' align='left'>Active</td><td class='label' align='left'>Passive</td></tr>");
 
         res.push_str("<tr><td class='label majorlabelrow' colspan='4'>Indicative</td></tr>");

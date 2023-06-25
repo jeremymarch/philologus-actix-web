@@ -183,7 +183,9 @@ window.addEventListener('load', start, false);
   font-family: 'WebNewAthenaUnicode';
   src: url('/newathu5_8.ttf') format('truetype');
 }  
-
+#ptccase {
+    display:none;
+}
 .rotate { 
     transform: rotate(-42deg);
     width: 10%;
@@ -345,14 +347,14 @@ day22	u16
                                 </select>
                                 <select id="number" class="verbparam">
                                     <option value=""></option>
-                                    <option value="sing">Singular</option>
-                                    <option value="pl">Plural</option>
+                                    <option value="singular">Singular</option>
+                                    <option value="plural">Plural</option>
                                 </select>
                                 <select id="ptcgender" class="verbparam">
                                     <option value=""></option>
-                                    <option value="masc">Masculine</option>
-                                    <option value="fem">Feminine</option>
-                                    <option value="neut">Neuter</option>
+                                    <option value="masculine">Masculine</option>
+                                    <option value="feminine">Feminine</option>
+                                    <option value="neuter">Neuter</option>
                                 </select>
                                 <!--<select id="ptcnumber" class="verbparam">
                                     <option value=""></option>
@@ -361,11 +363,11 @@ day22	u16
                                 </select>-->
                                 <select id="ptccase" class="verbparam">
                                     <option value=""></option>
-                                    <option value="nom">Nominative</option>
-                                    <option value="gen">Genitive</option>
-                                    <option value="dat">Dative</option>
-                                    <option value="acc">Accusative</option>
-                                    <option value="acc">Ablative</option>
+                                    <option value="nominative">Nominative</option>
+                                    <option value="genitive">Genitive</option>
+                                    <option value="dative">Dative</option>
+                                    <option value="accusative">Accusative</option>
+                                    <option value="ablative">Ablative</option>
                                 </select>
                                 <span align="right" colspan="2" id="submitcell">
                                     <button id="submitbutton">Submit</button>

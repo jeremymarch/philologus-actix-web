@@ -743,8 +743,20 @@ async fn latin_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> 
     <html>
     <head>
     <meta charset="UTF-8">
+    <style nonce="2726c7f26c">
+        .synlist { width: 600px;
+            margin: 0px auto;
+            border-collapse: collapse;
+            font-size: 16pt;
+            font-family:helvetica,arial;
+        }
+        .synlist td { padding: 3px; }
+        .headerrow {border-bottom:1px solid black;font-weight:bold;}
+    
+    </style>
     </head>
-    <body><table>"#,
+    <body><table class='synlist'>
+    <tr><td class='headerrow'>Date</td><td class='headerrow'>Name</td><td class='headerrow'>Advisor</td><td class='headerrow'>Verb</td></tr>"#,
     );
     for l in list {
         let d = UNIX_EPOCH + Duration::from_millis(l.1.try_into().unwrap());
@@ -813,7 +825,7 @@ async fn latin_synopsis_result(
         );
         res.push_str(
             format!(
-                "<tr><td class='label'>Pers. Num. Gen.</td><td colspan='3'>{} {} {}</td></tr>",
+                "<tr><td class='label'>Pers. Num. Gen.</td><td colspan='3'>{}, {}, {}</td></tr>",
                 l.verbperson, l.verbnumber, l.verbptcgender
             )
             .as_str(),

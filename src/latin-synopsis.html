@@ -16,9 +16,21 @@ function submitSynopsis () {
   json.unit = '0'; // $('#unitfilter').val().trim();
   json.verb = $('#selectedverb').val().trim();
   json.person = $('#person').val();
+  if (json.person === null) {
+    json.person = '';
+  }
   json.number = $('#number').val();
+  if (json.number === null) {
+    json.number = '';
+  }
   json.ptccase = ''; // $('#ptccase').val();
+  if (json.ptccase === null) {
+    json.ptccase = '';
+  }
   json.ptcgender = $('#ptcgender').val();
+  if (json.ptcgender === null) {
+    json.ptcgender = '';
+  }
   json.ptcnumber = '';
   const name = $('#sname').val().trim();
   if (name.length < 1) {

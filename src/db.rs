@@ -18,6 +18,7 @@ along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
 use tracing::info;
 
+use crate::GreekSynopsisResult;
 use crate::LatinSynopsisResult;
 use crate::SynopsisSaverRequest;
 use serde::{Deserialize, Serialize};
@@ -41,7 +42,7 @@ pub async fn greek_get_synopsis_list(
     pool: &SqlitePool,
 ) -> Result<Vec<(i64, i64, String, String, String)>, sqlx::Error> {
     let query =
-        "SELECT id, updated, sname, advisor, selectedverb FROM synopsisresults ORDER BY updated DESC;";
+        "SELECT id, updated, sname, advisor, selectedverb FROM greeksynopsisresults ORDER BY updated DESC;";
     let res: Vec<(i64, i64, String, String, String)> =
         sqlx::query_as(query).fetch_all(pool).await?;
 
@@ -51,10 +52,14 @@ pub async fn greek_get_synopsis_list(
 pub async fn greek_get_synopsis_result(
     pool: &SqlitePool,
     id: u32,
-) -> Result<Vec<(i64, i64, String, String, String)>, sqlx::Error> {
-    let query = format!("SELECT id, updated, sname, advisor, selectedverb FROM synopsisresults WHERE id={} ORDER BY updated DESC;", id);
-    let res: Vec<(i64, i64, String, String, String)> =
-        sqlx::query_as(&query).fetch_all(pool).await?;
+) -> Result<Vec<GreekSynopsisResult>, sqlx::Error> {
+    let query = format!(
+        "SELECT * FROM greeksynopsisresults WHERE id={} ORDER BY updated DESC;",
+        id
+    );
+    let res: Vec<GreekSynopsisResult> = sqlx::query_as::<_, GreekSynopsisResult>(&query)
+        .fetch_all(pool)
+        .await?;
 
     Ok(res)
 }
@@ -66,9 +71,9 @@ pub async fn greek_insert_synopsis(
     ip: &str,
     agent: &str,
 ) -> Result<u32, sqlx::Error> {
-    let query = format!("INSERT INTO synopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}')", 
+    let query = format!("INSERT INTO greeksynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')", 
         accessed, info.sname, info.advisor, info.unit, info.verb, info.pp,
-        info.number, info.person, info.ptcgender, info.ptcnumber, info.ptccase, ip, agent,
+        info.number, info.person, info.ptcgender, info.ptcnumber, info.ptccase, ip, agent, 1,
         info.r.join("', '"));
     sqlx::query(&query).execute(pool).await?;
 

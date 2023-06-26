@@ -12,13 +12,27 @@ pub async fn greek_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWErr
     <html>
     <head>
     <meta charset="UTF-8">
+    <style nonce="2726c7f26c">
+        .synlist { width: 600px;
+            margin: 0px auto;
+            border-collapse: collapse;
+            font-size: 16pt;
+            font-family:helvetica,arial;
+        }
+        .synlist td { padding: 3px; }
+        .headerrow {border-bottom:1px solid black;font-weight:bold;}
+    </style>
     </head>
-    <body><table>"#,
+    <body><table class='synlist'>
+    <tr><td class='headerrow'>Date</td><td class='headerrow'>Name</td><td class='headerrow'>Advisor</td><td class='headerrow'>Verb</td></tr>"#,
     );
     for l in list {
-        let d = UNIX_EPOCH + Duration::from_millis(l.1.try_into().unwrap());
-        let datetime = DateTime::<Local>::from(d);
-        let timestamp_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+        let eastern_daylight_tz = FixedOffset::west_opt(4 * 60 * 60).unwrap();
+        let d = eastern_daylight_tz.timestamp_millis_opt(l.1);
+        let timestamp_str = match d {
+            LocalResult::Single(t) => t.format("%Y-%m-%d %H:%M:%S").to_string(),
+            _ => "".to_string(),
+        };
 
         res.push_str(format!("<tr><td><a href='greek-synopsis-result?id={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
     }
@@ -38,18 +52,105 @@ pub async fn greek_synopsis_result(
 
     let mut res = String::from(
         r#"<!DOCTYPE html>
-    <html>
+    <html lang='en'>
     <head>
     <meta charset="UTF-8">
+    <style nonce="2726c7f26c">
+    @font-face {
+        font-family: 'WebNewAthenaUnicode';
+        src: url('/newathu5_8.ttf') format('truetype');
+      }  
+    BODY {font-family:helvetica,arial}
+    .synTable { min-width:800px; font-size:16pt; border-spacing:0px;border-collapse: collapse;margin: 0px auto; }
+    .synTable td {padding:4px 5px;}
+    .labelcol { width:25%;}
+    .label {font-weight:bold; }
+    .spacer { width:25%;}
+    .majorlabelrow { border-top:1px solid black;}
+    .greek { font-family: WebNewAthenaUnicode;}
+    </style>
+    <script nonce="2726c7f26c">
+    function fixdate() {
+        const ds = document.getElementById('submittedDate');
+        const date = new Date(parseInt(ds.innerHTML));
+        ds.innerHTML = date.toLocaleString(navigator.language);
+    }
+    // window.addEventListener('load', fixdate, false);
+    </script>
     </head>
-    <body><table>"#,
+    <body><table class='synTable' border='1'>"#,
     );
     for l in list {
-        let d = UNIX_EPOCH + Duration::from_millis(l.1.try_into().unwrap());
-        let datetime = DateTime::<Local>::from(d);
-        let timestamp_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+        let eastern_daylight_tz = FixedOffset::west_opt(4 * 60 * 60).unwrap();
+        let d = eastern_daylight_tz.timestamp_millis_opt(l.updated);
+        let timestamp_str = match d {
+            LocalResult::Single(t) => t.format("%Y-%m-%d %H:%M:%S").to_string(),
+            _ => "".to_string(),
+        };
 
-        res.push_str(format!("<tr><td><a href='greek-synopsis-result?id={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
+        res.push_str(
+            format!(
+                "<tr><td class='label'>Name</td><td colspan='3'>{}</td></tr>",
+                l.sname
+            )
+            .as_str(),
+        );
+        res.push_str(
+            format!(
+                "<tr><td class='label'>Advisor</td><td colspan='3'>{}</td></tr>",
+                l.advisor
+            )
+            .as_str(),
+        );
+        res.push_str(
+            format!(
+                "<tr><td class='label'>Date</td><td id='submittedDate' colspan='3'>{}</td></tr>",
+                timestamp_str
+            )
+            .as_str(),
+        );
+        res.push_str(
+            format!(
+                "<tr><td class='label'>Pers., Num., Gen., Case</td><td colspan='3'>{}, {}, {}, {}</td></tr>",
+                l.verbperson, l.verbnumber, l.verbptcgender, l.verbptccase
+            )
+            .as_str(),
+        );
+        res.push_str("<tr><td colspan='4'>&nbsp;</td></tr>");
+        res.push_str(
+            format!(
+                "<tr><td class='label'>Principal Parts</td><td colspan='3' class='greek'>{}</td></tr>",
+                l.pp
+            )
+            .as_str(),
+        );
+        res.push_str("<tr><td colspan='4'>&nbsp;</td></tr>");
+        res.push_str("<tr><td>&nbsp;</td><td class='label' align='left'>Active</td><td class='label' align='left'>Middle</td><td class='label' align='left'>Passive</td></tr>");
+
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present Indicative",  l.f0, l.f1, l.f2).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Imperfect Indicative",  l.f3, l.f4, l.f5).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Future Indicative",  l.f6, l.f7, l.f8).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist Indicative",  l.f9, l.f10, l.f11).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Perfect Indicative",  l.f12, l.f13, l.f14).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Pluperfect Indicative",  l.f15, l.f16, l.f17).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present Subjunctive",  l.f18, l.f19, l.f20).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist Subjunctive",  l.f21, l.f22, l.f23).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present Optative",  l.f24, l.f25, l.f26).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Future Optative",  l.f27, l.f28, l.f29).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist Optative",  l.f30, l.f31, l.f32).as_str());
+
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present Imperative",  l.f33, l.f34, l.f35).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist Imperative",  l.f36, l.f37, l.f38).as_str());
+
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present Infinitive",  l.f39, l.f40, l.f41).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Future Infinitive",  l.f42, l.f43, l.f44).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist Infinitive",  l.f45, l.f46, l.f47).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Perfect Infinitive",  l.f48, l.f49, l.f50).as_str());
+
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present Participle",  l.f51, l.f52, l.f53).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Future Participle",  l.f54, l.f55, l.f56).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist Participle",  l.f57, l.f58, l.f59).as_str());
+        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Perfect Participle",  l.f60, l.f61, l.f62).as_str());
     }
     res.push_str("</table></body></html>");
 
@@ -97,8 +198,8 @@ pub async fn greek_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> 
     let mut count = 0;
     let rowlabels = vec![
         "Present Indicative",
-        "Future Indicative",
         "Imperfect Indicative",
+        "Future Indicative",
         "Aorist Indicative",
         "Perfect Indicative",
         "Pluperfect Indicative",
@@ -138,7 +239,7 @@ pub async fn greek_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> 
 
     Ok(HttpResponse::Ok().content_type("text/html").body(template))
 }
-
+use chrono::LocalResult;
 pub async fn latin_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
 
@@ -167,9 +268,12 @@ pub async fn latin_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWErr
     <tr><td class='headerrow'>Date</td><td class='headerrow'>Name</td><td class='headerrow'>Advisor</td><td class='headerrow'>Verb</td></tr>"#,
     );
     for l in list {
-        let d = UNIX_EPOCH + Duration::from_millis(l.1.try_into().unwrap());
-        let datetime = DateTime::<Local>::from(d);
-        let timestamp_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+        let eastern_daylight_tz = FixedOffset::west_opt(4 * 60 * 60).unwrap();
+        let d = eastern_daylight_tz.timestamp_millis_opt(l.1);
+        let timestamp_str = match d {
+            LocalResult::Single(t) => t.format("%Y-%m-%d %H:%M:%S").to_string(),
+            _ => "".to_string(),
+        };
 
         res.push_str(format!("<tr><td><a href='latin-synopsis-result?id={}'>{}</a></td><td>{}</td><td>{}</td><td>{}</td></tr>", l.0, timestamp_str, l.2, l.3,l.4).as_str());
     }
@@ -201,14 +305,25 @@ pub async fn latin_synopsis_result(
     .spacer { width:25%;}
     .majorlabelrow { border-top:1px solid black;}
     </style>
+    <script nonce="2726c7f26c">
+    function fixdate() {
+        const ds = document.getElementById('submittedDate');
+        const date = new Date(parseInt(ds.innerHTML));
+        ds.innerHTML = date.toLocaleString(navigator.language);
+    }
+    // window.addEventListener('load', fixdate, false);
+    </script>
     </head>
     <body><table class='synTable'>"#,
     );
 
     for l in list {
-        let d = UNIX_EPOCH + Duration::from_millis(l.updated.try_into().unwrap());
-        let datetime = DateTime::<Local>::from(d);
-        let timestamp_str = datetime.format("%Y-%m-%d %H:%M:%S").to_string();
+        let eastern_daylight_tz = FixedOffset::west_opt(4 * 60 * 60).unwrap();
+        let d = eastern_daylight_tz.timestamp_millis_opt(l.updated);
+        let timestamp_str = match d {
+            LocalResult::Single(t) => t.format("%Y-%m-%d %H:%M:%S").to_string(),
+            _ => "".to_string(),
+        };
 
         res.push_str(
             format!(
@@ -226,7 +341,7 @@ pub async fn latin_synopsis_result(
         );
         res.push_str(
             format!(
-                "<tr><td class='label'>Date</td><td colspan='3'>{}</td></tr>",
+                "<tr><td class='label'>Date</td><td id='submittedDate' colspan='3'>{}</td></tr>",
                 timestamp_str
             )
             .as_str(),

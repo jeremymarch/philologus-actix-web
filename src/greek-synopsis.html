@@ -98,11 +98,14 @@ function submitSynopsis () {
       // procResponse(data, textStatus);
       // showToast("success: " + data);
       // alert(data);
+      alert('Submitted!');
+      clearForm();
     },
     error: function (response) {
       // getwords(url); //redo request on error
       // showToast("error");
       // alert(response);
+      alert('There was an error submitting the synopsis. Check your internet connection and try submitting again.');
     }
   });
   // alert(JSON.stringify(json));
@@ -305,7 +308,7 @@ day22	u16
 }
 /* .unit16 { } */
 
-#namecell { display:none;}
+#namecell { }
 #submitcell { display:auto; }
 
 #selectedverb {width:250px;}
@@ -388,10 +391,11 @@ day22	u16
                         <option value="8">Unit 8</option>
                         <option value="11">Unit 11</option>
                         <option value="16">Unit 16</option>
-                    </select></td><td align="right" id="namecell">
-                        Name: <input type="text" id="sname" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
+                    </select></td></tr>
+                    <tr><td colspan='4' align="right" id="namecell">
+                      Name: <input type="text" id="sname" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
 Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
-                    </td></tr>
+                  </td></tr>
                     <tr><td width="50%" id="paramcell"><h3>Synopsis of: 
                         <input type="text" id="selectedverb" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
                         <select id="person" class="verbparam">

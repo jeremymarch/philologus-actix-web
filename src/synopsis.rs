@@ -1,4 +1,142 @@
 use super::*;
+use sqlx::FromRow;
+
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
+pub struct LatinSynopsisResult {
+    pub id: i64,
+    pub updated: i64,
+    pub sname: String,
+    pub advisor: String,
+    pub sgiday: i64,
+    pub selectedverb: String,
+    pub pp: String,
+    pub verbnumber: String,
+    pub verbperson: String,
+    pub verbptcgender: String,
+    pub verbptcnumber: String,
+    pub verbptccase: String,
+    pub ip: String,
+    pub ua: String,
+    pub status: i64,
+    pub f0: String,
+    pub f1: String,
+    pub f2: String,
+    pub f3: String,
+    pub f4: String,
+    pub f5: String,
+    pub f6: String,
+    pub f7: String,
+    pub f8: String,
+    pub f9: String,
+    pub f10: String,
+    pub f11: String,
+    pub f12: String,
+    pub f13: String,
+    pub f14: String,
+    pub f15: String,
+    pub f16: String,
+    pub f17: String,
+    pub f18: String,
+    pub f19: String,
+    pub f20: String,
+    pub f21: String,
+    pub f22: String,
+    pub f23: String,
+    pub f24: String,
+    pub f25: String,
+    pub f26: String,
+    pub f27: String,
+    pub f28: String,
+    pub f29: String,
+    pub f30: String,
+    pub f31: String,
+    pub f32: String,
+    pub f33: String,
+    pub f34: String,
+    pub f35: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
+pub struct GreekSynopsisResult {
+    pub id: i64,
+    pub updated: i64,
+    pub sname: String,
+    pub advisor: String,
+    pub sgiday: i64,
+    pub selectedverb: String,
+    pub pp: String,
+    pub verbnumber: String,
+    pub verbperson: String,
+    pub verbptcgender: String,
+    pub verbptcnumber: String,
+    pub verbptccase: String,
+    pub ip: String,
+    pub ua: String,
+    pub status: i64,
+    pub f0: String,
+    pub f1: String,
+    pub f2: String,
+    pub f3: String,
+    pub f4: String,
+    pub f5: String,
+    pub f6: String,
+    pub f7: String,
+    pub f8: String,
+    pub f9: String,
+    pub f10: String,
+    pub f11: String,
+    pub f12: String,
+    pub f13: String,
+    pub f14: String,
+    pub f15: String,
+    pub f16: String,
+    pub f17: String,
+    pub f18: String,
+    pub f19: String,
+    pub f20: String,
+    pub f21: String,
+    pub f22: String,
+    pub f23: String,
+    pub f24: String,
+    pub f25: String,
+    pub f26: String,
+    pub f27: String,
+    pub f28: String,
+    pub f29: String,
+    pub f30: String,
+    pub f31: String,
+    pub f32: String,
+    pub f33: String,
+    pub f34: String,
+    pub f35: String,
+    pub f36: String,
+    pub f37: String,
+    pub f38: String,
+    pub f39: String,
+    pub f40: String,
+    pub f41: String,
+    pub f42: String,
+    pub f43: String,
+    pub f44: String,
+    pub f45: String,
+    pub f46: String,
+    pub f47: String,
+    pub f48: String,
+    pub f49: String,
+    pub f50: String,
+    pub f51: String,
+    pub f52: String,
+    pub f53: String,
+    pub f54: String,
+    pub f55: String,
+    pub f56: String,
+    pub f57: String,
+    pub f58: String,
+    pub f59: String,
+    pub f60: String,
+    pub f61: String,
+    pub f62: String,
+}
 
 pub async fn greek_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
@@ -63,10 +201,10 @@ pub async fn greek_synopsis_result(
     BODY {font-family:helvetica,arial}
     .synTable { min-width:800px; font-size:16pt; border-spacing:0px;border-collapse: collapse;margin: 0px auto; }
     .synTable td {padding:4px 5px;}
-    .labelcol { width:25%;}
+    .labelcol { width:15%;}
     .label {font-weight:bold; }
-    .spacer { width:25%;}
-    .majorlabelrow { border-top:1px solid black;}
+    .spacer { width:50px;}
+    .majorlabelrow { border-top:1px solid black;font-weight:bold;}
     .greek { font-family: WebNewAthenaUnicode;}
     </style>
     <script nonce="2726c7f26c">
@@ -78,7 +216,7 @@ pub async fn greek_synopsis_result(
     // window.addEventListener('load', fixdate, false);
     </script>
     </head>
-    <body><table class='synTable' border='1'>"#,
+    <body><table class='synTable'>"#,
     );
     for l in list {
         let eastern_daylight_tz = FixedOffset::west_opt(4 * 60 * 60).unwrap();
@@ -87,70 +225,77 @@ pub async fn greek_synopsis_result(
             LocalResult::Single(t) => t.format("%Y-%m-%d %H:%M:%S").to_string(),
             _ => "".to_string(),
         };
-
         res.push_str(
             format!(
-                "<tr><td class='label'>Name</td><td colspan='3'>{}</td></tr>",
+                "<tr><td colspan='2' class='label'>Name</td><td colspan='3'>{}</td></tr>",
                 l.sname
             )
             .as_str(),
         );
         res.push_str(
             format!(
-                "<tr><td class='label'>Advisor</td><td colspan='3'>{}</td></tr>",
+                "<tr><td colspan='2' class='label'>Advisor</td><td colspan='3'>{}</td></tr>",
                 l.advisor
             )
             .as_str(),
         );
         res.push_str(
             format!(
-                "<tr><td class='label'>Date</td><td id='submittedDate' colspan='3'>{}</td></tr>",
+                "<tr><td colspan='2' class='label'>Date</td><td id='submittedDate' colspan='3'>{}</td></tr>",
                 timestamp_str
             )
             .as_str(),
         );
         res.push_str(
             format!(
-                "<tr><td class='label'>Pers., Num., Gen., Case</td><td colspan='3'>{}, {}, {}, {}</td></tr>",
+                "<tr><td colspan='2' class='label'>Pers., Num., Gen., Case</td><td colspan='3'>{}, {}, {}, {}</td></tr>",
                 l.verbperson, l.verbnumber, l.verbptcgender, l.verbptccase
             )
             .as_str(),
         );
-        res.push_str("<tr><td colspan='4'>&nbsp;</td></tr>");
+        //res.push_str("<tr><td colspan='5'>&nbsp;</td></tr>");
         res.push_str(
             format!(
-                "<tr><td class='label'>Principal Parts</td><td colspan='3' class='greek'>{}</td></tr>",
+                "<tr><td colspan='2' class='label'>Principal Parts</td><td colspan='3' class='greek'>{}</td></tr>",
                 l.pp
             )
             .as_str(),
         );
-        res.push_str("<tr><td colspan='4'>&nbsp;</td></tr>");
-        res.push_str("<tr><td>&nbsp;</td><td class='label' align='left'>Active</td><td class='label' align='left'>Middle</td><td class='label' align='left'>Passive</td></tr>");
+        //res.push_str("<tr><td colspan='5'>&nbsp;</td></tr>");
+        res.push_str("<tr><td colspan='2'>&nbsp;</td><td class='label' align='left'>Active</td><td class='label' align='left'>Middle</td><td class='label' align='left'>Passive</td></tr>");
 
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present Indicative",  l.f0, l.f1, l.f2).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Imperfect Indicative",  l.f3, l.f4, l.f5).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Future Indicative",  l.f6, l.f7, l.f8).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist Indicative",  l.f9, l.f10, l.f11).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Perfect Indicative",  l.f12, l.f13, l.f14).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Pluperfect Indicative",  l.f15, l.f16, l.f17).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present Subjunctive",  l.f18, l.f19, l.f20).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist Subjunctive",  l.f21, l.f22, l.f23).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present Optative",  l.f24, l.f25, l.f26).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Future Optative",  l.f27, l.f28, l.f29).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist Optative",  l.f30, l.f31, l.f32).as_str());
+        res.push_str("<tr><td colspan='5' class='majorlabelrow'>Indicative</td></tr>");
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present",  l.f0, l.f1, l.f2).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Imperfect",  l.f3, l.f4, l.f5).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Future",  l.f6, l.f7, l.f8).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist",  l.f9, l.f10, l.f11).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Perfect",  l.f12, l.f13, l.f14).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Pluperfect",  l.f15, l.f16, l.f17).as_str());
 
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present Imperative",  l.f33, l.f34, l.f35).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist Imperative",  l.f36, l.f37, l.f38).as_str());
+        res.push_str("<tr><td colspan='5' class='majorlabelrow'>Subjunctive</td></tr>");
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present",  l.f18, l.f19, l.f20).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist",  l.f21, l.f22, l.f23).as_str());
 
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present Infinitive",  l.f39, l.f40, l.f41).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Future Infinitive",  l.f42, l.f43, l.f44).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist Infinitive",  l.f45, l.f46, l.f47).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Perfect Infinitive",  l.f48, l.f49, l.f50).as_str());
+        res.push_str("<tr><td colspan='5' class='majorlabelrow'>Optative</td></tr>");
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present",  l.f24, l.f25, l.f26).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Future",  l.f27, l.f28, l.f29).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist",  l.f30, l.f31, l.f32).as_str());
 
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present Participle",  l.f51, l.f52, l.f53).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Future Participle",  l.f54, l.f55, l.f56).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist Participle",  l.f57, l.f58, l.f59).as_str());
-        res.push_str(format!("<tr><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Perfect Participle",  l.f60, l.f61, l.f62).as_str());
+        res.push_str("<tr><td colspan='5' class='majorlabelrow'>Imperative</td></tr>");
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present",  l.f33, l.f34, l.f35).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist",  l.f36, l.f37, l.f38).as_str());
+
+        res.push_str("<tr><td colspan='5' class='majorlabelrow'>Infinitive</td></tr>");
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present",  l.f39, l.f40, l.f41).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Future",  l.f42, l.f43, l.f44).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist",  l.f45, l.f46, l.f47).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Perfect",  l.f48, l.f49, l.f50).as_str());
+
+        res.push_str("<tr><td colspan='5' class='majorlabelrow'>Participle</td></tr>");
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Present",  l.f51, l.f52, l.f53).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Future",  l.f54, l.f55, l.f56).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Aorist",  l.f57, l.f58, l.f59).as_str());
+        res.push_str(format!("<tr><td class='spacer'>&nbsp;</td><td class='labelcol label'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td><td class='greek'>{}</td></tr>", "Perfect",  l.f60, l.f61, l.f62).as_str());
     }
     res.push_str("</table></body></html>");
 

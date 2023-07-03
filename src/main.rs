@@ -612,6 +612,7 @@ async fn main() -> io::Result<()> {
 
     HttpServer::new(move || {
         App::new()
+            .app_data(load_verbs("pp.txt"))
             .app_data(tantivy_index.clone())
             .app_data(db_pool.clone())
             .app_data(db_log_pool.clone())

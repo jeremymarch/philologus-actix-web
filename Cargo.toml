@@ -21,7 +21,8 @@ tracing-actix-web = "0.7.4"
 tracing = { version = "0.1.37", features = ["log"] }
 tracing-appender = "0.2.2"
 tracing-subscriber = "0.3.17"
-polytonic-greek = { git = "https://github.com/jeremymarch/polytonic-greek", version = "0.4.6" }
+# polytonic-greek = { git = "https://github.com/jeremymarch/polytonic-greek", version = "0.4.6" }
+hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", version = "0.3.9" }
 
 
 [dev-dependencies]

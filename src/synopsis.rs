@@ -1,5 +1,7 @@
 use super::*;
+use hoplite_verbs_rs::*;
 use sqlx::FromRow;
+use std::sync::Arc;
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct LatinSynopsisResult {
@@ -136,6 +138,96 @@ pub struct GreekSynopsisResult {
     pub f60: String,
     pub f61: String,
     pub f62: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
+pub struct SynopsisJsonResult {
+    pub pp: String,
+    pub f: Vec<Option<String>>,
+}
+
+pub async fn synopsis_json(_req: HttpRequest) -> Result<HttpResponse, AWError> {
+    let pp = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+    let verb = Arc::new(HcGreekVerb::from_string(1, pp, REGULAR, 0).unwrap());
+
+    let tenses = [
+        HcTense::Present,
+        HcTense::Imperfect,
+        HcTense::Future,
+        HcTense::Aorist,
+        HcTense::Perfect,
+        HcTense::Pluperfect,
+    ];
+
+    let voices = [HcVoice::Active, HcVoice::Middle, HcVoice::Passive];
+    let moods = [
+        HcMood::Indicative,
+        HcMood::Subjunctive,
+        HcMood::Optative,
+        HcMood::Imperative,
+        HcMood::Infinitive,
+        HcMood::Participle,
+    ];
+
+    let numbers = [HcNumber::Singular /*, HcNumber::Plural*/];
+    let persons = [/*HcPerson::First, HcPerson::Second,*/ HcPerson::Third];
+
+    let mut res = SynopsisJsonResult {
+        pp: pp.to_string(),
+        f: Vec::new(),
+    };
+
+    for m in moods {
+        for t in tenses {
+            for v in voices {
+                if ((m == HcMood::Subjunctive || m == HcMood::Optative || m == HcMood::Imperative)
+                    && (t == HcTense::Imperfect
+                        || t == HcTense::Perfect
+                        || t == HcTense::Pluperfect))
+                    || t == HcTense::Future && (m == HcMood::Subjunctive || m == HcMood::Imperative)
+                {
+                    // allow moods for oida, synoida
+                    if !((m == HcMood::Subjunctive
+                        || m == HcMood::Optative
+                        || m == HcMood::Imperative)
+                        && t == HcTense::Perfect
+                        && v == HcVoice::Active
+                        && (verb.pps[0] == "οἶδα" || verb.pps[0] == "σύνοιδα"))
+                    {
+                        continue;
+                    }
+                }
+
+                if (m == HcMood::Infinitive || m == HcMood::Participle)
+                    && (t == HcTense::Imperfect || t == HcTense::Pluperfect)
+                {
+                    continue;
+                }
+
+                for n in numbers {
+                    for p in persons {
+                        let vf = HcGreekVerbForm {
+                            verb: verb.clone(),
+                            person: p,
+                            number: n,
+                            tense: t,
+                            voice: v,
+                            mood: m,
+                            gender: None,
+                            case: None,
+                        };
+
+                        if let Ok(f) = vf.get_form(false) {
+                            res.f.push(Some(f.last().unwrap().form.replace(" /", ",")))
+                        } else {
+                            res.f.push(None)
+                        }
+                    }
+                }
+            }
+        }
+    }
+    Ok(HttpResponse::Ok().json(res))
 }
 
 pub async fn greek_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
@@ -334,6 +426,11 @@ pub async fn greek_synopsis_saver(
     //Ok(HttpResponse::Ok().finish())
     //let res = 1;
     Ok(HttpResponse::Ok().json(1))
+}
+
+pub async fn cetest(_req: HttpRequest) -> Result<HttpResponse, AWError> {
+    let template = include_str!("cetest.html").to_string();
+    Ok(HttpResponse::Ok().content_type("text/html").body(template))
 }
 
 pub async fn greek_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> {

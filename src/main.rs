@@ -50,7 +50,7 @@ use tantivy::collector::{Count, TopDocs};
 use tantivy::query::QueryParser;
 use tantivy::{Index, ReloadPolicy};
 
-use polytonic_greek::hgk_strip_diacritics;
+use hoplite_verbs_rs::polytonic_greek::hgk_strip_diacritics;
 
 /*
 {"error":"","wtprefix":"test1","nocache":"1","container":"test1Container","requestTime":"1635643672625","selectId":"32","page":"0","lastPage":"0","lastPageUp":"1","scroll":"32","query":"","arrOptions":[{"i":1,"r":["Α α",1,0]},{"i":2,"r":["ἀ-",2,0]},{"i":3,"r":["ἀ-",3,0]},{"i":4,"r":["ἆ",4,0]}...
@@ -648,6 +648,8 @@ async fn main() -> io::Result<()> {
             .service(web::resource("/latin-synopsis-list").route(web::get().to(latin_synopsis_list)))
             .service(web::resource("/latin-synopsis-saver").route(web::post().to(latin_synopsis_saver)))
             .service(web::resource("/latin-synopsis").route(web::get().to(latin_synopsis)))
+            .service(web::resource("/synopsis-json").route(web::get().to(synopsis_json)))
+            .service(web::resource("/cetest").route(web::get().to(cetest)))
             .service(web::resource("/hc.php").route(web::get().to(hc)))
             .service(
                 fs::Files::new("/", "./static")

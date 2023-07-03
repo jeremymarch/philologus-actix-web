@@ -9,8 +9,8 @@ pub struct SynopsisRequest {
     // unit:u32,
     // pp:Option<String>, //give either the pps
     // verb:Option<String>, //or give the verb_id
-    person:String,
-    number:String,
+    person: String,
+    number: String,
     // gender:Option<String>,
     // case:Option<String>,
 }
@@ -184,12 +184,12 @@ pub async fn synopsis_json(
     ];
 
     let numbers = match params.number.as_str() {
-        "plural" => [HcNumber::Plural,],
-        _ => [HcNumber::Singular,],
+        "plural" => [HcNumber::Plural],
+        _ => [HcNumber::Singular],
     };
     let persons = match params.person.as_str() {
-        "1st" => [HcPerson::First,],
-        "2nd" => [HcPerson::Second,],
+        "1st" => [HcPerson::First],
+        "2nd" => [HcPerson::Second],
         _ => [HcPerson::Third],
     };
     let mut res = SynopsisJsonResult {

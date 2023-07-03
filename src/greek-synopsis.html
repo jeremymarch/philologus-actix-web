@@ -170,12 +170,12 @@ day22	u16
             <td align="left" colspan="4">
                 <table cellpadding=0 cellspacing=0>
                     <tr><td width="50%"><select tabindex="-1" id="unitfilter">
-                        <option value="2">Unit 2</option>
-                        <option value="5">Unit 5</option>
+                        <option value="2">Units 2-4</option>
+                        <option value="5">Units 5-6</option>
                         <option value="7">Unit 7</option>
-                        <option value="8">Unit 8</option>
-                        <option value="11">Unit 11</option>
-                        <option value="16">Unit 16</option>
+                        <option value="8">Units 8-10</option>
+                        <option value="11">Unit2 11-15</option>
+                        <option value="16">Units 16-20</option>
                     </select></td></tr>
                     <tr><td colspan='4' align="right" id="namecell">
                       Name: <input type="text" id="sname" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
@@ -442,10 +442,18 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   }
 
   function check () {
+    const p = document.getElementById('person').value;
+    const n = document.getElementById('number').value;
+    const g = document.getElementById('ptcgender').value;
+    const c = document.getElementById('ptccase').value;
+    const u = 16;
+
+    const data = { person: p, number: n, unit: u };
+
     $.ajax({
-      url: 'synopsis-json?person=1&number=1&unit=16',
+      url: 'synopsis-json',
       type: 'GET',
-      // data: JSON.stringify(json),
+      data,
       contentType: 'application/json',
       dataType: 'json',
       success: function (data, textStatus, jqXHR) {

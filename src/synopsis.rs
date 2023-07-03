@@ -9,8 +9,8 @@ pub struct SynopsisRequest {
     // unit:u32,
     // pp:Option<String>, //give either the pps
     // verb:Option<String>, //or give the verb_id
-    // person:u32,
-    // number:u32,
+    person:String,
+    number:String,
     // gender:Option<String>,
     // case:Option<String>,
 }
@@ -159,7 +159,7 @@ pub struct SynopsisJsonResult {
 }
 
 pub async fn synopsis_json(
-    (_params, _req): (web::Query<SynopsisRequest>, HttpRequest),
+    (params, _req): (web::Query<SynopsisRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let pp = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
     let verb = Arc::new(HcGreekVerb::from_string(1, pp, REGULAR, 0).unwrap());
@@ -183,9 +183,15 @@ pub async fn synopsis_json(
         HcMood::Participle,
     ];
 
-    let numbers = [HcNumber::Singular /*, HcNumber::Plural*/];
-    let persons = [/*HcPerson::First, HcPerson::Second,*/ HcPerson::Third];
-
+    let numbers = match params.number.as_str() {
+        "plural" => [HcNumber::Plural,],
+        _ => [HcNumber::Singular,],
+    };
+    let persons = match params.person.as_str() {
+        "1st" => [HcPerson::First,],
+        "2nd" => [HcPerson::Second,],
+        _ => [HcPerson::Third],
+    };
     let mut res = SynopsisJsonResult {
         pp: pp.to_string(),
         f: Vec::new(),

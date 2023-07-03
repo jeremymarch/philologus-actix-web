@@ -3,6 +3,18 @@ use hoplite_verbs_rs::*;
 use sqlx::FromRow;
 use std::sync::Arc;
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct SynopsisRequest {
+    // status:Option<String>, //tbd
+    // unit:u32,
+    // pp:Option<String>, //give either the pps
+    // verb:Option<String>, //or give the verb_id
+    // person:u32,
+    // number:u32,
+    // gender:Option<String>,
+    // case:Option<String>,
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct LatinSynopsisResult {
     pub id: i64,
@@ -146,7 +158,9 @@ pub struct SynopsisJsonResult {
     pub f: Vec<Option<String>>,
 }
 
-pub async fn synopsis_json(_req: HttpRequest) -> Result<HttpResponse, AWError> {
+pub async fn synopsis_json(
+    (_params, _req): (web::Query<SynopsisRequest>, HttpRequest),
+) -> Result<HttpResponse, AWError> {
     let pp = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
     let verb = Arc::new(HcGreekVerb::from_string(1, pp, REGULAR, 0).unwrap());
 

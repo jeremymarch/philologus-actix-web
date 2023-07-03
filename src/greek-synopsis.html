@@ -19,220 +19,6 @@
   }
   run();
 </script>
-<script nonce="2726c7f26c">
-/* global $ */
-const unicodeMode = 0;
-function toggleDiacritic (str, pos, diacritic, unicodeMode) {
-  if (pos < 0 || pos > str.length) {
-    return { str, pos: str.length };
-  }
-  const maxCombiningChars = 10;
-  const replaceLen = Math.min(maxCombiningChars + 1, pos);
-  const s = str.slice(pos - replaceLen, pos);
-  // eslint-disable-next-line no-undef
-  const res = toggle(s, parseInt(diacritic), false, parseInt(unicodeMode));
-
-  const newPos = (pos - replaceLen) + res.length;
-
-  return { str: str.slice(0, pos - replaceLen) + res + str.slice(pos), pos: newPos };
-}
-
-function handleKey (e) {
-  if (typeof (this.selectionStart) === 'number' && typeof (this.selectionEnd) === 'number') {
-    const text = this.value;
-    const start = this.selectionStart;
-    const key = e.key.toLowerCase(); // force lower case
-
-    if (key === 'enter') { // enter key
-      // submitClicked();
-      return false;
-    } else if (!isNaN(parseInt(key))) {
-      if (parseInt(key) > 0) {
-        const res = toggleDiacritic(text, start, key, unicodeMode);
-        this.value = res.str;
-        this.selectionStart = this.selectionEnd = res.pos;
-      }
-      e.preventDefault();
-      return false;
-    } else if (key.length === 1) { // len == 1 to exclude keys like "ENTER", etc.
-      // eslint-disable-next-line no-undef
-      const greekLetter = translit(key); // returns \0 if the character cannot be transliterated
-      if (greekLetter !== '\0') {
-        const end = this.selectionEnd;
-        this.value = text.slice(0, start) + greekLetter + text.slice(end);
-        this.selectionStart = this.selectionEnd = start + 1;
-        e.preventDefault();
-        return false;
-      }
-    }
-  }
-  return true; // true allows most punctuation, etc. pass through
-}
-
-function submitSynopsis () {
-  const json = {};
-  json.pp = $('#pppppp0').val().trim();
-  json.unit = $('#unitfilter').val().trim();
-  json.verb = $('#selectedverb').val().trim();
-  json.person = $('#person').val().trim();
-  json.number = $('#number').val().trim();
-  json.ptccase = $('#ptccase').val().trim();
-  json.ptcgender = $('#ptcgender').val().trim();
-  json.ptcnumber = '';
-  json.sname = $('#sname').val().trim(); ;
-  json.advisor = $('#sadvisor').val().trim();
-
-  json.r = [];
-  $('.formcellinput').each(function () {
-    json.r[parseInt(this.id.substring(6))] = this.value.trim();
-  });
-
-  // console.log(json);
-  $.ajax({
-    url: 'greek-synopsis-saver',
-    type: 'POST',
-    data: JSON.stringify(json),
-    contentType: 'application/json',
-    dataType: 'json',
-    success: function (data, textStatus, jqXHR) {
-      // procResponse(data, textStatus);
-      // showToast("success: " + data);
-      // alert(data);
-      alert('Submitted!');
-      clearForm();
-    },
-    error: function (response) {
-      // getwords(url); //redo request on error
-      // showToast("error");
-      // alert(response);
-      alert('There was an error submitting the synopsis. Check your internet connection and try submitting again.');
-    }
-  });
-  // alert(JSON.stringify(json));
-}
-
-// eslint-disable-next-line no-unused-vars
-function start () {
-  const unit = getCookie('unit');
-  if (unit) {
-    document.getElementById('unitfilter').value = unit;
-    document.body.classList = 'unit' + unit;
-  } else {
-    document.getElementById('unitfilter').value = 16;
-    document.body.classList = 'unit' + 16;
-  }
-  const legend = getCookie('legend');
-  if (legend && legend === 'hidden') {
-    document.querySelector('.tophelp').style.display = 'none';
-  }
-  $('.gkinput').keypress(handleKey);
-  $('.gkinput').blur(savefields);
-  $('#submitbutton').click(submitSynopsis);
-
-  document.getElementById('clearbutton').addEventListener('click', clearForm);
-  document.getElementById('unitfilter').addEventListener('change', setunit);
-  document.getElementById('legendtoggle').addEventListener('click', togglelegend);
-
-  retrievefields();
-}
-
-function savefields () {
-  if (!lsTest()) return;
-  console.log('save fields');
-  $('.gkinput').each(function () {
-    console.log('save: ' + this.id + ': ' + this.value);
-    setCookie(this.id, this.value, 365);
-  });
-  setCookie('person', $('#person').val(), 365);
-  setCookie('number', $('#number').val(), 365);
-  setCookie('ptccase', $('#ptccase').val(), 365);
-  setCookie('ptcgender', $('#ptcgender').val(), 365);
-}
-
-function retrievefields () {
-  if (!lsTest()) return;
-  for (let i = 0; i < localStorage.length; i++) {
-    const id = localStorage.key(i);
-    const val = localStorage.getItem(localStorage.key(i));
-    console.log('set:' + id + ': ' + val);
-    $('#' + id).val(val);
-  }
-  $('#person').val(localStorage.getItem('person'));
-  $('#number').val(localStorage.getItem('number'));
-  $('#ptccase').val(localStorage.getItem('ptccase'));
-  $('#ptcgender').val(localStorage.getItem('ptcgender'));
-}
-
-// eslint-disable-next-line no-unused-vars
-function clearForm () {
-  $('.gkinput').val('');
-  if (!lsTest()) return;
-  $('.gkinput').each(function () {
-    localStorage.removeItem(this.id);
-  });
-  $('#person').val('');
-  $('#number').val('');
-  $('#ptccase').val('');
-  $('#ptcgender').val('');
-  setCookie('person', '', 365);
-  setCookie('number', '', 365);
-  setCookie('ptccase', '', 365);
-  setCookie('ptcgender', '', 365);
-  // localStorage.clear();
-}
-
-function lsTest () {
-  const test = 'test';
-  try {
-    localStorage.setItem(test, test);
-    localStorage.removeItem(test);
-    return true;
-  } catch (e) {
-    return false;
-  }
-}
-
-// eslint-disable-next-line no-unused-vars
-function setunit () {
-  const unit = document.getElementById('unitfilter').value;
-  document.body.classList = 'unit' + unit;
-  setCookie('unit', unit, 365);
-}
-
-function setCookie (name, value, days) {
-  if (typeof (localStorage) !== 'undefined') {
-    localStorage.setItem(name, value);
-  }
-}
-
-function getCookie (name) {
-  if (typeof (localStorage) !== 'undefined') {
-    const value = localStorage.getItem(name);
-    console.log('localstorage: ' + name + ': ' + value);
-    return value;
-  }
-  return null;
-}
-
-// eslint-disable-next-line no-unused-vars
-function eraseCookie (name) {
-  setCookie(name, '', -1);
-}
-
-// eslint-disable-next-line no-unused-vars
-function togglelegend () {
-  const a = document.querySelector('.tophelp');
-  if (a.style.display === 'none') {
-    a.style.display = '';
-    setCookie('legend', 'displayed', 365);
-  } else {
-    a.style.display = 'none';
-    setCookie('legend', 'hidden', 365);
-  }
-}
-
-window.addEventListener('load', start, false);
-</script>
 <style nonce="2726c7f26c">
 @font-face {
   font-family: 'WebNewAthenaUnicode';
@@ -440,5 +226,261 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
         <tr><td></td><td class="colheader active">Active</td><td class="colheader middle">Middle</td><td class="colheader passive">Passive</td></tr>
 %rows%
 </table>
+<script nonce="2726c7f26c">
+  /* global $ */
+  const unicodeMode = 0;
+  function toggleDiacritic (str, pos, diacritic, unicodeMode) {
+    if (pos < 0 || pos > str.length) {
+      return { str, pos: str.length };
+    }
+    const maxCombiningChars = 10;
+    const replaceLen = Math.min(maxCombiningChars + 1, pos);
+    const s = str.slice(pos - replaceLen, pos);
+    // eslint-disable-next-line no-undef
+    const res = toggle(s, parseInt(diacritic), false, parseInt(unicodeMode));
+  
+    const newPos = (pos - replaceLen) + res.length;
+  
+    return { str: str.slice(0, pos - replaceLen) + res + str.slice(pos), pos: newPos };
+  }
+  
+  function handleKey (e) {
+    if (typeof (this.selectionStart) === 'number' && typeof (this.selectionEnd) === 'number') {
+      const text = this.value;
+      const start = this.selectionStart;
+      const key = e.key.toLowerCase(); // force lower case
+  
+      if (key === 'enter') { // enter key
+        // submitClicked();
+        return false;
+      } else if (!isNaN(parseInt(key))) {
+        if (parseInt(key) > 0) {
+          const res = toggleDiacritic(text, start, key, unicodeMode);
+          this.value = res.str;
+          this.selectionStart = this.selectionEnd = res.pos;
+        }
+        e.preventDefault();
+        return false;
+      } else if (key.length === 1) { // len == 1 to exclude keys like "ENTER", etc.
+        // eslint-disable-next-line no-undef
+        const greekLetter = translit(key); // returns \0 if the character cannot be transliterated
+        if (greekLetter !== '\0') {
+          const end = this.selectionEnd;
+          this.value = text.slice(0, start) + greekLetter + text.slice(end);
+          this.selectionStart = this.selectionEnd = start + 1;
+          e.preventDefault();
+          return false;
+        }
+      }
+    }
+    return true; // true allows most punctuation, etc. pass through
+  }
+  
+  function submitSynopsis () {
+    const json = {};
+    json.pp = $('#pppppp0').val().trim();
+    json.unit = $('#unitfilter').val().trim();
+    json.verb = $('#selectedverb').val().trim();
+    json.person = $('#person').val().trim();
+    json.number = $('#number').val().trim();
+    json.ptccase = $('#ptccase').val().trim();
+    json.ptcgender = $('#ptcgender').val().trim();
+    json.ptcnumber = '';
+    json.sname = $('#sname').val().trim(); ;
+    json.advisor = $('#sadvisor').val().trim();
+  
+    json.r = [];
+    $('.formcellinput').each(function () {
+      json.r[parseInt(this.id.substring(6))] = this.value.trim();
+    });
+  
+    // console.log(json);
+    $.ajax({
+      url: 'greek-synopsis-saver',
+      type: 'POST',
+      data: JSON.stringify(json),
+      contentType: 'application/json',
+      dataType: 'json',
+      success: function (data, textStatus, jqXHR) {
+        // procResponse(data, textStatus);
+        // showToast("success: " + data);
+        // alert(data);
+        alert('Submitted!');
+        clearForm();
+      },
+      error: function (response) {
+        // getwords(url); //redo request on error
+        // showToast("error");
+        // alert(response);
+        alert('There was an error submitting the synopsis. Check your internet connection and try submitting again.');
+      }
+    });
+    // alert(JSON.stringify(json));
+  }
+  
+  // eslint-disable-next-line no-unused-vars
+  function start () {
+    const unit = getCookie('unit');
+    if (unit) {
+      document.getElementById('unitfilter').value = unit;
+      document.body.classList = 'unit' + unit;
+    } else {
+      document.getElementById('unitfilter').value = 16;
+      document.body.classList = 'unit' + 16;
+    }
+    const legend = getCookie('legend');
+    if (legend && legend === 'hidden') {
+      document.querySelector('.tophelp').style.display = 'none';
+    }
+    $('.gkinput').keypress(handleKey);
+    $('.gkinput').blur(savefields);
+    $('#submitbutton').click(submitSynopsis);
+  
+    document.getElementById('clearbutton').addEventListener('click', clearForm);
+    document.getElementById('unitfilter').addEventListener('change', setunit);
+    document.getElementById('legendtoggle').addEventListener('click', togglelegend);
+  
+    retrievefields();
+  }
+  
+  function savefields () {
+    if (!lsTest()) return;
+    console.log('save fields');
+    $('.gkinput').each(function () {
+      console.log('save: ' + this.id + ': ' + this.value);
+      setCookie(this.id, this.value, 365);
+    });
+    setCookie('person', $('#person').val(), 365);
+    setCookie('number', $('#number').val(), 365);
+    setCookie('ptccase', $('#ptccase').val(), 365);
+    setCookie('ptcgender', $('#ptcgender').val(), 365);
+  }
+  
+  function retrievefields () {
+    if (!lsTest()) return;
+    for (let i = 0; i < localStorage.length; i++) {
+      const id = localStorage.key(i);
+      const val = localStorage.getItem(localStorage.key(i));
+      console.log('set:' + id + ': ' + val);
+      $('#' + id).val(val);
+    }
+    $('#person').val(localStorage.getItem('person'));
+    $('#number').val(localStorage.getItem('number'));
+    $('#ptccase').val(localStorage.getItem('ptccase'));
+    $('#ptcgender').val(localStorage.getItem('ptcgender'));
+  }
+  
+  // eslint-disable-next-line no-unused-vars
+  function clearForm () {
+    $('.gkinput').val('');
+    if (!lsTest()) return;
+    $('.gkinput').each(function () {
+      localStorage.removeItem(this.id);
+    });
+    $('#person').val('');
+    $('#number').val('');
+    $('#ptccase').val('');
+    $('#ptcgender').val('');
+    setCookie('person', '', 365);
+    setCookie('number', '', 365);
+    setCookie('ptccase', '', 365);
+    setCookie('ptcgender', '', 365);
+    // localStorage.clear();
+  }
+  
+  function lsTest () {
+    const test = 'test';
+    try {
+      localStorage.setItem(test, test);
+      localStorage.removeItem(test);
+      return true;
+    } catch (e) {
+      return false;
+    }
+  }
+  
+  // eslint-disable-next-line no-unused-vars
+  function setunit () {
+    const unit = document.getElementById('unitfilter').value;
+    document.body.classList = 'unit' + unit;
+    setCookie('unit', unit, 365);
+  }
+  
+  function setCookie (name, value, days) {
+    if (typeof (localStorage) !== 'undefined') {
+      localStorage.setItem(name, value);
+    }
+  }
+  
+  function getCookie (name) {
+    if (typeof (localStorage) !== 'undefined') {
+      const value = localStorage.getItem(name);
+      console.log('localstorage: ' + name + ': ' + value);
+      return value;
+    }
+    return null;
+  }
+
+  function setAnswers (data) {
+    console.log(data);
+  
+    const e = document.getElementById('pppppp0');
+    if (e) {
+      e.value = data.pp;
+    }
+
+    for (let i = 0; i < data.f.length; i++) {
+      const e = document.getElementById('gkform' + i);
+      if (e) {
+        if (data.f[i]) {
+          e.value = data.f[i];
+        } else {
+          e.value = '';
+        }
+      }
+    }
+  }
+
+  function check () {
+    $.ajax({
+      url: 'synopsis-json?person=1&number=1&unit=16',
+      type: 'GET',
+      // data: JSON.stringify(json),
+      contentType: 'application/json',
+      dataType: 'json',
+      success: function (data, textStatus, jqXHR) {
+        // procResponse(data, textStatus);
+        // showToast("success: " + data);
+        // alert(data);
+        setAnswers(data);
+      },
+      error: function (response) {
+        // getwords(url); //redo request on error
+        // showToast("error");
+        // alert(response);
+        alert('There was an error.');
+      }
+    });
+  }
+  
+  // eslint-disable-next-line no-unused-vars
+  function eraseCookie (name) {
+    setCookie(name, '', -1);
+  }
+  
+  // eslint-disable-next-line no-unused-vars
+  function togglelegend () {
+    const a = document.querySelector('.tophelp');
+    if (a.style.display === 'none') {
+      a.style.display = '';
+      setCookie('legend', 'displayed', 365);
+    } else {
+      a.style.display = 'none';
+      setCookie('legend', 'hidden', 365);
+    }
+  }
+  
+  window.addEventListener('load', start, false);
+  </script>
 </body>
 </html>

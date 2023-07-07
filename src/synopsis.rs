@@ -10,8 +10,8 @@ pub struct SynopsisRequest {
     // unit:u32,
     // pp:Option<String>, //give either the pps
     // verb:Option<String>, //or give the verb_id
-    person: String,
-    number: String,
+    person: usize,
+    number: usize,
     // gender:Option<String>,
     // case:Option<String>,
 }
@@ -177,8 +177,8 @@ pub struct SynopsisJsonResult {
 pub fn get_forms(
     verbs: &[Arc<HcGreekVerb>],
     verb_id: usize,
-    person: &str,
-    number: &str,
+    person: usize,
+    number: usize,
 ) -> Vec<Option<String>> {
     let mut forms = Vec::new();
 
@@ -202,12 +202,12 @@ pub fn get_forms(
     ];
 
     let numbers = match number {
-        "plural" => [HcNumber::Plural],
+        1 => [HcNumber::Plural],
         _ => [HcNumber::Singular],
     };
     let persons = match person {
-        "1st" => [HcPerson::First],
-        "2nd" => [HcPerson::Second],
+        0 => [HcPerson::First],
+        1 => [HcPerson::Second],
         _ => [HcPerson::Third],
     };
 
@@ -273,7 +273,7 @@ pub async fn synopsis_json(
     // let verb = Arc::new(HcGreekVerb::from_string(1, pp, REGULAR, 0).unwrap());
     let verb_id: usize = 14;
 
-    let forms = get_forms(verbs, verb_id, &params.person, &params.number);
+    let forms = get_forms(verbs, verb_id, params.person, params.number);
 
     let mut res = Vec::<SaverResults>::new();
     for f in forms {
@@ -489,8 +489,8 @@ pub async fn greek_synopsis_saver(
         "".to_string()
     };
 
-    let verb_id = 14;
-    let correct_answers = get_forms(verbs, verb_id, &info.person, &info.number);
+    let verb_id = info.verb;
+    let correct_answers = get_forms(verbs, verb_id, info.person, info.number);
     let mut is_correct = Vec::new();
     // let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
     for (i, f) in info.r.iter().enumerate() {
@@ -510,6 +510,24 @@ pub async fn greek_synopsis_saver(
         });
     }
 
+    let res = SynopsisJsonResult {
+        verb_id,
+        person: info.person,
+        number: info.number,
+        case: info.ptccase,
+        gender: info.ptcgender,
+        unit: 0,
+        pp: verbs[verb_id]
+            .pps
+            .iter()
+            .map(|x| x.replace('/', " or ").replace("  ", " "))
+            .collect::<Vec<_>>()
+            .join(", "),
+        name: info.sname.clone(),
+        advisor: info.advisor.clone(),
+        f: res_forms,
+    };
+
     let _ = greek_insert_synopsis(
         &db2.0,
         &info.into_inner(),
@@ -519,24 +537,6 @@ pub async fn greek_synopsis_saver(
     )
     .await
     .map_err(map_sqlx_error)?;
-
-    let res = SynopsisJsonResult {
-        verb_id,
-        person: 0,
-        number: 0,
-        case: 0,
-        gender: 0,
-        unit: 0,
-        pp: verbs[verb_id]
-            .pps
-            .iter()
-            .map(|x| x.replace('/', " or ").replace("  ", " "))
-            .collect::<Vec<_>>()
-            .join(", "),
-        name: "".to_string(),
-        advisor: "".to_string(),
-        f: res_forms,
-    };
 
     //Ok(HttpResponse::Ok().finish())
     //let res = 1;

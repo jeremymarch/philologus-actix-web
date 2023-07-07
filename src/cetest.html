@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+<title>Greek Synopsis</title>
+  <script nonce="2726c7f26c" type="module">
+    // eslint-disable-next-line import/no-named-default
+    import { toggle, translit, default as init } from './hoplitekb_wasm_rs.js';
+
+    async function run () {
+      await init('./hoplitekb_wasm_rs_bg.wasm');
+      // make the function available to the browser
+      window.toggle = toggle;
+      window.translit = translit;
+    }
+    run();
+  </script>
+  <style nonce="2726c7f26c">
+@font-face {
+  font-family: 'WebNewAthenaUnicode';
+  src: url('/newathu5_8.ttf') format('truetype');
+}  
+*{margin: 0; padding: 0;}
+#app {
+  min-height: 300px;
+  display: flex;
+  max-width: 100%;
+}
+.right {
+  flex-grow: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+}
+.editor-wrap {
+  flex: 1;
+}
+.editor {
+  border:2px solid black;
+  border-radius: 16px;
+  min-height: 150px;
+  width: 700px;
+  word-wrap: break-word;
+  word-break: break-all;
+  white-space: pre-wrap; /* to allow new lines? */
+  padding:8px;
+  font-family: 'WebNewAthenaUnicode';
+  font-size: 24pt;
+  margin: 20px auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+#gkform {
+  font-size: 24pt;
+  font-family: 'WebNewAthenaUnicode';
+  margin: 20px auto;width: 700px;
+  display:block;
+  text-align: center;
+}
+#answerform {
+  font-size: 24pt;
+  font-family: 'WebNewAthenaUnicode';
+  margin: 20px auto;
+  width: 700px;
+  display:block;
+  text-align: center;
+}
+    </style>
+</head>
+<body>
+  <div class="editor-wrap">
+    <div id="editor" class="editor" spellcheck="false" autocapitalize="off" autocomplete="off" contenteditable="true"></div>
+  </div>
+  <input type="text" id="gkform" class="gkinput formcellinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
+  <br>
+  <textarea id="answerform" class="gkinput newform disablecopypaste" autocomplete="off" autocorrect="off" autocapitalize="none" spellcheck="false"></textarea>
+<script nonce="2726c7f26c">
+// https://stackoverflow.com/questions/6249095/how-to-set-the-caret-cursor-position-in-a-contenteditable-element-div
+// https://stackoverflow.com/questions/3771824/select-range-in-contenteditable-div
+// https://stackoverflow.com/questions/45973121/how-to-wrap-long-lines-in-contenteditable-div-with-flex
+
+const unicodeMode = 0;
+function toggleDiacritic (str, pos, diacritic, unicodeMode) {
+  if (pos < 0 || pos > str.length) {
+    return { str, pos: str.length };
+  }
+  const maxCombiningChars = 10;
+  const replaceLen = Math.min(maxCombiningChars + 1, pos);
+  const s = str.slice(pos - replaceLen, pos);
+  // eslint-disable-next-line no-undef
+  const res = toggle(s, parseInt(diacritic), false, parseInt(unicodeMode));
+
+  const newPos = (pos - replaceLen) + res.length;
+
+  return { str: str.slice(0, pos - replaceLen) + res + str.slice(pos), pos: newPos };
+}
+
+function handleKey (e) {
+  let start;
+  let text;
+  if (this.nodeName.toUpperCase() === 'DIV' && this.contentEditable) {
+    text = this.innerText;
+    start = ContentEditableCursor.getPosition(this);
+  } else if (typeof (this.selectionStart) === 'number') {
+    text = this.value;
+    start = this.selectionStart;
+  } else {
+    return true;
+  }
+  const key = e.key.toLowerCase(); // force lower case
+
+  if (key === 'enter') { // enter key
+    // submitClicked();
+    // return false; // block the key
+    // if (this.nodeName.toUpperCase() === 'DIV' && this.contentEditable) {
+    //   this.innerText = text.slice(0, start) + '\n' + text.slice(start);
+    //   ContentEditableCursor.setPosition(start + 1, this);
+    // } else if (typeof (this.selectionStart) === 'number') { }
+    return false;
+  } else if (!isNaN(parseInt(key))) {
+    if (parseInt(key) > 0) {
+      const res = toggleDiacritic(text, start, key, unicodeMode);
+      if (this.nodeName.toUpperCase() === 'DIV' && this.contentEditable) {
+        this.innerText = res.str;
+        ContentEditableCursor.setPosition(res.pos, this);
+      } else if (typeof (this.selectionStart) === 'number') {
+        this.value = res.str;
+        this.selectionStart = this.selectionEnd = res.pos;
+      }
+    }
+    e.preventDefault();
+    return false;
+  } else if (key.length === 1) { // len == 1 to exclude keys like "ENTER", etc.
+    // eslint-disable-next-line no-undef
+    const greekLetter = translit(key); // returns \0 if the character cannot be transliterated
+    if (greekLetter !== '\0') {
+      if (this.nodeName.toUpperCase() === 'DIV' && this.contentEditable) {
+        const end = start;
+        this.innerText = text.slice(0, start) + greekLetter + text.slice(end);
+        ContentEditableCursor.setPosition(start + 1, this);
+      } else if (typeof (this.selectionStart) === 'number') {
+        const end = this.selectionEnd;
+        this.value = text.slice(0, start) + greekLetter + text.slice(end);
+        this.selectionStart = this.selectionEnd = start + 1;
+      }
+      e.preventDefault();
+      return false;
+    }
+  }
+
+  return true; // true allows most punctuation, etc. pass through
+}
+
+// eslint-disable-next-line no-unused-vars
+function start () {
+  document.getElementById('editor').addEventListener('keypress', handleKey, false);
+  document.getElementById('gkform').addEventListener('keypress', handleKey, false);
+  document.getElementById('answerform').addEventListener('keypress', handleKey, false);
+}
+window.addEventListener('load', start, false);
+
+class ContentEditableCursor {
+  static getPosition (parentElement) {
+    const selection = window.getSelection();
+    let charCount = -1;
+    let node;
+
+    if (selection.focusNode) {
+      if (ContentEditableCursor._isChildOf(selection.focusNode, parentElement)) {
+        node = selection.focusNode;
+        charCount = selection.focusOffset;
+
+        while (node) {
+          if (node === parentElement) {
+            break;
+          }
+
+          if (node.previousSibling) {
+            node = node.previousSibling;
+            charCount += node.textContent.length;
+          } else {
+            node = node.parentNode;
+            if (node === null) {
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    return charCount;
+  }
+
+  static setPosition (chars, element) {
+    if (chars >= 0) {
+      const selection = window.getSelection();
+
+      const range = ContentEditableCursor._createRange(element, { count: chars });
+
+      if (range) {
+        range.collapse(false);
+        selection.removeAllRanges();
+        selection.addRange(range);
+      }
+    }
+  }
+
+  static _createRange (node, chars, range) {
+    if (!range) {
+      range = document.createRange();
+      range.selectNode(node);
+      range.setStart(node, 0);
+    }
+
+    if (chars.count === 0) {
+      range.setEnd(node, chars.count);
+    } else if (node && chars.count > 0) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        if (node.textContent.length < chars.count) {
+          chars.count -= node.textContent.length;
+        } else {
+          range.setEnd(node, chars.count);
+          chars.count = 0;
+        }
+      } else {
+        for (let lp = 0; lp < node.childNodes.length; lp++) {
+          range = ContentEditableCursor._createRange(node.childNodes[lp], chars, range);
+
+          if (chars.count === 0) {
+            break;
+          }
+        }
+      }
+    }
+
+    return range;
+  }
+
+  static _isChildOf (node, parentElement) {
+    while (node !== null) {
+      if (node === parentElement) {
+        return true;
+      }
+      node = node.parentNode;
+    }
+
+    return false;
+  }
+}
+</script>
+</body>
+</html>

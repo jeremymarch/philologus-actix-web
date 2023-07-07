@@ -1,4 +1,5 @@
 use super::*;
+use crate::synopsis::polytonic_greek::hgk_compare_multiple_forms;
 use hoplite_verbs_rs::*;
 use sqlx::FromRow;
 use std::sync::Arc;
@@ -152,19 +153,34 @@ pub struct GreekSynopsisResult {
     pub f62: String,
 }
 
-#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
-pub struct SynopsisJsonResult {
-    pub pp: String,
-    pub f: Vec<Option<String>>,
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SaverResults {
+    pub given: String,
+    pub correct: Option<String>,
+    pub is_correct: bool,
 }
 
-pub async fn synopsis_json(
-    (params, req): (web::Query<SynopsisRequest>, HttpRequest),
-) -> Result<HttpResponse, AWError> {
-    let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
-    // let pp = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
-    // let verb = Arc::new(HcGreekVerb::from_string(1, pp, REGULAR, 0).unwrap());
-    let verb_id = 5;
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
+pub struct SynopsisJsonResult {
+    pub verb_id: usize,
+    pub person: usize,
+    pub number: usize,
+    pub case: usize,
+    pub gender: usize,
+    pub unit: usize,
+    pub pp: String,
+    pub name: String,
+    pub advisor: String,
+    pub f: Vec<SaverResults>,
+}
+
+pub fn get_forms(
+    verbs: &[Arc<HcGreekVerb>],
+    verb_id: usize,
+    person: &str,
+    number: &str,
+) -> Vec<Option<String>> {
+    let mut forms = Vec::new();
 
     let tenses = [
         HcTense::Present,
@@ -185,18 +201,14 @@ pub async fn synopsis_json(
         HcMood::Participle,
     ];
 
-    let numbers = match params.number.as_str() {
+    let numbers = match number {
         "plural" => [HcNumber::Plural],
         _ => [HcNumber::Singular],
     };
-    let persons = match params.person.as_str() {
+    let persons = match person {
         "1st" => [HcPerson::First],
         "2nd" => [HcPerson::Second],
         _ => [HcPerson::Third],
-    };
-    let mut res = SynopsisJsonResult {
-        pp: verbs[verb_id].pps[0].to_string(),
-        f: Vec::new(),
     };
 
     for m in moods {
@@ -240,15 +252,56 @@ pub async fn synopsis_json(
                         };
 
                         if let Ok(f) = vf.get_form(false) {
-                            res.f.push(Some(f.last().unwrap().form.replace(" /", ",")))
+                            forms.push(Some(f.last().unwrap().form.replace(" /", ",")))
                         } else {
-                            res.f.push(None)
+                            forms.push(None)
                         }
                     }
                 }
             }
         }
     }
+    forms
+}
+
+pub async fn synopsis_json(
+    (params, req): (web::Query<SynopsisRequest>, HttpRequest),
+) -> Result<HttpResponse, AWError> {
+    // let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
+    let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
+    // let pp = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
+    // let verb = Arc::new(HcGreekVerb::from_string(1, pp, REGULAR, 0).unwrap());
+    let verb_id: usize = 14;
+
+    let forms = get_forms(verbs, verb_id, &params.person, &params.number);
+
+    let mut res = Vec::<SaverResults>::new();
+    for f in forms {
+        res.push(SaverResults {
+            given: f.unwrap_or("".to_string()),
+            correct: None,
+            is_correct: true,
+        });
+    }
+
+    let res = SynopsisJsonResult {
+        verb_id: 0,
+        person: 0,
+        number: 0,
+        case: 0,
+        gender: 0,
+        unit: 0,
+        pp: verbs[verb_id]
+            .pps
+            .iter()
+            .map(|x| x.replace('/', " or ").replace("  ", " "))
+            .collect::<Vec<_>>()
+            .join(", "),
+        name: "".to_string(),
+        advisor: "".to_string(),
+        f: res,
+    };
+
     Ok(HttpResponse::Ok().json(res))
 }
 
@@ -420,6 +473,7 @@ pub async fn greek_synopsis_saver(
     (info, req): (web::Json<SynopsisSaverRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+    let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let time_stamp = SystemTime::now().duration_since(UNIX_EPOCH);
     let time_stamp_ms = if time_stamp.is_ok() {
@@ -435,6 +489,27 @@ pub async fn greek_synopsis_saver(
         "".to_string()
     };
 
+    let verb_id = 14;
+    let correct_answers = get_forms(verbs, verb_id, &info.person, &info.number);
+    let mut is_correct = Vec::new();
+    // let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
+    for (i, f) in info.r.iter().enumerate() {
+        if let Some(a) = &correct_answers[i] {
+            is_correct.push(hgk_compare_multiple_forms(a, &f.replace("---", "—")));
+        } else {
+            is_correct.push(true);
+        }
+    }
+
+    let mut res_forms = Vec::<SaverResults>::new();
+    for (n, i) in correct_answers.into_iter().enumerate() {
+        res_forms.push(SaverResults {
+            given: info.r[n].clone(),
+            correct: i,
+            is_correct: is_correct[n],
+        });
+    }
+
     let _ = greek_insert_synopsis(
         &db2.0,
         &info.into_inner(),
@@ -445,9 +520,27 @@ pub async fn greek_synopsis_saver(
     .await
     .map_err(map_sqlx_error)?;
 
+    let res = SynopsisJsonResult {
+        verb_id,
+        person: 0,
+        number: 0,
+        case: 0,
+        gender: 0,
+        unit: 0,
+        pp: verbs[verb_id]
+            .pps
+            .iter()
+            .map(|x| x.replace('/', " or ").replace("  ", " "))
+            .collect::<Vec<_>>()
+            .join(", "),
+        name: "".to_string(),
+        advisor: "".to_string(),
+        f: res_forms,
+    };
+
     //Ok(HttpResponse::Ok().finish())
     //let res = 1;
-    Ok(HttpResponse::Ok().json(1))
+    Ok(HttpResponse::Ok().json(res))
 }
 
 pub async fn cetest(_req: HttpRequest) -> Result<HttpResponse, AWError> {

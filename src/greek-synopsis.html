@@ -138,6 +138,9 @@ day22	u16
   top: 30px;
   position:absolute;
 }
+.gkinput.formcellinput.incorrect {
+  color:red;
+}
 </style>
 </head>
 <body>
@@ -306,7 +309,8 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
         // showToast("success: " + data);
         // alert(data);
         alert('Submitted!');
-        clearForm();
+        setAnswers(data);
+        // clearForm();
       },
       error: function (response) {
         // getwords(url); //redo request on error
@@ -433,7 +437,12 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       const e = document.getElementById('gkform' + i);
       if (e) {
         if (data.f[i]) {
-          e.value = data.f[i];
+          e.value = data.f[i].given;
+          if (!data.f[i].is_correct && data.f[i].correct) {
+            e.classList.add('incorrect');
+          } else {
+            e.classList.remove('incorrect');
+          }
         } else {
           e.value = '';
         }

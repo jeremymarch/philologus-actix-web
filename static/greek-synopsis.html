@@ -141,6 +141,13 @@ day22	u16
 .gkinput.formcellinput.incorrect {
   color:red;
 }
+.spacer {
+  width: 40px;
+}
+.moodrows {
+  font-weight: bold;
+  height: 40px;
+}
 </style>
 </head>
 <body>
@@ -156,7 +163,7 @@ day22	u16
     <button id="clearbutton" tabindex="-1">Clear</button>
     <table id="table1" cellpadding=0 cellspacing=0>
         <tr>
-            <td colspan="4">
+            <td colspan="5">
 <table class="tophelp" cellpadding=0 cellspacing=0>
     <tr>
         <td colspan="9">Diacritic Keys</td>
@@ -170,7 +177,7 @@ day22	u16
             </td>
         </tr>
         <tr>
-            <td align="left" colspan="4">
+            <td align="left" colspan="5">
                 <table cellpadding=0 cellspacing=0>
                     <tr><td width="50%"><select tabindex="-1" id="unitfilter">
                         <option value="2">Units 2-4</option>
@@ -219,12 +226,12 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
         </td>
         </tr>
         <tr>
-            <td>Principal Parts</td>
-            <td colspan=3  class="formcell">
+            <td colspan="2">Principal Parts</td>
+            <td colspan="3" class="formcell">
                 <input type="text" id="pppppp0" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
             </td>
         </tr>
-        <tr><td></td><td class="colheader active">Active</td><td class="colheader middle">Middle</td><td class="colheader passive">Passive</td></tr>
+        <tr><td></td><td></td><td class="colheader active">Active</td><td class="colheader middle">Middle</td><td class="colheader passive">Passive</td></tr>
 <!-- %rows% -->
 </table>
 <script nonce="2726c7f26c">
@@ -702,15 +709,33 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   function makeTable () {
     const dFrag = document.createDocumentFragment();
     let count = 0;
+    let currentMood = -1;
     for (let r = 0; r < labels.length; r++) {
+      if (r === 0 || r === 6 || r === 8 || r === 11 || r === 13 || r === 17) {
+        currentMood++;
+        const tr = document.createElement('tr');
+        const td = document.createElement('td');
+        td.classList.add('moodrows', moods[currentMood].toLowerCase());
+        td.setAttribute('colspan', '5');
+        td.innerText = moods[currentMood];
+        tr.append(td);
+        dFrag.appendChild(tr);
+      }
+
       const tr = document.createElement('tr');
+
+      const spacertd = document.createElement('td');
+      spacertd.classList.add('spacer');
+      tr.append(spacertd);
+
       const td = document.createElement('td');
-      td.classList.add(labels[r].split(' ')[0], labels[r].split(' ')[1]);
+      td.classList.add(labels[r].toLowerCase(), moods[currentMood].toLowerCase());
       td.innerText = labels[r];
       tr.appendChild(td);
+
       for (let c = 0; c < voices.length; c++) {
         const td = document.createElement('td');
-        td.classList.add('formcell', voices[c]);
+        td.classList.add('formcell', voices[c].toLowerCase(), labels[r].toLowerCase(), moods[currentMood].toLowerCase());
         const div = document.createElement('div');
         div.classList.add('formcellInner');
         const input = document.createElement('input');
@@ -728,28 +753,29 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   }
 
   const voices = ['Active', 'Middle', 'Passive'];
+  const moods = ['Indicative', 'Subjunctive', 'Optative', 'Imperative', 'Infinitive', 'Participle'];
   const labels = [
-    'Present Indicative',
-    'Imperfect Indicative',
-    'Future Indicative',
-    'Aorist Indicative',
-    'Perfect Indicative',
-    'Pluperfect Indicative',
-    'Present Subjunctive',
-    'Aorist Subjunctive',
-    'Present Optative',
-    'Future Optative',
-    'Aorist Optative',
-    'Present Imperative',
-    'Aorist Imperative',
-    'Present Infinitive',
-    'Future Infinitive',
-    'Aorist Infinitive',
-    'Perfect Infinitive',
-    'Present Participle',
-    'Future Participle',
-    'Aorist Participle',
-    'Perfect Participle'
+    'Present',
+    'Imperfect',
+    'Future',
+    'Aorist',
+    'Perfect',
+    'Pluperfect',
+    'Present',
+    'Aorist',
+    'Present',
+    'Future',
+    'Aorist',
+    'Present',
+    'Aorist',
+    'Present',
+    'Future',
+    'Aorist',
+    'Perfect',
+    'Present',
+    'Future',
+    'Aorist',
+    'Perfect'
   ];
   </script>
 </body>

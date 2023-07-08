@@ -70,14 +70,18 @@ border: 1px solid #666;
 padding: 3px;
 }
 /*
-day4	u2
+day3  synopsis is not given for u2
+day4	u3
 day7	u5
 day9	u7
 day11	u8
 day14	u11
 day22	u16
 */
-.unit2 .passive,.unit2 .middle,.unit2 .imperative,.unit2 .participle, .unit2 .future.optative, .unit2 .future.infinitive, .unit2 #ptccase, .unit2 #ptcgender {
+.unit2 .passive,.unit2 .middle,.unit2 .imperative,.unit2 .perfect,.unit2 .pluperfect,.unit2 .participle, .unit2 .subjunctive, .unit2 .optative, .unit2 .future.infinitive, .unit2 #ptccase, .unit2 #ptcgender {
+    display:none;
+}
+.unit3 .passive,.unit3 .middle,.unit3 .imperative,.unit3 .participle, .unit3 .future.optative, .unit3 .future.infinitive, .unit3 #ptccase, .unit3 #ptcgender {
     display:none;
 }
 .unit5 .middle,.unit5 .imperative,.unit5 .participle, .unit5 .future.optative, .unit5 .future.infinitive, .unit5 #ptccase, .unit5 #ptcgender {
@@ -92,7 +96,7 @@ day22	u16
 .unit11 .future.optative, .unit11 .future.infinitive {
     display:none;
 }
-/* .unit16 { } */
+/* .unit16 { everything } */
 
 #submitcell { display:auto; }
 
@@ -180,12 +184,13 @@ day22	u16
             <td align="left" colspan="5">
                 <table cellpadding=0 cellspacing=0>
                     <tr><td width="50%"><select tabindex="-1" id="unitfilter">
-                        <option value="2">Units 2-4</option>
-                        <option value="5">Units 5-6</option>
-                        <option value="7">Unit 7</option>
-                        <option value="8">Units 8-10</option>
-                        <option value="11">Unit2 11-15</option>
-                        <option value="16">Units 16-20</option>
+                        <option value="2">H&Q Unit 2</option>
+                        <option value="3">H&Q Units 3-4</option>
+                        <option value="5">H&Q Units 5-6</option>
+                        <option value="7">H&Q Unit 7</option>
+                        <option value="8">H&Q Units 8-10</option>
+                        <option value="11">H&Q Unit2 11-15</option>
+                        <option value="16">H&Q Units 16-20</option>
                     </select></td></tr>
                     <tr><td colspan='4' align="right" id="namecell">
                       Name: <input type="text" id="sname" class="" spellcheck="false" autocapitalize="off" autocomplete="off"/>
@@ -320,14 +325,14 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     json.ptccase = ptccase ? parseInt(ptccase) : null;
     const ptcgender = document.getElementById('ptcgender').value;
     json.ptcgender = ptcgender ? parseInt(ptcgender) : null;
-    json.ptcnumber = null;
+    json.ptcnumber = null; // we just use the number of the verb for now
 
     json.sname = document.getElementById('sname').value.trim();
     json.advisor = document.getElementById('sadvisor').value.trim();
   
     json.r = [];
-    $('.formcellinput').each(function () {
-      json.r[parseInt(this.id.substring(6))] = this.value.trim();
+    document.querySelectorAll('.formcellinput').forEach(e => {
+      json.r[parseInt(e.id.substring(6))] = e.value.trim();
     });
   
     $.ajax({
@@ -362,20 +367,24 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     if (legend && legend === 'hidden') {
       document.querySelector('.tophelp').style.display = 'none';
     }
-    $('.gkinput').keypress(handleKey);
-    $('.gkinput').blur(savefields);
-    $('#submitbutton').click(submitSynopsis);
+    document.querySelectorAll('.gkinput').forEach(e => {
+      e.addEventListener('keypress', handleKey);
+    });
+    document.querySelectorAll('.gkinput').forEach(e => {
+      e.addEventListener('blur', savefields);
+    });
 
     const vc = document.getElementById('selectedverb');
     for (let i = 0; i < verbs.length; i++) {
       if (verbs[i].i !== 78 && verbs[i].i !== 79 && verbs[i].i !== 122 && verbs[i].i !== 127) {
         const o = document.createElement('option');
         o.value = verbs[i].i;
-        o.text = verbs[i].pp; // .substring(0, verbs[i].pp.indexOf(','));
+        o.text = verbs[i].pp;
         vc.add(o);
       }
     }
-  
+
+    document.getElementById('submitbutton').addEventListener('click', submitSynopsis);
     document.getElementById('clearbutton').addEventListener('click', clearForm);
     document.getElementById('unitfilter').addEventListener('change', setunit);
     document.getElementById('legendtoggle').addEventListener('click', togglelegend);
@@ -386,17 +395,17 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   function savefields () {
     if (!lsTest()) return;
     console.log('save fields');
-    $('.gkinput').each(function () {
-      console.log('save: ' + this.id + ': ' + this.value);
-      setCookie(this.id, this.value, 365);
+    document.querySelectorAll('.gkinput').forEach(e => {
+      setCookie(e.id, e.value, 365);
     });
-    setCookie('sname', $('#sname').val(), 365);
-    setCookie('sadvisor', $('#sadvisor').val(), 365);
-    setCookie('selectedverb', $('#selectedverb').val(), 365);
-    setCookie('person', $('#person').val(), 365);
-    setCookie('number', $('#number').val(), 365);
-    setCookie('ptccase', $('#ptccase').val(), 365);
-    setCookie('ptcgender', $('#ptcgender').val(), 365);
+
+    setCookie('sname', document.getElementById('sname').value, 365);
+    setCookie('sadvisor', document.getElementById('sadvisor').value, 365);
+    setCookie('selectedverb', document.getElementById('selectedverb').value, 365);
+    setCookie('person', document.getElementById('person').value, 365);
+    setCookie('number', document.getElementById('number').value, 365);
+    setCookie('ptccase', document.getElementById('ptccase').value, 365);
+    setCookie('ptcgender', document.getElementById('ptcgender').value, 365);
   }
   
   function retrievefields () {
@@ -404,31 +413,36 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     for (let i = 0; i < localStorage.length; i++) {
       const id = localStorage.key(i);
       const val = localStorage.getItem(localStorage.key(i));
-      console.log('set:' + id + ': ' + val);
-      $('#' + id).val(val);
+      // console.log('set:' + id + ': ' + val);
+      const e = document.getElementById(id);
+      if (e) {
+        e.value = val;
+      }
     }
-    $('#sname').val(localStorage.getItem('sname'));
-    $('#sadvisor').val(localStorage.getItem('sadvisor'));
-    $('#selectedverb').val(localStorage.getItem('selectedverb'));
-    $('#person').val(localStorage.getItem('person'));
-    $('#number').val(localStorage.getItem('number'));
-    $('#ptccase').val(localStorage.getItem('ptccase'));
-    $('#ptcgender').val(localStorage.getItem('ptcgender'));
+    // redundant: this is done in the loop above?
+    // document.getElementById('sname').value = localStorage.getItem('sname');
+    // document.getElementById('sadvisor').value = localStorage.getItem('sadvisor');
+    // document.getElementById('selectedverb').value = localStorage.getItem('selectedverb');
+    // document.getElementById('person').value = localStorage.getItem('person');
+    // document.getElementById('number').value = localStorage.getItem('number');
+    // document.getElementById('ptccase').value = localStorage.getItem('ptccase');
+    // document.getElementById('ptcgender').value = localStorage.getItem('ptcgender');
   }
   
   // eslint-disable-next-line no-unused-vars
   function clearForm () {
-    $('.gkinput').val('');
-    if (!lsTest()) return;
-    $('.gkinput').each(function () {
-      localStorage.removeItem(this.id);
-      this.classList.remove('incorrect');
+    document.querySelectorAll('.gkinput').forEach(e => {
+      e.value = '';
+      localStorage.removeItem(e.id);
+      e.classList.remove('incorrect');
     });
-    $('#selectedverb').val('');
-    $('#person').val('');
-    $('#number').val('');
-    $('#ptccase').val('');
-    $('#ptcgender').val('');
+    // if (!lsTest()) return;
+
+    document.getElementById('selectedverb').value = '';
+    document.getElementById('person').value = '';
+    document.getElementById('number').value = '';
+    document.getElementById('ptccase').value = '';
+    document.getElementById('ptcgender').value = '';
     setCookie('selectedverb', '', 365);
     setCookie('person', '', 365);
     setCookie('number', '', 365);

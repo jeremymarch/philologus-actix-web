@@ -4,10 +4,11 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>Greek Synopsis</title>
-<script nonce="2726c7f26c" src="https://code.jquery.com/jquery-3.7.0.min.js" 
+<!-- <script nonce="2726c7f26c" src="https://code.jquery.com/jquery-3.7.0.min.js" 
   integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" 
-  crossorigin="anonymous"></script>
+  crossorigin="anonymous"></script> -->
 <script nonce="2726c7f26c" type="module">
+  'use strict';
   // eslint-disable-next-line import/no-named-default
   import { toggle, translit, default as init } from './hoplitekb_wasm_rs.js';
 
@@ -240,7 +241,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 <!-- %rows% -->
 </table>
 <script nonce="2726c7f26c">
-  /* global $ */
+  'use strict';
   const unicodeMode = 0;
   function toggleDiacritic (str, pos, diacritic, unicodeMode) {
     if (pos < 0 || pos > str.length) {
@@ -335,21 +336,30 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       json.r[parseInt(e.id.substring(6))] = e.value.trim();
     });
   
-    $.ajax({
+    microAjax({
       url: 'greek-synopsis-saver',
-      type: 'POST',
+      method: 'POST',
       data: JSON.stringify(json),
-      contentType: 'application/json',
-      dataType: 'json',
-      success: function (data, textStatus, jqXHR) {
-        alert('Submitted!');
-        setAnswers(data);
-        // clearForm();
-      },
-      error: function (response) {
-        alert('There was an error submitting the synopsis. Check your internet connection and try submitting again.');
-      }
+      success: function (data, textStatus, jqXHR) { alert('Submitted!'); setAnswers(data); /* clearForm(); */ },
+      warning: function (e) { console.log(e); },
+      error: function () { alert('There was an error submitting the synopsis. Check your internet connection and try submitting again.'); }
     });
+
+    // $.ajax({
+    //   url: 'greek-synopsis-saver',
+    //   type: 'POST',
+    //   data: JSON.stringify(json),
+    //   contentType: 'application/json',
+    //   dataType: 'json',
+    //   success: function (data, textStatus, jqXHR) {
+    //     alert('Submitted!');
+    //     setAnswers(data);
+    //     // clearForm();
+    //   },
+    //   error: function (response) {
+    //     alert('There was an error submitting the synopsis. Check your internet connection and try submitting again.');
+    //   }
+    // });
   }
   
   // eslint-disable-next-line no-unused-vars
@@ -582,25 +592,35 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     json.sname = document.getElementById('sname').value.trim();
     json.advisor = document.getElementById('sadvisor').value.trim();
     json.r = [];
-    $.ajax({
+
+    microAjax({
       url: 'synopsis-json',
-      type: 'POST',
+      method: 'POST',
       data: JSON.stringify(json),
-      contentType: 'application/json',
-      dataType: 'json',
-      success: function (data, textStatus, jqXHR) {
-        // procResponse(data, textStatus);
-        // showToast("success: " + data);
-        // alert(data);
-        setAnswers(data);
-      },
-      error: function (response) {
-        // getwords(url); //redo request on error
-        // showToast("error");
-        // alert(response);
-        alert('There was an error.');
-      }
+      success: function (data, textStatus, jqXHR) { setAnswers(data); },
+      warning: function (e) { console.log(e); },
+      error: function () { alert('There was an error.'); }
     });
+
+    // $.ajax({
+    //   url: 'synopsis-json',
+    //   type: 'POST',
+    //   data: JSON.stringify(json),
+    //   contentType: 'application/json',
+    //   dataType: 'json',
+    //   success: function (data, textStatus, jqXHR) {
+    //     // procResponse(data, textStatus);
+    //     // showToast("success: " + data);
+    //     // alert(data);
+    //     setAnswers(data);
+    //   },
+    //   error: function (response) {
+    //     // getwords(url); //redo request on error
+    //     // showToast("error");
+    //     // alert(response);
+    //     alert('There was an error.');
+    //   }
+    // });
   }
   
   // eslint-disable-next-line no-unused-vars
@@ -823,6 +843,58 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     'Aorist',
     'Perfect'
   ];
+
+  // https://github.com/le717/microajax
+  function microAjax (options) {
+    'use strict';
+
+    // Default to GET
+    if (!options.method) {
+      options.method = 'GET';
+    }
+
+    // Default empty functions for the callbacks
+    function noop () {}
+    if (!options.success) {
+      options.success = noop;
+    }
+    if (!options.warning) {
+      options.warning = noop;
+    }
+    if (!options.error) {
+      options.error = noop;
+    }
+
+    const request = new XMLHttpRequest();
+    request.open(options.method, options.url, true);
+    request.setRequestHeader('Content-type', 'application/json; charset=UTF-8');
+    // request.setRequestHeader('Content-type', 'application/x-www-form-urlencoded; charset=UTF-8');
+    request.send(options.data);
+
+    request.onload = function () {
+      // Success!
+      if (request.readyState === 4 && request.status === 200) {
+        options.success(JSON.parse(request.responseText));
+
+        // We reached our target destination, but it returned an error
+      } else {
+        options.warning(request.responseText);
+      }
+    };
+
+    // There was a connection error of some sort
+    request.onerror = options.error;
+  }
+
+  function serialize (obj) {
+    const str = [];
+    for (const p in obj) {
+      if (Object.hasOwn(obj, p)) {
+        str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
+      }
+    }
+    return str.join('&');
+  }
   </script>
 </body>
 </html>

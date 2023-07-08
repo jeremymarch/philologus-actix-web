@@ -279,16 +279,44 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   
   function submitSynopsis () {
     const json = {};
-    json.pp = $('#pppppp0').val().trim();
-    json.unit = parseInt($('#unitfilter').val());
-    json.verb = parseInt($('#selectedverb').val());
-    json.person = parseInt($('#person').val());
-    json.number = parseInt($('#number').val());
-    json.ptccase = parseInt($('#ptccase').val());
-    json.ptcgender = parseInt($('#ptcgender').val());
-    json.ptcnumber = 0;
-    json.sname = $('#sname').val().trim(); ;
-    json.advisor = $('#sadvisor').val().trim();
+    const verb = document.getElementById('selectedverb').value;
+    if (!verb) {
+      alert('Select a verb.');
+      return;
+    }
+    json.verb = parseInt(verb);
+
+    const unit = document.getElementById('unitfilter').value;
+    if (!unit) {
+      alert('Select a unit.');
+      return;
+    }
+    json.unit = parseInt(unit);
+  
+    const person = document.getElementById('person').value;
+    if (!person) {
+      alert('Select a person.');
+      return;
+    }
+    json.person = parseInt(person);
+
+    const number = document.getElementById('number').value;
+    if (!number) {
+      alert('Select a number.');
+      return;
+    }
+    json.number = parseInt(number);
+
+    json.pp = document.getElementById('pppppp0').value.trim();
+
+    const ptccase = document.getElementById('ptccase').value;
+    json.ptccase = ptccase ? parseInt(ptccase) : null;
+    const ptcgender = document.getElementById('ptcgender').value;
+    json.ptcgender = ptcgender ? parseInt(ptcgender) : null;
+    json.ptcnumber = null;
+
+    json.sname = document.getElementById('sname').value.trim();
+    json.advisor = document.getElementById('sadvisor').value.trim();
   
     json.r = [];
     $('.formcellinput').each(function () {

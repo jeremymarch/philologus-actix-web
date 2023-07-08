@@ -179,9 +179,9 @@ pub struct SynopsisSaverRequest {
     pub number: usize,
     pub person: usize,
     pub pp: String,
-    pub ptccase: usize,
-    pub ptcgender: usize,
-    pub ptcnumber: usize,
+    pub ptccase: Option<usize>,
+    pub ptcgender: Option<usize>,
+    pub ptcnumber: Option<usize>,
     pub r: Vec<String>,
     pub verb: usize,
 }

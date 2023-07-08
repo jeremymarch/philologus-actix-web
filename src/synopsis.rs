@@ -165,8 +165,8 @@ pub struct SynopsisJsonResult {
     pub verb_id: usize,
     pub person: usize,
     pub number: usize,
-    pub case: usize,
-    pub gender: usize,
+    pub case: Option<usize>,
+    pub gender: Option<usize>,
     pub unit: usize,
     pub pp: String,
     pub name: String,
@@ -288,8 +288,8 @@ pub async fn synopsis_json(
         verb_id: 0,
         person: 0,
         number: 0,
-        case: 0,
-        gender: 0,
+        case: Some(0),
+        gender: Some(0),
         unit: 0,
         pp: verbs[verb_id]
             .pps
@@ -516,13 +516,14 @@ pub async fn greek_synopsis_saver(
         number: info.number,
         case: info.ptccase,
         gender: info.ptcgender,
-        unit: 0,
-        pp: verbs[verb_id]
-            .pps
-            .iter()
-            .map(|x| x.replace('/', " or ").replace("  ", " "))
-            .collect::<Vec<_>>()
-            .join(", "),
+        unit: info.unit,
+        pp: info.pp.clone(),
+        // pp: verbs[verb_id]
+        //     .pps
+        //     .iter()
+        //     .map(|x| x.replace('/', " or ").replace("  ", " "))
+        //     .collect::<Vec<_>>()
+        //     .join(", "),
         name: info.sname.clone(),
         advisor: info.advisor.clone(),
         f: res_forms,

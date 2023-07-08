@@ -73,7 +73,7 @@ pub async fn greek_insert_synopsis(
 ) -> Result<u32, sqlx::Error> {
     let query = format!("INSERT INTO greeksynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')", 
         accessed, info.sname, info.advisor, info.unit, info.verb, info.pp,
-        info.number, info.person, info.ptcgender, info.ptcnumber, info.ptccase, ip, agent, 1,
+        info.number, info.person, info.ptcgender.unwrap_or(999), info.ptcnumber.unwrap_or(999), info.ptccase.unwrap_or(999), ip, agent, 1,
         info.r.join("', '"));
     sqlx::query(&query).execute(pool).await?;
 
@@ -121,7 +121,7 @@ pub async fn latin_insert_synopsis(
 ) -> Result<u32, sqlx::Error> {
     let query = format!("INSERT INTO latinsynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')", 
         accessed, info.sname, info.advisor, info.unit, info.verb, info.pp,
-        info.number, info.person, info.ptcgender, info.ptcnumber, info.ptccase, ip, agent, 1,
+        info.number, info.person, info.ptcgender.unwrap_or(999), info.ptcnumber.unwrap_or(999), info.ptccase.unwrap_or(999), ip, agent, 1,
         info.r.join("', '"));
     sqlx::query(&query).execute(pool).await?;
 

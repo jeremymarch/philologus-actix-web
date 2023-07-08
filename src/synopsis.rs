@@ -550,55 +550,6 @@ pub async fn cetest(_req: HttpRequest) -> Result<HttpResponse, AWError> {
     Ok(HttpResponse::Ok().content_type("text/html").body(template))
 }
 
-pub async fn greek_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> {
-    let mut template = include_str!("greek-synopsis.html").to_string();
-
-    let mut rows = String::from("");
-    let mut count = 0;
-    let rowlabels = vec![
-        "Present Indicative",
-        "Imperfect Indicative",
-        "Future Indicative",
-        "Aorist Indicative",
-        "Perfect Indicative",
-        "Pluperfect Indicative",
-        "Present Subjunctive",
-        "Aorist Subjunctive",
-        "Present Optative",
-        "Future Optative",
-        "Aorist Optative",
-        "Present Imperative",
-        "Aorist Imperative",
-        "Present Infinitive",
-        "Future Infinitive",
-        "Aorist Infinitive",
-        "Perfect Infinitive",
-        "Present Participle",
-        "Future Participle",
-        "Aorist Participle",
-        "Perfect Participle",
-    ];
-    let voices = vec!["Active", "Middle", "Passive"];
-    for l in rowlabels {
-        rows.push_str(format!(r#"<tr class="{}"><td>{}</td>"#, l.to_lowercase(), l).as_str());
-        for v in &voices {
-            rows.push_str(format!(
-            r#"<td class="formcell {}">
-                <div class="formcellInner">
-                <input type="text" id="gkform{}" class="gkinput formcellinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
-                </div>
-            </td>"#, 
-            v.to_lowercase(), count).as_str());
-            count += 1;
-        }
-        rows.push_str("</tr>");
-    }
-
-    template = template.replacen("%rows%", &rows, 1);
-
-    Ok(HttpResponse::Ok().content_type("text/html").body(template))
-}
-
 pub async fn latin_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
 

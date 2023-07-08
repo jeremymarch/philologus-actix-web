@@ -648,7 +648,7 @@ async fn main() -> io::Result<()> {
             .service(web::resource("/latin-synopsis-list").route(web::get().to(latin_synopsis_list)))
             .service(web::resource("/latin-synopsis-saver").route(web::post().to(latin_synopsis_saver)))
             .service(web::resource("/latin-synopsis").route(web::get().to(latin_synopsis)))
-            .service(web::resource("/synopsis-json").route(web::get().to(synopsis_json)))
+            .service(web::resource("/synopsis-json").route(web::post().to(synopsis_json)))
             .service(web::resource("/cetest").route(web::get().to(cetest)))
             .service(web::resource("/hc.php").route(web::get().to(hc)))
             .service(

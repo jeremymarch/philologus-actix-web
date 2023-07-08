@@ -528,18 +528,50 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 
   // eslint-disable-next-line no-unused-vars
   function check () {
-    const p = document.getElementById('person').value;
-    const n = document.getElementById('number').value;
-    // const g = document.getElementById('ptcgender').value;
-    // const c = document.getElementById('ptccase').value;
-    const u = 16;
+    const json = {};
+    const verb = document.getElementById('selectedverb').value;
+    if (!verb) {
+      alert('Select a verb.');
+      return;
+    }
+    json.verb = parseInt(verb);
 
-    const data = { person: p, number: n, unit: u };
+    const unit = document.getElementById('unitfilter').value;
+    if (!unit) {
+      alert('Select a unit.');
+      return;
+    }
+    json.unit = parseInt(unit);
+  
+    const person = document.getElementById('person').value;
+    if (!person) {
+      alert('Select a person.');
+      return;
+    }
+    json.person = parseInt(person);
 
+    const number = document.getElementById('number').value;
+    if (!number) {
+      alert('Select a number.');
+      return;
+    }
+    json.number = parseInt(number);
+
+    json.pp = document.getElementById('pppppp0').value.trim();
+
+    const ptccase = document.getElementById('ptccase').value;
+    json.ptccase = ptccase ? parseInt(ptccase) : null;
+    const ptcgender = document.getElementById('ptcgender').value;
+    json.ptcgender = ptcgender ? parseInt(ptcgender) : null;
+    json.ptcnumber = null;
+
+    json.sname = document.getElementById('sname').value.trim();
+    json.advisor = document.getElementById('sadvisor').value.trim();
+    json.r = [];
     $.ajax({
       url: 'synopsis-json',
-      type: 'GET',
-      data,
+      type: 'POST',
+      data: JSON.stringify(json),
       contentType: 'application/json',
       dataType: 'json',
       success: function (data, textStatus, jqXHR) {

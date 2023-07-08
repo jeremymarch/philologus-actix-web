@@ -5,18 +5,6 @@ use hoplite_verbs_rs::*;
 use sqlx::FromRow;
 use std::sync::Arc;
 
-#[derive(Debug, Deserialize, Clone)]
-pub struct SynopsisRequest {
-    // status:Option<String>, //tbd
-    // unit:u32,
-    // pp:Option<String>, //give either the pps
-    // verb:Option<String>, //or give the verb_id
-    person: usize,
-    number: usize,
-    // gender:Option<String>,
-    // case:Option<String>,
-}
-
 #[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct LatinSynopsisResult {
     pub id: i64,
@@ -266,13 +254,13 @@ pub fn get_forms(
 }
 
 pub async fn synopsis_json(
-    (params, req): (web::Query<SynopsisRequest>, HttpRequest),
+    (params, req): (web::Json<SynopsisSaverRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     // let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
     // let pp = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
     // let verb = Arc::new(HcGreekVerb::from_string(1, pp, REGULAR, 0).unwrap());
-    let verb_id: usize = 14;
+    let verb_id: usize = params.verb;
 
     let forms = get_forms(verbs, verb_id, params.person, params.number);
 
@@ -286,12 +274,12 @@ pub async fn synopsis_json(
     }
 
     let res = SynopsisJsonResult {
-        verb_id: 0,
-        person: 0,
-        number: 0,
+        verb_id: params.verb,
+        person: params.person,
+        number: params.number,
         case: Some(0),
         gender: Some(0),
-        unit: 0,
+        unit: params.unit,
         pp: verbs[verb_id]
             .pps
             .iter()

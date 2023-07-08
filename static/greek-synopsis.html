@@ -4,9 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
 <title>Greek Synopsis</title>
-<!-- <script nonce="2726c7f26c" src="https://code.jquery.com/jquery-3.7.0.min.js" 
-  integrity="sha256-2Pmvv0kuTBOenSvLm6bvfBSSHrUJ+3A7x6P5Ebd07/g=" 
-  crossorigin="anonymous"></script> -->
 <script nonce="2726c7f26c" type="module">
   'use strict';
   // eslint-disable-next-line import/no-named-default
@@ -55,16 +52,18 @@
 .colheader {
     text-align:center;
     padding-top:25px;
+    font-weight:bold;
 }
 BODY {
     font-family:helvetica,arial;
-    background-color:#ddd;
+    background-color:white;
     max-width:1024px;
     width:90%;
     margin:10px auto;
 }
 .formcell { margin:0px;padding:0px 8px; }
-.formcellInner { height:100%;width:100%; }
+#ppcell {border-bottom: 1px solid #AAA;}
+.formcellInner { height:100%;width:100%;border-bottom: 1px solid #AAA; }
 .tophelp td { text-align:center;
 width: 11%;
 border: 1px solid #666;
@@ -233,7 +232,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
         </tr>
         <tr>
             <td colspan="2">Principal Parts</td>
-            <td colspan="3" class="formcell">
+            <td colspan="3" id="ppcell" class="formcell">
                 <input type="text" id="pppppp0" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
             </td>
         </tr>
@@ -344,22 +343,6 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       warning: function (e) { console.log(e); },
       error: function () { alert('There was an error submitting the synopsis. Check your internet connection and try submitting again.'); }
     });
-
-    // $.ajax({
-    //   url: 'greek-synopsis-saver',
-    //   type: 'POST',
-    //   data: JSON.stringify(json),
-    //   contentType: 'application/json',
-    //   dataType: 'json',
-    //   success: function (data, textStatus, jqXHR) {
-    //     alert('Submitted!');
-    //     setAnswers(data);
-    //     // clearForm();
-    //   },
-    //   error: function (response) {
-    //     alert('There was an error submitting the synopsis. Check your internet connection and try submitting again.');
-    //   }
-    // });
   }
   
   // eslint-disable-next-line no-unused-vars
@@ -601,26 +584,6 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       warning: function (e) { console.log(e); },
       error: function () { alert('There was an error.'); }
     });
-
-    // $.ajax({
-    //   url: 'synopsis-json',
-    //   type: 'POST',
-    //   data: JSON.stringify(json),
-    //   contentType: 'application/json',
-    //   dataType: 'json',
-    //   success: function (data, textStatus, jqXHR) {
-    //     // procResponse(data, textStatus);
-    //     // showToast("success: " + data);
-    //     // alert(data);
-    //     setAnswers(data);
-    //   },
-    //   error: function (response) {
-    //     // getwords(url); //redo request on error
-    //     // showToast("error");
-    //     // alert(response);
-    //     alert('There was an error.');
-    //   }
-    // });
   }
   
   // eslint-disable-next-line no-unused-vars
@@ -884,16 +847,6 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 
     // There was a connection error of some sort
     request.onerror = options.error;
-  }
-
-  function serialize (obj) {
-    const str = [];
-    for (const p in obj) {
-      if (Object.hasOwn(obj, p)) {
-        str.push(encodeURIComponent(p) + '=' + encodeURIComponent(obj[p]));
-      }
-    }
-    return str.join('&');
   }
   </script>
 </body>

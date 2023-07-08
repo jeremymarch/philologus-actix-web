@@ -383,6 +383,9 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       console.log('save: ' + this.id + ': ' + this.value);
       setCookie(this.id, this.value, 365);
     });
+    setCookie('sname', $('#sname').val(), 365);
+    setCookie('sadvisor', $('#sadvisor').val(), 365);
+    setCookie('selectedverb', $('#selectedverb').val(), 365);
     setCookie('person', $('#person').val(), 365);
     setCookie('number', $('#number').val(), 365);
     setCookie('ptccase', $('#ptccase').val(), 365);
@@ -397,6 +400,9 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       console.log('set:' + id + ': ' + val);
       $('#' + id).val(val);
     }
+    $('#sname').val(localStorage.getItem('sname'));
+    $('#sadvisor').val(localStorage.getItem('sadvisor'));
+    $('#selectedverb').val(localStorage.getItem('selectedverb'));
     $('#person').val(localStorage.getItem('person'));
     $('#number').val(localStorage.getItem('number'));
     $('#ptccase').val(localStorage.getItem('ptccase'));
@@ -409,11 +415,14 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     if (!lsTest()) return;
     $('.gkinput').each(function () {
       localStorage.removeItem(this.id);
+      this.classList.remove('incorrect');
     });
+    $('#selectedverb').val('');
     $('#person').val('');
     $('#number').val('');
     $('#ptccase').val('');
     $('#ptcgender').val('');
+    setCookie('selectedverb', '', 365);
     setCookie('person', '', 365);
     setCookie('number', '', 365);
     setCookie('ptccase', '', 365);

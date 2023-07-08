@@ -1,5 +1,6 @@
 use super::*;
 use crate::synopsis::polytonic_greek::hgk_compare_multiple_forms;
+use chrono::LocalResult;
 use hoplite_verbs_rs::*;
 use sqlx::FromRow;
 use std::sync::Arc;
@@ -597,7 +598,7 @@ pub async fn greek_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> 
 
     Ok(HttpResponse::Ok().content_type("text/html").body(template))
 }
-use chrono::LocalResult;
+
 pub async fn latin_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
 

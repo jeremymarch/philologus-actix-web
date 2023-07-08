@@ -225,7 +225,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
             </td>
         </tr>
         <tr><td></td><td class="colheader active">Active</td><td class="colheader middle">Middle</td><td class="colheader passive">Passive</td></tr>
-%rows%
+<!-- %rows% -->
 </table>
 <script nonce="2726c7f26c">
   /* global $ */
@@ -342,6 +342,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   
   // eslint-disable-next-line no-unused-vars
   function start () {
+    makeTable();
     const unit = getCookie('unit');
     if (unit) {
       document.getElementById('unitfilter').value = unit;
@@ -687,6 +688,59 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     { i: 125, s: 112, pp: 'τρέπω', u: 20 },
     { i: 126, s: 116, pp: 'φαίνω', u: 20 },
     { i: 127, s: 126, pp: 'χρή', u: 20 }
+  ];
+
+  function makeTable () {
+    const dFrag = document.createDocumentFragment();
+    let count = 0;
+    for (let r = 0; r < labels.length; r++) {
+      const tr = document.createElement('tr');
+      const td = document.createElement('td');
+      td.classList.add(labels[r].split(' ')[0], labels[r].split(' ')[1]);
+      td.innerText = labels[r];
+      tr.appendChild(td);
+      for (let c = 0; c < voices.length; c++) {
+        const td = document.createElement('td');
+        td.classList.add('formcell', voices[c]);
+        const div = document.createElement('div');
+        div.classList.add('formcellInner');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.id = 'gkform' + count++;
+        input.classList.add('gkinput', 'formcellinput');
+        input.setAttribute('spellcheck', 'false');
+        div.appendChild(input);
+        td.appendChild(div);
+        tr.append(td);
+      }
+      dFrag.appendChild(tr);
+    }
+    document.getElementById('table1').appendChild(dFrag);
+  }
+
+  const voices = ['Active', 'Middle', 'Passive'];
+  const labels = [
+    'Present Indicative',
+    'Imperfect Indicative',
+    'Future Indicative',
+    'Aorist Indicative',
+    'Perfect Indicative',
+    'Pluperfect Indicative',
+    'Present Subjunctive',
+    'Aorist Subjunctive',
+    'Present Optative',
+    'Future Optative',
+    'Aorist Optative',
+    'Present Imperative',
+    'Aorist Imperative',
+    'Present Infinitive',
+    'Future Infinitive',
+    'Aorist Infinitive',
+    'Perfect Infinitive',
+    'Present Participle',
+    'Future Participle',
+    'Aorist Participle',
+    'Perfect Participle'
   ];
   </script>
 </body>

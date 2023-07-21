@@ -348,6 +348,18 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   // eslint-disable-next-line no-unused-vars
   function start () {
     makeTable();
+    // sort verbs by sequence rather than by unit
+    verbs.sort(function (a, b) { return a.s - b.s; });
+    const vc = document.getElementById('selectedverb');
+    for (let i = 0; i < verbs.length; i++) {
+      if (verbs[i].i !== 78 && verbs[i].i !== 79 && verbs[i].i !== 122 && verbs[i].i !== 127) {
+        const o = document.createElement('option');
+        o.value = verbs[i].i;
+        o.text = verbs[i].pp;
+        vc.add(o);
+      }
+    }
+
     const unit = getCookie('unit');
     if (unit) {
       document.getElementById('unitfilter').value = unit;
@@ -360,29 +372,20 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     if (legend && legend === 'hidden') {
       document.querySelector('.tophelp').style.display = 'none';
     }
+
+    retrievefields();
+
+    // add event handlers
     document.querySelectorAll('.gkinput').forEach(e => {
       e.addEventListener('keypress', handleKey);
     });
     document.querySelectorAll('.gkinput').forEach(e => {
       e.addEventListener('blur', savefields);
     });
-
-    const vc = document.getElementById('selectedverb');
-    for (let i = 0; i < verbs.length; i++) {
-      if (verbs[i].i !== 78 && verbs[i].i !== 79 && verbs[i].i !== 122 && verbs[i].i !== 127) {
-        const o = document.createElement('option');
-        o.value = verbs[i].i;
-        o.text = verbs[i].pp;
-        vc.add(o);
-      }
-    }
-
     document.getElementById('submitbutton').addEventListener('click', submitSynopsis);
     document.getElementById('clearbutton').addEventListener('click', clearForm);
     document.getElementById('unitfilter').addEventListener('change', setunit);
     document.getElementById('legendtoggle').addEventListener('click', togglelegend);
-  
-    retrievefields();
   }
   
   function savefields () {

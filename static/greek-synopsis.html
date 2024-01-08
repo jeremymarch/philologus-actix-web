@@ -40,7 +40,7 @@
 
 .gkinput {
     width: 100%;
-    height: 40px;
+    min-height: 40px;
     font-size: 20pt;
     border-radius: 6px;
     margin: 5px;
@@ -61,9 +61,9 @@ BODY {
     width:90%;
     margin:10px auto;
 }
-.formcell { margin:0px;padding:0px 8px; }
+.formcell { margin:0px;padding:0px 8px;width:28%;vertical-align: middle;border-bottom: 1px solid #AAA; }
 #ppcell {border-bottom: 1px solid #AAA;}
-.formcellInner { height:100%;width:100%;border-bottom: 1px solid #AAA; }
+.formcellInner { height:100%;width:100%; }
 .tophelp td { text-align:center;
 width: 11%;
 border: 1px solid #666;
@@ -258,34 +258,58 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   }
   
   function handleKey (e) {
-    if (typeof (this.selectionStart) === 'number' && typeof (this.selectionEnd) === 'number') {
-      const text = this.value;
-      const start = this.selectionStart;
-      const key = e.key.toLowerCase(); // force lower case
-  
-      if (key === 'enter') { // enter key
-        // submitClicked();
-        return false;
-      } else if (!isNaN(parseInt(key))) {
-        if (parseInt(key) > 0) {
-          const res = toggleDiacritic(text, start, key, unicodeMode);
+    let start;
+    let text;
+    if (this.nodeName.toUpperCase() === 'DIV' && this.contentEditable) {
+      text = this.innerText;
+      start = ContentEditableCursor.getPosition(this);
+    } else if (typeof (this.selectionStart) === 'number') {
+      text = this.value;
+      start = this.selectionStart;
+    } else {
+      return true;
+    }
+    const key = e.key.toLowerCase(); // force lower case
+
+    if (key === 'enter') { // enter key
+      // submitClicked();
+      // return false; // block the key
+      // if (this.nodeName.toUpperCase() === 'DIV' && this.contentEditable) {
+      //   this.innerText = text.slice(0, start) + '\n' + text.slice(start);
+      //   ContentEditableCursor.setPosition(start + 1, this);
+      // } else if (typeof (this.selectionStart) === 'number') { }
+      return false;
+    } else if (!isNaN(parseInt(key))) {
+      if (parseInt(key) > 0) {
+        const res = toggleDiacritic(text, start, key, unicodeMode);
+        if (this.nodeName.toUpperCase() === 'DIV' && this.contentEditable) {
+          this.innerText = res.str;
+          ContentEditableCursor.setPosition(res.pos, this);
+        } else if (typeof (this.selectionStart) === 'number') {
           this.value = res.str;
           this.selectionStart = this.selectionEnd = res.pos;
         }
-        e.preventDefault();
-        return false;
-      } else if (key.length === 1) { // len == 1 to exclude keys like "ENTER", etc.
-        // eslint-disable-next-line no-undef
-        const greekLetter = translit(key); // returns \0 if the character cannot be transliterated
-        if (greekLetter !== '\0') {
+      }
+      e.preventDefault();
+      return false;
+    } else if (key.length === 1) { // len == 1 to exclude keys like "ENTER", etc.
+      // eslint-disable-next-line no-undef
+      const greekLetter = translit(key); // returns \0 if the character cannot be transliterated
+      if (greekLetter !== '\0') {
+        if (this.nodeName.toUpperCase() === 'DIV' && this.contentEditable) {
+          const end = start;
+          this.innerText = text.slice(0, start) + greekLetter + text.slice(end);
+          ContentEditableCursor.setPosition(start + 1, this);
+        } else if (typeof (this.selectionStart) === 'number') {
           const end = this.selectionEnd;
           this.value = text.slice(0, start) + greekLetter + text.slice(end);
           this.selectionStart = this.selectionEnd = start + 1;
-          e.preventDefault();
-          return false;
         }
+        e.preventDefault();
+        return false;
       }
     }
+
     return true; // true allows most punctuation, etc. pass through
   }
   
@@ -332,7 +356,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
   
     json.r = [];
     document.querySelectorAll('.formcellinput').forEach(e => {
-      json.r[parseInt(e.id.substring(6))] = e.value.trim();
+      json.r[parseInt(e.id.substring(6))] = getValue(e).trim();
     });
   
     microAjax({
@@ -387,12 +411,28 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     document.getElementById('unitfilter').addEventListener('change', setunit);
     document.getElementById('legendtoggle').addEventListener('click', togglelegend);
   }
+
+  function getValue (el) {
+    if (el.nodeName.toUpperCase() === 'DIV' && el.contentEditable) {
+      return el.innerText;
+    } else {
+      return el.value;
+    }
+  }
+
+  function setValue (el, value) {
+    if (el.nodeName.toUpperCase() === 'DIV' && el.contentEditable) {
+      el.innerText = value;
+    } else {
+      el.value = value;
+    }
+  }
   
   function savefields () {
     if (!lsTest()) return;
     console.log('save fields');
     document.querySelectorAll('.gkinput').forEach(e => {
-      setCookie(e.id, e.value, 365);
+      setCookie(e.id, getValue(e), 365);
     });
 
     setCookie('sname', document.getElementById('sname').value, 365);
@@ -412,7 +452,8 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       // console.log('set:' + id + ': ' + val);
       const e = document.getElementById(id);
       if (e) {
-        e.value = val;
+        setValue(e, val);
+        // e.value = val;
       }
     }
     // redundant: this is done in the loop above?
@@ -523,7 +564,8 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       const e = document.getElementById('gkform' + i);
       if (e) {
         if (data.f[i]) {
-          e.value = data.f[i].given;
+          // e.value = data.f[i].given;
+          setValue(e, data.f[i].given);
           if (!data.f[i].is_correct && data.f[i].correct) {
             e.classList.add('incorrect');
           } else {
@@ -738,6 +780,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
     { i: 127, s: 126, pp: 'χρή', u: 20 }
   ];
 
+  const useContentEditable = true;
   function makeTable () {
     const dFrag = document.createDocumentFragment();
     let count = 0;
@@ -770,11 +813,26 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
         td.classList.add('formcell', voices[c].toLowerCase(), labels[r].toLowerCase(), moods[currentMood].toLowerCase());
         const div = document.createElement('div');
         div.classList.add('formcellInner');
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.id = 'gkform' + count++;
-        input.classList.add('gkinput', 'formcellinput');
-        input.setAttribute('spellcheck', 'false');
+        let input;
+        if (useContentEditable) {
+          input = document.createElement('div');
+          input.setAttribute('contenteditable', 'true');
+          input.setAttribute('spellcheck', 'false');
+          input.setAttribute('autocapitalize', 'off');
+          input.setAttribute('autocomplete', 'off');
+          input.id = 'gkform' + count++;
+          input.classList.add('gkinput', 'formcellinput');
+          input.style.display = 'block';
+        } else {
+          input = document.createElement('input');
+          input.type = 'text';
+          input.id = 'gkform' + count++;
+          input.classList.add('gkinput', 'formcellinput');
+          input.setAttribute('spellcheck', 'false');
+          input.setAttribute('autocapitalize', 'off');
+          input.setAttribute('autocomplete', 'off');
+        }
+
         div.appendChild(input);
         td.appendChild(div);
         tr.append(td);
@@ -850,6 +908,95 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
 
     // There was a connection error of some sort
     request.onerror = options.error;
+  }
+
+  class ContentEditableCursor {
+    static getPosition (parentElement) {
+      const selection = window.getSelection();
+      let charCount = -1;
+      let node;
+
+      if (selection.focusNode) {
+        if (ContentEditableCursor._isChildOf(selection.focusNode, parentElement)) {
+          node = selection.focusNode;
+          charCount = selection.focusOffset;
+
+          while (node) {
+            if (node === parentElement) {
+              break;
+            }
+
+            if (node.previousSibling) {
+              node = node.previousSibling;
+              charCount += node.textContent.length;
+            } else {
+              node = node.parentNode;
+              if (node === null) {
+                break;
+              }
+            }
+          }
+        }
+      }
+
+      return charCount;
+    }
+
+    static setPosition (chars, element) {
+      if (chars >= 0) {
+        const selection = window.getSelection();
+
+        const range = ContentEditableCursor._createRange(element, { count: chars });
+
+        if (range) {
+          range.collapse(false);
+          selection.removeAllRanges();
+          selection.addRange(range);
+        }
+      }
+    }
+
+    static _createRange (node, chars, range) {
+      if (!range) {
+        range = document.createRange();
+        range.selectNode(node);
+        range.setStart(node, 0);
+      }
+
+      if (chars.count === 0) {
+        range.setEnd(node, chars.count);
+      } else if (node && chars.count > 0) {
+        if (node.nodeType === Node.TEXT_NODE) {
+          if (node.textContent.length < chars.count) {
+            chars.count -= node.textContent.length;
+          } else {
+            range.setEnd(node, chars.count);
+            chars.count = 0;
+          }
+        } else {
+          for (let lp = 0; lp < node.childNodes.length; lp++) {
+            range = ContentEditableCursor._createRange(node.childNodes[lp], chars, range);
+
+            if (chars.count === 0) {
+              break;
+            }
+          }
+        }
+      }
+
+      return range;
+    }
+
+    static _isChildOf (node, parentElement) {
+      while (node !== null) {
+        if (node === parentElement) {
+          return true;
+        }
+        node = node.parentNode;
+      }
+
+      return false;
+    }
   }
   </script>
 </body>

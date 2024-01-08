@@ -608,12 +608,12 @@ async fn main() -> io::Result<()> {
                 .handler(http::StatusCode::NOT_FOUND, api::not_found);
     */
 
-    let tantivy_index = Index::open_in_dir(tantivy_index_path).unwrap();
+    //let tantivy_index = Index::open_in_dir(tantivy_index_path).unwrap();
 
     HttpServer::new(move || {
         App::new()
             .app_data(load_verbs("pp.txt"))
-            .app_data(tantivy_index.clone())
+            //.app_data(tantivy_index.clone())
             .app_data(db_pool.clone())
             .app_data(db_log_pool.clone())
             //.wrap(middleware::Logger::default())

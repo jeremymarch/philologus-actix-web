@@ -567,6 +567,11 @@ async fn main() -> io::Result<()> {
     let tantivy_index_path = std::env::var("TANTIVY_INDEX_PATH").unwrap_or_else(|_| {
         panic!("Environment variable for tantivy index path not set: TANTIVY_INDEX_PATH.")
     });
+
+    if !Path::new(&tantivy_index_path).exists() {
+        panic!("tantivy path does not exist: {}", tantivy_index_path);
+    }
+    
     // let tracing_log_path = std::env::var("TRACING_LOG_PATH").unwrap_or_else(|_| {
     //     panic!("Environment variable for tracing log path not set: TRACING_LOG_PATH.")
     // });
@@ -609,9 +614,6 @@ async fn main() -> io::Result<()> {
                 .handler(http::StatusCode::NOT_FOUND, api::not_found);
     */
 
-    if !Path::new(&tantivy_index_path).exists() {
-        panic!("tantivy path does not exist: {}", tantivy_index_path);
-    }
     let tantivy_index = Index::open_in_dir(tantivy_index_path).unwrap();
 
     HttpServer::new(move || {

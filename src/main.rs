@@ -44,6 +44,7 @@ mod synopsis;
 use crate::synopsis::*;
 use serde::{Deserialize, Serialize};
 
+use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use tantivy::collector::{Count, TopDocs};
@@ -608,6 +609,9 @@ async fn main() -> io::Result<()> {
                 .handler(http::StatusCode::NOT_FOUND, api::not_found);
     */
 
+    if !Path::new(&tantivy_index_path).exists() {
+        panic!("tantivy path does not exist: {}", tantivy_index_path);
+    }
     //let tantivy_index = Index::open_in_dir(tantivy_index_path).unwrap();
 
     HttpServer::new(move || {

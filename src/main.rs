@@ -568,10 +568,14 @@ async fn main() -> io::Result<()> {
         panic!("Environment variable for tantivy index path not set: TANTIVY_INDEX_PATH.")
     });
 
+    //println!("blah {}", &"sqlite:///var/data/db.sqlite?mode=ro"[9..28]);
+    if !Path::new(&db_path[9..28]).exists() {
+        panic!("sqlite path does not exist: {}", &db_path[9..28]);
+    }
     if !Path::new(&tantivy_index_path).exists() {
         panic!("tantivy path does not exist: {}", tantivy_index_path);
     }
-    
+
     // let tracing_log_path = std::env::var("TRACING_LOG_PATH").unwrap_or_else(|_| {
     //     panic!("Environment variable for tracing log path not set: TRACING_LOG_PATH.")
     // });

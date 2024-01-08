@@ -570,10 +570,12 @@ async fn main() -> io::Result<()> {
 
     //println!("blah {}", &"sqlite:///var/data/db.sqlite?mode=ro"[9..28]);
     if !Path::new(&db_path[9..28]).exists() {
-        panic!("sqlite path does not exist: {}", &db_path[9..28]);
+        println!("sqlite path does not exist: {}", &db_path[9..28]);
+        //panic!("sqlite path does not exist: {}", &db_path[9..28]);
     }
     if !Path::new(&tantivy_index_path).exists() {
-        panic!("tantivy path does not exist: {}", tantivy_index_path);
+        println!("tantivy path does not exist: {}", tantivy_index_path);
+        //panic!("tantivy path does not exist: {}", tantivy_index_path);
     }
 
     // let tracing_log_path = std::env::var("TRACING_LOG_PATH").unwrap_or_else(|_| {
@@ -618,12 +620,12 @@ async fn main() -> io::Result<()> {
                 .handler(http::StatusCode::NOT_FOUND, api::not_found);
     */
 
-    let tantivy_index = Index::open_in_dir(tantivy_index_path).unwrap();
+    //let tantivy_index = Index::open_in_dir(tantivy_index_path).unwrap();
 
     HttpServer::new(move || {
         App::new()
             .app_data(load_verbs("pp.txt"))
-            .app_data(tantivy_index.clone())
+            //.app_data(tantivy_index.clone())
             .app_data(db_pool.clone())
             .app_data(db_log_pool.clone())
             //.wrap(middleware::Logger::default())

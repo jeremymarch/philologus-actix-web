@@ -465,8 +465,8 @@ pub async fn greek_synopsis_saver(
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let time_stamp = SystemTime::now().duration_since(UNIX_EPOCH);
-    let time_stamp_ms = if time_stamp.is_ok() {
-        time_stamp.unwrap().as_millis()
+    let time_stamp_ms = if let Ok(time_stamp) = time_stamp {
+        time_stamp.as_millis()
     } else {
         0
     };
@@ -700,8 +700,8 @@ pub async fn latin_synopsis_saver(
     let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
 
     let time_stamp = SystemTime::now().duration_since(UNIX_EPOCH);
-    let time_stamp_ms = if time_stamp.is_ok() {
-        time_stamp.unwrap().as_millis()
+    let time_stamp_ms = if let Ok(time_stamp) = time_stamp {
+        time_stamp.as_millis()
     } else {
         0
     };

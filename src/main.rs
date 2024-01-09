@@ -44,7 +44,7 @@ mod synopsis;
 use crate::synopsis::*;
 use serde::{Deserialize, Serialize};
 
-use std::path::Path;
+//use std::path::Path;
 use std::time::{SystemTime, UNIX_EPOCH};
 
 use tantivy::collector::{Count, TopDocs};
@@ -480,8 +480,8 @@ async fn philologus_defs(
         _ => 0,
     };
     let time_stamp = SystemTime::now().duration_since(UNIX_EPOCH);
-    let time_stamp_ms = if time_stamp.is_ok() {
-        time_stamp.unwrap().as_millis()
+    let time_stamp_ms = if let Ok(time_stamp) = time_stamp {
+        time_stamp.as_millis()
     } else {
         0
     };
@@ -568,6 +568,7 @@ async fn main() -> io::Result<()> {
         panic!("Environment variable for tantivy index path not set: TANTIVY_INDEX_PATH.")
     });
 
+    /*
     //println!("blah {}", &"sqlite:///var/data/db.sqlite?mode=ro"[9..28]);
     if !Path::new(&db_path[9..28]).exists() {
         println!("sqlite path does not exist: {}", &db_path[9..28]);
@@ -577,6 +578,7 @@ async fn main() -> io::Result<()> {
         println!("tantivy path does not exist: {}", tantivy_index_path);
         //panic!("tantivy path does not exist: {}", tantivy_index_path);
     }
+    */
 
     // let tracing_log_path = std::env::var("TRACING_LOG_PATH").unwrap_or_else(|_| {
     //     panic!("Environment variable for tracing log path not set: TRACING_LOG_PATH.")
@@ -620,12 +622,12 @@ async fn main() -> io::Result<()> {
                 .handler(http::StatusCode::NOT_FOUND, api::not_found);
     */
 
-    //let tantivy_index = Index::open_in_dir(tantivy_index_path).unwrap();
-
+    let tantivy_index = Index::open_in_dir(tantivy_index_path).unwrap();
+    //curl "https://philolog-us.onrender.com/db.sqlite.zip" -o "/var/data/db.sqlite" && cargo run --release
     HttpServer::new(move || {
         App::new()
             .app_data(load_verbs("pp.txt"))
-            //.app_data(tantivy_index.clone())
+            .app_data(tantivy_index.clone())
             .app_data(db_pool.clone())
             .app_data(db_log_pool.clone())
             //.wrap(middleware::Logger::default())

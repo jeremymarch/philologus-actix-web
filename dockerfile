@@ -11,7 +11,7 @@ FROM gcr.io/distroless/cc-debian12
 
 COPY --from=build /usr/local/cargo/bin/philologus-actix-web /usr/local/bin/philologus-actix-web
 
-ENV PHILOLOGUS_DB_PATH=philolog_us.sqlite
-ENV PHILOLOGUS_LOG_DB_PATH=philolog_us_log.sqlite
+ENV PHILOLOGUS_DB_PATH=sqlite://db.sqlite?mode=ro
+ENV PHILOLOGUS_LOG_DB_PATH=sqlite://log.sqlite?mode=rwc
 
 CMD ["philologus-actix-web"]

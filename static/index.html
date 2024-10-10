@@ -23,7 +23,7 @@
         setTheme();
     </script>
     <style nonce="2726c7f26c">
-        /* try to use local NewAthenaUnicode before downloading from server; 
+        /* try to use local NewAthenaUnicode before downloading from server;
         does not work in Safari https://stackoverflow.com/questions/59986432/safari-user-installed-fonts-dont-render */
         @font-face {
           font-family: 'WebNewAthenaUnicode';
@@ -31,7 +31,7 @@
             url('/newathu5_8.woff') format('woff'),
             url('/newathu5_8.ttf') format('ttf');
         }
-        
+
         #lemmataLangBtn {
           font-family: helvetica, arial, sans-serif;
           font-size: 11pt;
@@ -62,7 +62,7 @@
         .dark #lemmataLangBtn {
           color:white;
           background-color: #444;
-          
+
         }
         /*.dark.greekOn #lemmataLangBtn {
           color:white;
@@ -109,7 +109,7 @@
           width:100%;
           display:flex;
         }
-        #mesg { 
+        #mesg {
           display:none;
           background-color:blue;
           position:absolute;
@@ -609,7 +609,7 @@
             position: absolute;
             top: 70px;
             right: 11px;
-            height: 234px;
+            height: 234px; /*height: 274px;//for sponsor button*/
             width: 230px;
             z-index: 999;
             padding: 10px;
@@ -763,6 +763,17 @@
           transition: .5s;
           margin-right: 282px;
         }
+        #sponsorbutton {
+          box-sizing:content-box;
+          padding: 4px;
+          margin: 4px;
+          margin-top: 14px;
+          background-color: black;
+          border: 0px;
+        }
+        #sponsorbuttonli {
+          text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -800,14 +811,15 @@
         <li>
           <div id="settingsDarkMode" tabindex='0' class="settingsItem">dark mode:
             <div class='settingsDarkMode'>
-              <label for='darkModeSystem'>system</label> 
+              <label for='darkModeSystem'>system</label>
               <input id='darkModeSystem' type='radio' name='darkmode' value='system'/><br>
-              <label for='darkModeDark'>dark</label> 
+              <label for='darkModeDark'>dark</label>
               <input id='darkModeDark' type='radio' name='darkmode' value='dark'/><br>
               <label for='darkModeLight'>light</label><input id='darkModeLight' type='radio' name='darkmode' value='light'/>
             </div>
           </div>
         </li>
+        <!-- <li id="sponsorbuttonli"><iframe id="sponsorbutton" src="https://github.com/sponsors/jeremymarch/button" title="Sponsor jeremy march" height="32" width="114" style="border: 0; border-radius: 6px;"></iframe></li> -->
       </ul>
     </div>
     <div id="mesg"></div>
@@ -1153,7 +1165,7 @@
 
         wt.onClickActivate = onClickRow;
         wt.onSelectionChanged = onClickRow;
-      
+
         highlightSearch(0);
 
         const urlLexDef = getLexAndWordFromURL(window.location.pathname);

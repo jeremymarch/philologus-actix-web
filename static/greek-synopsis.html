@@ -50,9 +50,10 @@
     font-family: NewAthenaUnicode, WebNewAthenaUnicode,helvetica,arial;
 }
 .colheader {
-    text-align:center;
-    padding-top:25px;
-    font-weight:bold;
+  text-align: left;
+  padding-top: 25px;
+  font-weight: bold;
+  padding-left: 18px;
 }
 BODY {
     font-family:helvetica,arial;
@@ -96,6 +97,19 @@ day22	u16
 .unit11 .future.optative, .unit11 .future.infinitive {
     display:none;
 }
+
+.unit2 .formcell {
+  width:84%;
+}
+.unit3 .formcell {
+  width:84%;
+}
+.unit5 .formcell {
+  width: 42%;
+}
+#ppcell.formcell {
+  width: 27%;
+}
 /* .unit16 { everything } */
 
 #submitcell { display:auto; }
@@ -119,6 +133,9 @@ day22	u16
     position:absolute;
     right:20px;
     top:50px;
+}
+.tablestyle {
+  width:100%;margin:0px auto;
 }
 #table1 {
   width:100%;margin:0px auto;
@@ -152,6 +169,18 @@ day22	u16
   font-weight: bold;
   height: 40px;
 }
+
+@media print {
+    /* styles here */
+    .tophelp { display:none; }
+    #unitfilter { display:none; }
+    #clearbutton { display:none; }
+    #legendtoggle { display:none; }
+    #submitbutton { display:none; }
+    #checkbutton { display:none; }
+    .gkinput { font-size: 14pt; min-height: auto; }
+
+}
 </style>
 </head>
 <body>
@@ -165,9 +194,9 @@ day22	u16
     </div>-->
     <div id="legendlink"><span tabindex="-1" id="legendtoggle">keys</span></div>
     <button id="clearbutton" tabindex="-1">Clear</button>
-    <table id="table1" cellpadding=0 cellspacing=0>
+    <table id="table1" class="tablestyle" cellpadding=0 cellspacing=0>
         <tr>
-            <td colspan="5">
+            <td colspan="2">
 <table class="tophelp" cellpadding=0 cellspacing=0>
     <tr>
         <td colspan="9">Diacritic Keys</td>
@@ -181,7 +210,7 @@ day22	u16
             </td>
         </tr>
         <tr>
-            <td align="left" colspan="5">
+            <td align="left" colspan="2">
                 <table cellpadding=0 cellspacing=0>
                     <tr><td width="50%"><select tabindex="-1" id="unitfilter">
                         <option value="2">H&Q Unit 2</option>
@@ -224,19 +253,23 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
                             <option value="1">Genitive</option>
                             <option value="2">Dative</option>
                             <option value="3">Accusative</option>
+                            <option value="4">Vocative</option>
                         </select>
                             
-                    <span align="right" colspan="2" id="submitcell"><button id="submitbutton">Submit</button></span></h3></td></tr>
+                    <span align="right" colspan="2" id="submitcell"><button id="submitbutton">Submit</button><button id="checkbutton">Check</button></span></h3></td></tr>
         </table>
         </td>
         </tr>
         <tr>
-            <td colspan="2">Principal Parts</td>
-            <td colspan="3" id="ppcell" class="formcell">
+            <td width="4%">Principal Parts</td>
+            <td id="ppcell" class="formcell">
                 <input type="text" id="pppppp0" class="gkinput" spellcheck="false" autocapitalize="off" autocomplete="off"/>
             </td>
         </tr>
+      </table>
+      <table id="table3" class="tablestyle">
         <tr><td></td><td></td><td class="colheader active">Active</td><td class="colheader middle">Middle</td><td class="colheader passive">Passive</td></tr>
+      
 <!-- %rows% -->
 </table>
 <script nonce="2726c7f26c">
@@ -407,6 +440,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       e.addEventListener('blur', savefields);
     });
     document.getElementById('submitbutton').addEventListener('click', submitSynopsis);
+    document.getElementById('checkbutton').addEventListener('click', check);
     document.getElementById('clearbutton').addEventListener('click', clearForm);
     document.getElementById('unitfilter').addEventListener('change', setunit);
     document.getElementById('legendtoggle').addEventListener('click', togglelegend);
@@ -839,7 +873,7 @@ Advisor: <input type="text" id="sadvisor" class="" spellcheck="false" autocapita
       }
       dFrag.appendChild(tr);
     }
-    document.getElementById('table1').appendChild(dFrag);
+    document.getElementById('table3').appendChild(dFrag);
   }
 
   const voices = ['Active', 'Middle', 'Passive'];

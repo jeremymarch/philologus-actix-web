@@ -1,5 +1,5 @@
 use super::*;
-use crate::synopsis::polytonic_greek::hgk_compare_multiple_forms;
+use crate::synopsis::hgk_compare_multiple_forms;
 use chrono::LocalResult;
 use hoplite_verbs_rs::*;
 use sqlx::FromRow;
@@ -168,6 +168,8 @@ pub fn get_forms(
     verb_id: usize,
     person: usize,
     number: usize,
+    case: Option<usize>,
+    gender: Option<usize>,
 ) -> Vec<Option<String>> {
     let mut forms = Vec::new();
 
@@ -198,6 +200,22 @@ pub fn get_forms(
         0 => [HcPerson::First],
         1 => [HcPerson::Second],
         _ => [HcPerson::Third],
+    };
+
+    let case_value = match case {
+        Some(0) => Some(HcCase::Nominative),
+        Some(1) => Some(HcCase::Genitive),
+        Some(2) => Some(HcCase::Dative),
+        Some(3) => Some(HcCase::Accusative),
+        Some(4) => Some(HcCase::Vocative),
+        _ => None,
+    };
+
+    let gender_value = match gender {
+        Some(0) => Some(HcGender::Masculine),
+        Some(1) => Some(HcGender::Feminine),
+        Some(2) => Some(HcGender::Neuter),
+        _ => None,
     };
 
     for m in moods {
@@ -231,13 +249,29 @@ pub fn get_forms(
                     for p in persons {
                         let vf = HcGreekVerbForm {
                             verb: verbs[verb_id].clone(),
-                            person: p,
-                            number: n,
+                            person: if m == HcMood::Infinitive || m == HcMood::Participle {
+                                None
+                            } else {
+                                Some(p)
+                            },
+                            number: if m == HcMood::Infinitive {
+                                None
+                            } else {
+                                Some(n)
+                            },
                             tense: t,
                             voice: v,
                             mood: m,
-                            gender: None,
-                            case: None,
+                            gender: if m == HcMood::Participle {
+                                gender_value
+                            } else {
+                                None
+                            },
+                            case: if m == HcMood::Participle {
+                                case_value
+                            } else {
+                                None
+                            },
                         };
 
                         if let Ok(f) = vf.get_form(false) {
@@ -262,7 +296,14 @@ pub async fn synopsis_json(
     // let verb = Arc::new(HcGreekVerb::from_string(1, pp, REGULAR, 0).unwrap());
     let verb_id: usize = params.verb;
 
-    let forms = get_forms(verbs, verb_id, params.person, params.number);
+    let forms = get_forms(
+        verbs,
+        verb_id,
+        params.person,
+        params.number,
+        params.ptccase,
+        params.ptcgender,
+    );
 
     let mut res = Vec::<SaverResults>::new();
     for f in forms {
@@ -277,8 +318,8 @@ pub async fn synopsis_json(
         verb_id: params.verb,
         person: params.person,
         number: params.number,
-        case: Some(0),
-        gender: Some(0),
+        case: params.ptccase,
+        gender: params.ptcgender,
         unit: params.unit,
         pp: verbs[verb_id]
             .pps
@@ -353,7 +394,7 @@ pub async fn greek_synopsis_result(
     @font-face {
         font-family: 'WebNewAthenaUnicode';
         src: url('/newathu5_8.ttf') format('truetype');
-      }  
+      }
     BODY {font-family:helvetica,arial}
     .synTable { min-width:800px; font-size:16pt; border-spacing:0px;border-collapse: collapse;margin: 0px auto; }
     .synTable td {padding:4px 5px;}
@@ -479,12 +520,19 @@ pub async fn greek_synopsis_saver(
     };
 
     let verb_id = info.verb;
-    let correct_answers = get_forms(verbs, verb_id, info.person, info.number);
+    let correct_answers = get_forms(
+        verbs,
+        verb_id,
+        info.person,
+        info.number,
+        info.ptccase,
+        info.ptcgender,
+    );
     let mut is_correct = Vec::new();
     // let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
     for (i, f) in info.r.iter().enumerate() {
         if let Some(a) = &correct_answers[i] {
-            is_correct.push(hgk_compare_multiple_forms(a, &f.replace("---", "—")));
+            is_correct.push(hgk_compare_multiple_forms(a, &f.replace("---", "—"), true));
         } else {
             is_correct.push(true);
         }
@@ -559,7 +607,7 @@ pub async fn latin_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWErr
         }
         .synlist td { padding: 3px; }
         .headerrow {border-bottom:1px solid black;font-weight:bold;}
-    
+
     </style>
     </head>
     <body><table class='synlist'>
@@ -796,6 +844,8 @@ pub async fn latin_synopsis(_req: HttpRequest) -> Result<HttpResponse, AWError> 
     Ok(HttpResponse::Ok().content_type("text/html").body(template))
 }
 
+static PPS: &str = include_str!("pp.txt");
+
 pub fn load_verbs(_path: &str) -> Vec<Arc<HcGreekVerb>> {
     let mut verbs = vec![];
     // if let Ok(pp_file) = File::open(path) {
@@ -826,131 +876,17 @@ pub fn load_verbs(_path: &str) -> Vec<Arc<HcGreekVerb>> {
     verbs
 }
 
-pub static PPS: &str = r##"παιδεύω, παιδεύσω, ἐπαίδευσα, πεπαίδευκα, πεπαίδευμαι, ἐπαιδεύθην % 2
-πέμπω, πέμψω, ἔπεμψα, πέπομφα, πέπεμμαι, ἐπέμφθην % 2
-κελεύω, κελεύσω, ἐκέλευσα, κεκέλευκα, κεκέλευσμαι, ἐκελεύσθην % 2
-λῡ́ω, λῡ́σω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην % 2
-γράφω, γράψω, ἔγραψα, γέγραφα, γέγραμμαι, ἐγράφην % 3
-θῡ́ω, θῡ́σω, ἔθῡσα, τέθυκα, τέθυμαι, ἐτύθην % 3
-παύω, παύσω, ἔπαυσα, πέπαυκα, πέπαυμαι, ἐπαύθην % 3
-φυλάττω, φυλάξω, ἐφύλαξα, πεφύλαχα, πεφύλαγμαι, ἐφυλάχθην % 3
-διδάσκω, διδάξω, ἐδίδαξα, δεδίδαχα, δεδίδαγμαι, ἐδιδάχθην % 4
-ἐθέλω, ἐθελήσω, ἠθέλησα, ἠθέληκα, —, — % 4
-θάπτω, θάψω, ἔθαψα, —, τέθαμμαι, ἐτάφην % 4 % CONSONANT_STEM_PERFECT_PI
-τάττω, τάξω, ἔταξα, τέταχα, τέταγμαι, ἐτάχθην % 4 % CONSONANT_STEM_PERFECT_GAMMA
-ἄρχω, ἄρξω, ἦρξα, ἦρχα, ἦργμαι, ἤρχθην % 5 % CONSONANT_STEM_PERFECT_CHI
-βλάπτω, βλάψω, ἔβλαψα, βέβλαφα, βέβλαμμαι, ἐβλάβην / ἐβλάφθην % 5 % CONSONANT_STEM_PERFECT_BETA
-πείθω, πείσω, ἔπεισα, πέπεικα, πέπεισμαι, ἐπείσθην % 5
-πρᾱ́ττω, πρᾱ́ξω, ἔπρᾱξα, πέπρᾱχα / πέπρᾱγα, πέπρᾱγμαι, ἐπρᾱ́χθην % 5 % CONSONANT_STEM_PERFECT_GAMMA
-δουλεύω, δουλεύσω, ἐδούλευσα, δεδούλευκα, —, — % 6
-κωλῡ́ω, κωλῡ́σω, ἐκώλῡσα, κεκώλῡκα, κεκώλῡμαι, ἐκωλῡ́θην % 6
-πολῑτεύω, πολῑτεύσω, ἐπολῑ́τευσα, πεπολῑ́τευκα, πεπολῑ́τευμαι, ἐπολῑτεύθην % 6
-χορεύω, χορεύσω, ἐχόρευσα, κεχόρευκα, κεχόρευμαι, ἐχορεύθην % 6
-κλέπτω, κλέψω, ἔκλεψα, κέκλοφα, κέκλεμμαι, ἐκλάπην % 7 % CONSONANT_STEM_PERFECT_PI
-λείπω, λείψω, ἔλιπον, λέλοιπα, λέλειμμαι, ἐλείφθην % 7 % CONSONANT_STEM_PERFECT_PI
-σῴζω, σώσω, ἔσωσα, σέσωκα, σέσωσμαι / σέσωμαι, ἐσώθην % 7
-ἄγω, ἄξω, ἤγαγον, ἦχα, ἦγμαι, ἤχθην % 8 % CONSONANT_STEM_PERFECT_GAMMA
-ἥκω, ἥξω, —, —, —, — % 8
-ἀδικέω, ἀδικήσω, ἠδίκησα, ἠδίκηκα, ἠδίκημαι, ἠδικήθην % 9
-νῑκάω, νῑκήσω, ἐνῑ́κησα, νενῑ́κηκα, νενῑ́κημαι, ἐνῑκήθην % 9
-ποιέω, ποιήσω, ἐποίησα, πεποίηκα, πεποίημαι, ἐποιήθην % 9
-τῑμάω, τῑμήσω, ἐτῑ́μησα, τετῑ́μηκα, τετῑ́μημαι, ἐτῑμήθην % 9
-ἀγγέλλω, ἀγγελῶ, ἤγγειλα, ἤγγελκα, ἤγγελμαι, ἠγγέλθην % 10 % CONSONANT_STEM_PERFECT_LAMBDA
-ἀξιόω, ἀξιώσω, ἠξίωσα, ἠξίωκα, ἠξίωμαι, ἠξιώθην % 10
-δηλόω, δηλώσω, ἐδήλωσα, δεδήλωκα, δεδήλωμαι, ἐδηλώθην % 10
-καλέω, καλῶ, ἐκάλεσα, κέκληκα, κέκλημαι, ἐκλήθην % 10
-μένω, μενῶ, ἔμεινα, μεμένηκα, —, — % 10
-τελευτάω, τελευτήσω, ἐτελεύτησα, τετελεύτηκα, τετελεύτημαι, ἐτελευτήθην % 10
-ἀκούω, ἀκούσομαι, ἤκουσα, ἀκήκοα, —, ἠκούσθην % 11
-ἀποδέχομαι, ἀποδέξομαι, ἀπεδεξάμην, —, ἀποδέδεγμαι, — % 11 % CONSONANT_STEM_PERFECT_CHI PREFIXED
-βάλλω, βαλῶ, ἔβαλον, βέβληκα, βέβλημαι, ἐβλήθην % 11
-βούλομαι, βουλήσομαι, —, —, βεβούλημαι, ἐβουλήθην % 11
-δέχομαι, δέξομαι, ἐδεξάμην, —, δέδεγμαι, — % 11 % CONSONANT_STEM_PERFECT_CHI
-λαμβάνω, λήψομαι, ἔλαβον, εἴληφα, εἴλημμαι, ἐλήφθην % 11 % CONSONANT_STEM_PERFECT_BETA
-πάσχω, πείσομαι, ἔπαθον, πέπονθα, —, — % 11
-ἀνατίθημι, ἀναθήσω, ἀνέθηκα, ἀνατέθηκα, ἀνατέθειμαι, ἀνετέθην % 12 % PREFIXED
-ἀποδίδωμι, ἀποδώσω, ἀπέδωκα, ἀποδέδωκα, ἀποδέδομαι, ἀπεδόθην % 12 % PREFIXED
-ἀφίστημι, ἀποστήσω, ἀπέστησα / ἀπέστην, ἀφέστηκα, ἀφέσταμαι, ἀπεστάθην % 12 % PREFIXED
-δίδωμι, δώσω, ἔδωκα, δέδωκα, δέδομαι, ἐδόθην % 12
-ἵστημι, στήσω, ἔστησα / ἔστην, ἕστηκα, ἕσταμαι, ἐστάθην % 12
-καθίστημι, καταστήσω, κατέστησα / κατέστην, καθέστηκα, καθέσταμαι, κατεστάθην % 12 % PREFIXED
-καταλῡ́ω, καταλῡ́σω, κατέλῡσα, καταλέλυκα, καταλέλυμαι, κατελύθην % 12 % PREFIXED
-τίθημι, θήσω, ἔθηκα, τέθηκα, τέθειμαι, ἐτέθην % 12
-φιλέω, φιλήσω, ἐφίλησα, πεφίληκα, πεφίλημαι, ἐφιλήθην % 12
-φοβέομαι, φοβήσομαι, —, —, πεφόβημαι, ἐφοβήθην % 12
-γίγνομαι, γενήσομαι, ἐγενόμην, γέγονα, γεγένημαι, — % 13
-ἔρχομαι, ἐλεύσομαι, ἦλθον, ἐλήλυθα, —, — % 13
-μανθάνω, μαθήσομαι, ἔμαθον, μεμάθηκα, —, — % 13
-μάχομαι, μαχοῦμαι, ἐμαχεσάμην, —, μεμάχημαι, — % 13
-μεταδίδωμι, μεταδώσω, μετέδωκα, μεταδέδωκα, μεταδέδομαι, μετεδόθην % 13 % PREFIXED
-μετανίσταμαι, μεταναστήσομαι, μετανέστην, μετανέστηκα, —, — % 13 % PREFIXED
-μηχανάομαι, μηχανήσομαι, ἐμηχανησάμην, —, μεμηχάνημαι, — % 13
-φεύγω, φεύξομαι, ἔφυγον, πέφευγα, —, — % 13
-δείκνῡμι, δείξω, ἔδειξα, δέδειχα, δέδειγμαι, ἐδείχθην % 14
-ἐπανίσταμαι, ἐπαναστήσομαι, ἐπανέστην, ἐπανέστηκα, —, —  % 14 % PREFIXED
-ἐπιδείκνυμαι, ἐπιδείξομαι, ἐπεδειξάμην, —, ἐπιδέδειγμαι, — % 14 % PREFIXED
-ἐρωτάω, ἐρωτήσω, ἠρώτησα, ἠρώτηκα, ἠρώτημαι, ἠρωτήθην % 14
-λανθάνω, λήσω, ἔλαθον, λέληθα, —, — % 14
-παραγίγνομαι, παραγενήσομαι, παρεγενόμην, παραγέγονα, παραγεγένημαι, — % 14 % PREFIXED
-παραδίδωμι, παραδώσω, παρέδωκα, παραδέδωκα, παραδέδομαι, παρεδόθην % 14 % PREFIXED
-παραμένω, παραμενῶ, παρέμεινα, παραμεμένηκα, —, — % 14 % PREFIXED
-τυγχάνω, τεύξομαι, ἔτυχον, τετύχηκα, —, — % 14
-ὑπακούω, ὑπακούσομαι, ὑπηκουσα, ὑπακήκοα, —, ὑπηκούσθην % 14 % PREFIXED
-ὑπομένω, ὑπομενῶ, ὑπέμεινα, ὑπομεμένηκα, —, — % 14 % PREFIXED
-φθάνω, φθήσομαι, ἔφθασα / ἔφθην, —, —, — % 14
-χαίρω, χαιρήσω, —, κεχάρηκα, —, ἐχάρην % 14
-αἱρέω, αἱρήσω, εἷλον, ᾕρηκα, ᾕρημαι, ᾑρέθην % 15
-αἰσθάνομαι, αἰσθήσομαι, ᾐσθόμην, —, ᾔσθημαι, — % 15
-διαφέρω, διοίσω, διήνεγκα / διήνεγκον, διενήνοχα, διενήνεγμαι, διηνέχθην % 15 % PREFIXED
-εἰμί, ἔσομαι, —, —, —, — % 15
-ἔστι(ν), ἔσται, —, —, —, — % 15
-ἔξεστι(ν), ἐξέσται, —, —, —, — % 15
-ἕπομαι, ἕψομαι, ἑσπόμην, —, —, — % 15
-ὁράω, ὄψομαι, εἶδον, ἑόρᾱκα / ἑώρᾱκα, ἑώρᾱμαι / ὦμμαι, ὤφθην % 15 % CONSONANT_STEM_PERFECT_PI
-συμφέρω, συνοίσω, συνήνεγκα / συνήνεγκον, συνενήνοχα, συνενήνεγμαι, συνηνέχθην % 15 % PREFIXED
-φέρω, οἴσω, ἤνεγκα / ἤνεγκον, ἐνήνοχα, ἐνήνεγμαι, ἠνέχθην % 15
-ἀναβαίνω, ἀναβήσομαι, ἀνέβην, ἀναβέβηκα, —, — % 16 % PREFIXED
-βαίνω, -βήσομαι, -ἔβην, βέβηκα, —, — % 16
-γιγνώσκω, γνώσομαι, ἔγνων, ἔγνωκα, ἔγνωσμαι, ἐγνώσθην % 16
-ἐκπῑ́πτω, ἐκπεσοῦμαι, ἐξέπεσον, ἐκπέπτωκα, —, — % 16 % PREFIXED
-λέγω, ἐρῶ / λέξω, εἶπον / ἔλεξα, εἴρηκα, εἴρημαι / λέλεγμαι, ἐλέχθην / ἐρρήθην % 16 % CONSONANT_STEM_PERFECT_GAMMA
-νομίζω, νομιῶ, ἐνόμισα, νενόμικα, νενόμισμαι, ἐνομίσθην % 16
-πῑ́πτω, πεσοῦμαι, ἔπεσον, πέπτωκα, —, — % 16
-προδίδωμι, προδώσω, προέδωκα / προύδωκα, προδέδωκα, προδέδομαι, προεδόθην / προυδόθην % 16 % PREFIXED
-φημί, φήσω, ἔφησα, —, —, — % 16
-ἁμαρτάνω, ἁμαρτήσομαι, ἥμαρτον, ἡμάρτηκα, ἡμάρτημαι, ἡμαρτήθην % 17
-δοκέω, δόξω, ἔδοξα, —, δέδογμαι, -ἐδόχθην % 17
-δύναμαι, δυνήσομαι, —, —, δεδύνημαι, ἐδυνήθην % 17
-εἶμι, —, —, —, —, — % 17
-ἐλαύνω, ἐλῶ, ἤλασα, -ἐλήλακα, ἐλήλαμαι, ἠλάθην % 17
-ἐπίσταμαι, ἐπιστήσομαι, —, —, —, ἠπιστήθην % 17
-ἔχω, ἕξω / σχήσω, ἔσχον, ἔσχηκα, -ἔσχημαι, — % 17
-ἀποθνῄσκω, ἀποθανοῦμαι, ἀπέθανον, τέθνηκα, —, — % 18 % PREFIXED
-ἀποκτείνω, ἀποκτενῶ, ἀπέκτεινα, ἀπέκτονα, —, — % 18 % PREFIXED
-ἀφῑ́ημι, ἀφήσω, ἀφῆκα, ἀφεῖκα, ἀφεῖμαι, ἀφείθην % 18 % PREFIXED
-βουλεύω, βουλεύσω, ἐβούλευσα, βεβούλευκα, βεβούλευμαι, ἐβουλεύθην % 18
-ἐπιβουλεύω, ἐπιβουλεύσω, ἐπεβούλευσα, ἐπιβεβούλευκα, ἐπιβεβούλευμαι, ἐπεβουλεύθην % 18 % PREFIXED
-ζητέω, ζητήσω, ἐζήτησα, ἐζήτηκα, —, ἐζητήθην % 18
-ῑ̔́ημι, -ἥσω, -ἧκα, -εἷκα, -εἷμαι, -εἵθην % 18
-μέλλω, μελλήσω, ἐμέλλησα, —, —, — % 18
-πιστεύω, πιστεύσω, ἐπίστευσα, πεπίστευκα, πεπίστευμαι, ἐπιστεύθην % 18
-συμβουλεύω, συμβουλεύσω, συνεβούλευσα, συμβεβούλευκα, συμβεβούλευμαι, συνεβουλεύθην % 18 % PREFIXED
-συνῑ́ημι, συνήσω, συνῆκα, συνεῖκα, συνεῖμαι, συνείθην % 18 % PREFIXED
-αἰσχῡ́νομαι, αἰσχυνοῦμαι, —, —, ᾔσχυμμαι, ᾐσχύνθην % 19 % CONSONANT_STEM_PERFECT_NU
-ἀποκρῑ́νομαι, ἀποκρινοῦμαι, ἀπεκρῑνάμην, —, ἀποκέκριμαι, — % 19
-ἀπόλλῡμι, ἀπολῶ, ἀπώλεσα / ἀπωλόμην, ἀπολώλεκα / ἀπόλωλα, —, — % 19
-—, ἀνερήσομαι, ἀνηρόμην, —, —, — % 19
-—, ἐρήσομαι, ἠρόμην, —, —, — % 19
-εὑρίσκω, εὑρήσω, ηὗρον, ηὕρηκα, ηὕρημαι, ηὑρέθην % 19
-ἡγέομαι, ἡγήσομαι, ἡγησάμην, —, ἥγημαι, ἡγήθην % 19
-κρῑ́νω, κρινῶ, ἔκρῑνα, κέκρικα, κέκριμαι, ἐκρίθην % 19
-οἶδα, εἴσομαι, —, —, —, — % 19
-σύνοιδα, συνείσομαι, —, —, —, — % 19
-ἀφικνέομαι, ἀφίξομαι, ἀφῑκόμην, —, ἀφῖγμαι, — % 20 % PREFIXED
-δεῖ, δεήσει, ἐδέησε(ν), —, —, — % 20
-κεῖμαι, κείσομαι, —, —, —, — % 20
-πυνθάνομαι, πεύσομαι, ἐπυθόμην, —, πέπυσμαι, — % 20
-τρέπω, τρέψω, ἔτρεψα / ἐτραπόμην, τέτροφα, τέτραμμαι, ἐτράπην / ἐτρέφθην % 20 % CONSONANT_STEM_PERFECT_PI
-φαίνω, φανῶ, ἔφηνα, πέφηνα, πέφασμαι, ἐφάνην % 20 % CONSONANT_STEM_PERFECT_NU
-χρή, χρῆσται, —, —, —, — % 20
-"##;
+/*
+CREATE TABLE latinsynopsisresults ( id INTEGER PRIMARY KEY AUTOINCREMENT, updated INTEGER NOT NULL, sname TEXT NOT NULL,
+    advisor TEXT NOT NULL, sgiday INTEGER NOT NULL, selectedverb TEXT NOT NULL, pp TEXT NOT NULL, verbnumber TEXT NOT NULL,
+    verbperson TEXT NOT NULL, verbptcgender TEXT NOT NULL, verbptcnumber TEXT NOT NULL, verbptccase TEXT NOT NULL, ip TEXT NOT NULL,
+    ua TEXT NOT NULL, status INTEGER NOT NULL,
+    f0 TEXT NOT NULL, f1 TEXT NOT NULL, f2 TEXT NOT NULL, f3 TEXT NOT NULL, f4 TEXT NOT NULL, f5 TEXT NOT NULL, f6 TEXT NOT NULL, f7 TEXT NOT NULL,
+    f8 TEXT NOT NULL, f9 TEXT NOT NULL, f10 TEXT NOT NULL, f11 TEXT NOT NULL, f12 TEXT NOT NULL, f13 TEXT NOT NULL, f14 TEXT NOT NULL,
+    f15 TEXT NOT NULL, f16 TEXT NOT NULL, f17 TEXT NOT NULL, f18 TEXT NOT NULL, f19 TEXT NOT NULL, f20 TEXT NOT NULL, f21 TEXT NOT NULL,
+    f22 TEXT NOT NULL, f23 TEXT NOT NULL, f24 TEXT NOT NULL, f25 TEXT NOT NULL, f26 TEXT NOT NULL, f27 TEXT NOT NULL, f28 TEXT NOT NULL,
+    f29 TEXT NOT NULL, f30 TEXT NOT NULL, f31 TEXT NOT NULL, f32 TEXT NOT NULL, f33 TEXT NOT NULL, f34 TEXT NOT NULL, f35 TEXT NOT NULL);
+
+
+CREATE TABLE greeksynopsisresults ( id INTEGER PRIMARY KEY AUTOINCREMENT, updated INTEGER NOT NULL, sname TEXT NOT NULL, advisor TEXT NOT NULL, sgiday INTEGER NOT NULL, selectedverb TEXT NOT NULL, pp TEXT NOT NULL, verbnumber TEXT NOT NULL, verbperson TEXT NOT NULL, verbptcgender TEXT NOT NULL, verbptcnumber TEXT NOT NULL, verbptccase TEXT NOT NULL, ip TEXT NOT NULL, ua TEXT NOT NULL, status INTEGER NOT NULL, f0 TEXT NOT NULL, f1 TEXT NOT NULL, f2 TEXT NOT NULL, f3 TEXT NOT NULL, f4 TEXT NOT NULL, f5 TEXT NOT NULL, f6 TEXT NOT NULL, f7 TEXT NOT NULL, f8 TEXT NOT NULL, f9 TEXT NOT NULL, f10 TEXT NOT NULL, f11 TEXT NOT NULL, f12 TEXT NOT NULL, f13 TEXT NOT NULL, f14 TEXT NOT NULL, f15 TEXT NOT NULL, f16 TEXT NOT NULL, f17 TEXT NOT NULL, f18 TEXT NOT NULL, f19 TEXT NOT NULL, f20 TEXT NOT NULL, f21 TEXT NOT NULL, f22 TEXT NOT NULL, f23 TEXT NOT NULL, f24 TEXT NOT NULL, f25 TEXT NOT NULL, f26 TEXT NOT NULL, f27 TEXT NOT NULL, f28 TEXT NOT NULL, f29 TEXT NOT NULL, f30 TEXT NOT NULL, f31 TEXT NOT NULL, f32 TEXT NOT NULL, f33 TEXT NOT NULL, f34 TEXT NOT NULL, f35 TEXT NOT NULL, f36 TEXT NOT NULL, f37 TEXT NOT NULL, f38 TEXT NOT NULL, f39 TEXT NOT NULL, f40 TEXT NOT NULL, f41 TEXT NOT NULL, f42 TEXT NOT NULL, f43 TEXT NOT NULL, f44 TEXT NOT NULL, f45 TEXT NOT NULL, f46 TEXT NOT NULL, f47 TEXT NOT NULL, f48 TEXT NOT NULL, f49 TEXT NOT NULL, f50 TEXT NOT NULL, f51 TEXT NOT NULL, f52 TEXT NOT NULL, f53 TEXT NOT NULL, f54 TEXT NOT NULL, f55 TEXT NOT NULL, f56 TEXT NOT NULL, f57 TEXT NOT NULL, f58 TEXT NOT NULL, f59 TEXT NOT NULL, f60 TEXT NOT NULL, f61 TEXT NOT NULL, f62 TEXT NOT NULL);
+*/

@@ -49,9 +49,9 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use tantivy::collector::{Count, TopDocs};
 use tantivy::query::QueryParser;
-use tantivy::{Index, ReloadPolicy};
+use tantivy::{/*Index,*/ ReloadPolicy};
 
-use hoplite_verbs_rs::polytonic_greek::hgk_strip_diacritics;
+use hoplite_verbs_rs::hgk_strip_diacritics;
 
 /*
 {"error":"","wtprefix":"test1","nocache":"1","container":"test1Container","requestTime":"1635643672625","selectId":"32","page":"0","lastPage":"0","lastPageUp":"1","scroll":"32","query":"","arrOptions":[{"i":1,"r":["Α α",1,0]},{"i":2,"r":["ἀ-",2,0]},{"i":3,"r":["ἀ-",3,0]},{"i":4,"r":["ἆ",4,0]}...
@@ -564,9 +564,10 @@ async fn main() -> io::Result<()> {
     let db_log_path = std::env::var("PHILOLOGUS_LOG_DB_PATH").unwrap_or_else(|_| {
         panic!("Environment variable for sqlite log path not set: PHILOLOGUS_LOG_DB_PATH.")
     });
-    let tantivy_index_path = std::env::var("TANTIVY_INDEX_PATH").unwrap_or_else(|_| {
-        panic!("Environment variable for tantivy index path not set: TANTIVY_INDEX_PATH.")
-    });
+    // fix tantivy
+    // let tantivy_index_path = std::env::var("TANTIVY_INDEX_PATH").unwrap_or_else(|_| {
+    //     panic!("Environment variable for tantivy index path not set: TANTIVY_INDEX_PATH.")
+    // });
 
     /*
     //println!("blah {}", &"sqlite:///var/data/db.sqlite?mode=ro"[9..28]);
@@ -622,12 +623,14 @@ async fn main() -> io::Result<()> {
                 .handler(http::StatusCode::NOT_FOUND, api::not_found);
     */
 
-    let tantivy_index = Index::open_in_dir(tantivy_index_path).unwrap();
+    // fix tantivy
+    //let tantivy_index = Index::open_in_dir(tantivy_index_path).unwrap();
+
     //curl "https://philolog-us.onrender.com/db.sqlite.zip" -o "/var/data/db.sqlite" && cargo run --release
     HttpServer::new(move || {
         App::new()
             .app_data(load_verbs("pp.txt"))
-            .app_data(tantivy_index.clone())
+            //.app_data(tantivy_index.clone())
             .app_data(db_pool.clone())
             .app_data(db_log_pool.clone())
             //.wrap(middleware::Logger::default())

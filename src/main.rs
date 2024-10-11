@@ -49,7 +49,8 @@ use std::time::{SystemTime, UNIX_EPOCH};
 
 use tantivy::collector::{Count, TopDocs};
 use tantivy::query::QueryParser;
-use tantivy::{/*Index,*/ ReloadPolicy};
+use tantivy::schema::*;
+use tantivy::{Index, ReloadPolicy};
 
 use hoplite_verbs_rs::hgk_strip_diacritics;
 
@@ -210,7 +211,7 @@ async fn full_text_query(
 
     let reader = index
         .reader_builder()
-        .reload_policy(ReloadPolicy::OnCommit)
+        .reload_policy(ReloadPolicy::OnCommitWithDelay)
         .try_into()
         .unwrap();
 
@@ -246,7 +247,7 @@ async fn full_text_query(
         Ok(query) => match searcher.search(&query, &my_collector) {
             Ok((count, top_docs)) => {
                 for (_score, doc_address) in top_docs {
-                    match searcher.doc(doc_address) {
+                    match searcher.doc::<TantivyDocument>(doc_address) {
                         Ok(retrieved_doc) => {
                             let mut word_id_value: u32 = 0;
                             let mut lexicon_value: String = String::from("");
@@ -255,7 +256,7 @@ async fn full_text_query(
                                 match index.schema().get_field_name(field) {
                                     "lexicon" => {
                                         lexicon_value =
-                                            field_values[0].as_text().unwrap_or("").to_string()
+                                            field_values[0].as_str().unwrap_or("").to_string()
                                     }
                                     "word_id" => {
                                         word_id_value = field_values[0]
@@ -565,9 +566,9 @@ async fn main() -> io::Result<()> {
         panic!("Environment variable for sqlite log path not set: PHILOLOGUS_LOG_DB_PATH.")
     });
     // fix tantivy
-    // let tantivy_index_path = std::env::var("TANTIVY_INDEX_PATH").unwrap_or_else(|_| {
-    //     panic!("Environment variable for tantivy index path not set: TANTIVY_INDEX_PATH.")
-    // });
+    let tantivy_index_path = std::env::var("TANTIVY_INDEX_PATH").unwrap_or_else(|_| {
+        panic!("Environment variable for tantivy index path not set: TANTIVY_INDEX_PATH.")
+    });
 
     /*
     //println!("blah {}", &"sqlite:///var/data/db.sqlite?mode=ro"[9..28]);
@@ -624,13 +625,13 @@ async fn main() -> io::Result<()> {
     */
 
     // fix tantivy
-    //let tantivy_index = Index::open_in_dir(tantivy_index_path).unwrap();
+    let tantivy_index = Index::open_in_dir(tantivy_index_path).unwrap();
 
     //curl "https://philolog-us.onrender.com/db.sqlite.zip" -o "/var/data/db.sqlite" && cargo run --release
     HttpServer::new(move || {
         App::new()
             .app_data(load_verbs("pp.txt"))
-            //.app_data(tantivy_index.clone())
+            .app_data(tantivy_index.clone())
             .app_data(db_pool.clone())
             .app_data(db_log_pool.clone())
             //.wrap(middleware::Logger::default())
@@ -654,7 +655,7 @@ async fn main() -> io::Result<()> {
             .service(web::resource("/{lex}/item").route(web::get().to(philologus_defs)))
             .service(web::resource("/{lex}/ft/").route(web::get().to(full_text_query)))
             .service(web::resource("/{lex}/{word}").route(web::get().to(index))) // requesting page from a word link, order of services matters
-            .service(web::resource("/ft").route(web::get().to(full_text_query)))
+            .service(web::resource("/ft/").route(web::get().to(full_text_query)))
             .service(web::resource("/item").route(web::get().to(philologus_defs)))
             .service(web::resource("/query").route(web::get().to(philologus_words)))
             .service(web::resource("/healthzzz").route(web::get().to(health_check)))

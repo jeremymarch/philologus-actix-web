@@ -19,9 +19,10 @@ FROM gcr.io/distroless/cc-debian12
 COPY --from=build /usr/local/cargo/bin/philologus-actix-web /usr/local/bin/philologus-actix-web
 COPY --from=build /usr/src/philologus-actix-web/db.sqlite /usr/local/bin/db.sqlite
 COPY --from=build /usr/src/philologus-actix-web/static/ /usr/local/bin/static/
+# COPY --from=build /usr/src/philologus-actix-web/tantivy-data/ /usr/local/bin/tantivy-data/
 
 ENV PHILOLOGUS_DB_PATH=sqlite:///usr/local/bin/db.sqlite?mode=ro
-ENV PHILOLOGUS_LOG_DB_PATH=sqlite://log.sqlite?mode=rwc
+# ENV PHILOLOGUS_LOG_DB_PATH=sqlite://log.sqlite?mode=rwc
 
 # nb still need to call docker run with -p8088:8088
 EXPOSE 8088
@@ -40,3 +41,8 @@ CMD ["philologus-actix-web"]
 #   -p8088:8088 lets web page to be found in browser
 # az acr update -n <acr_name> --admin-enabled false # to add admin rights on acr
 # free container storage: https://container-registry.com/
+
+# https://stackoverflow.com/questions/78897082/difference-between-docker-buildx-build-and-docker-build-for-multi-arch-images
+# docker buildx create --name multi-platform-builder --driver docker-container --use
+# docker build --builder multi-platform-builder --platform=linux/amd64 -t philologus-actix-web .
+# or multiple targets: docker build --builder multi-platform-builder --platform=linux/amd64,linux/arm64 -t philologus-actix-web .

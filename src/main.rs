@@ -451,7 +451,7 @@ async fn philologus_defs(
     (info, req): (web::Query<DefRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
     let db = req.app_data::<SqlitePool>().unwrap();
-    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+    let update_db_option = req.app_data::<Option<SqliteUpdatePool>>().unwrap();
 
     let table = get_long_lex(info.lexicon.as_str());
 
@@ -493,15 +493,19 @@ async fn philologus_defs(
     } else {
         "".to_string()
     };
-    let _ = insert_log(
-        &db2.0,
-        time_stamp_ms,
-        lex,
-        def_row.seq,
-        ip.as_str(),
-        user_agent,
-    )
-    .await;
+
+    // only log request to db if env PHILOLOGUS_LOG_DB_PATH is set
+    if let Some(update_db) = update_db_option {
+        let _ = insert_log(
+            &update_db.0,
+            time_stamp_ms,
+            lex,
+            def_row.seq,
+            ip.as_str(),
+            user_agent,
+        )
+        .await;
+    }
 
     let def = add_bibl_links(&def_row.def);
 
@@ -562,9 +566,9 @@ async fn main() -> io::Result<()> {
     let db_path = std::env::var("PHILOLOGUS_DB_PATH").unwrap_or_else(|_| {
         panic!("Environment variable for sqlite path not set: PHILOLOGUS_DB_PATH.")
     });
-    let db_log_path = std::env::var("PHILOLOGUS_LOG_DB_PATH").unwrap_or_else(|_| {
-        panic!("Environment variable for sqlite log path not set: PHILOLOGUS_LOG_DB_PATH.")
-    });
+    // let db_log_path = std::env::var("PHILOLOGUS_LOG_DB_PATH").unwrap_or_else(|_| {
+    //     panic!("Environment variable for sqlite log path not set: PHILOLOGUS_LOG_DB_PATH.")
+    // });
     // fix tantivy
     let tantivy_index_path = std::env::var("TANTIVY_INDEX_PATH").unwrap_or_else(|_| {
         panic!("Environment variable for tantivy index path not set: TANTIVY_INDEX_PATH.")
@@ -601,14 +605,21 @@ async fn main() -> io::Result<()> {
         .await
         .expect("Could not connect to db.");
 
-    let db_log_pool = SqliteUpdatePool(
-        SqlitePool::connect(&db_log_path)
-            .await
-            .expect("Could not connect to update db."),
-    );
-    let query = "CREATE TABLE IF NOT EXISTS log (id integer primary key autoincrement, accessed integer, lexicon integer, word integer, ip text, agent text);";
-    let _ = sqlx::query(query).execute(&db_log_pool.0).await;
-
+    // if env PHILOLOGUS_LOG_DB_PATH is set, set up log db
+    let db_log_pool;
+    if let Ok(db_log_path) = std::env::var("PHILOLOGUS_LOG_DB_PATH") {
+        db_log_pool = Some(SqliteUpdatePool(
+            SqlitePool::connect(&db_log_path)
+                .await
+                .expect("Could not connect to update db."),
+        ));
+        if let Some(ref update_db) = db_log_pool {
+            let query = "CREATE TABLE IF NOT EXISTS log (id integer primary key autoincrement, accessed integer, lexicon integer, word integer, ip text, agent text);";
+            let _ = sqlx::query(query).execute(&update_db.0).await;
+        }
+    } else {
+        db_log_pool = None;
+    }
     /*
     https://github.com/SergioBenitez/Rocket/discussions/1989
     .journal_mode(SqliteJournalMode::Off)
@@ -884,11 +895,11 @@ mod tests {
             .await
             .expect("Could not connect to db.");
 
-        let db_pool2 = SqliteUpdatePool(
+        let db_pool2 = Some(SqliteUpdatePool(
             SqlitePool::connect(db_path)
                 .await
                 .expect("Could not connect to update db."),
-        );
+        ));
 
         let app = test::init_service(
             App::new()

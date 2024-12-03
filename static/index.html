@@ -1,821 +1,904 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
-<head>
+  <head>
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
     <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
-    <meta name="format-detection" content="telephone=no">
-    <meta name="viewport" content="width=device-width">
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="viewport" content="width=device-width" />
     <title>philolog.us</title>
-    <meta name="description"
-        content="Philologus is a fast, streamlined interface to the online Greek and Latin lexica hosted by the Perseus Project." />
-    <meta name="keywords"
-        content="Liddell Scott and Jones, Lewis and Short, Slater's Lexicon to Pindar, Perseus Project, Greek, Classical Greek, Ancient Greek, Latin, lexica, lexicon, dictionary, dendrea.org" />
+    <meta
+      name="description"
+      content="Philologus is a fast, streamlined interface to the online Greek and Latin lexica hosted by the Perseus Project."
+    />
+    <meta
+      name="keywords"
+      content="Liddell Scott and Jones, Lewis and Short, Slater's Lexicon to Pindar, Perseus Project, Greek, Classical Greek, Ancient Greek, Latin, lexica, lexicon, dictionary, dendrea.org"
+    />
     <script nonce="2726c7f26c" type="text/javascript">
-        'use strict';
-        function setTheme () {
-          const mode = window.localStorage.getItem('mode'); // use mode to override system dark mode
-          if ((window.matchMedia('(prefers-color-scheme: dark)').matches || mode === 'dark') && mode !== 'light') {
-            document.querySelector('HTML').classList.add('dark');
-          } else {
-            document.querySelector('HTML').classList.remove('dark');
-          }
+      "use strict";
+      function setTheme() {
+        const mode = window.localStorage.getItem("mode"); // use mode to override system dark mode
+        if (
+          (window.matchMedia("(prefers-color-scheme: dark)").matches ||
+            mode === "dark") &&
+          mode !== "light"
+        ) {
+          document.querySelector("HTML").classList.add("dark");
+        } else {
+          document.querySelector("HTML").classList.remove("dark");
         }
-        setTheme();
+      }
+      setTheme();
     </script>
     <style nonce="2726c7f26c">
-        /* try to use local NewAthenaUnicode before downloading from server;
+      /* try to use local NewAthenaUnicode before downloading from server;
         does not work in Safari https://stackoverflow.com/questions/59986432/safari-user-installed-fonts-dont-render */
-        @font-face {
-          font-family: 'WebNewAthenaUnicode';
-          src: local('NewAthenaUnicode'),
-            url('/newathu5_8.woff') format('woff'),
-            url('/newathu5_8.ttf') format('ttf');
-        }
+      @font-face {
+        font-family: "WebNewAthenaUnicode";
+        src:
+          local("NewAthenaUnicode"),
+          url("/newathu5_8.woff") format("woff"),
+          url("/newathu5_8.ttf") format("ttf");
+      }
 
-        #lemmataLangBtn {
-          font-family: helvetica, arial, sans-serif;
-          font-size: 11pt;
-          color: #545;
-          position: absolute;
-          background-color: #eee;
-          width: 30px;
-          height: 22px;
-          top: 68px;
-          left: 192px;
-          border-radius: 0px 10px 10px 0px;
-          text-align: center;
-          cursor: pointer;
-          display: flex;
-          justify-content: center;
-          align-items: center;
-        }
-        #lemmataLangBtn::before {
-          content: 'a-z';
-        }
-        .greekOn #lemmataLangBtn::before {
-          content: 'α-ω';
-        }
-        /*.greekOn #lemmataLangBtn {
+      #lemmataLangBtn {
+        font-family: helvetica, arial, sans-serif;
+        font-size: 11pt;
+        color: #545;
+        position: absolute;
+        background-color: #eee;
+        width: 30px;
+        height: 22px;
+        top: 68px;
+        left: 192px;
+        border-radius: 0px 10px 10px 0px;
+        text-align: center;
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+      }
+      #lemmataLangBtn::before {
+        content: "a-z";
+      }
+      .greekOn #lemmataLangBtn::before {
+        content: "α-ω";
+      }
+      /*.greekOn #lemmataLangBtn {
           color:white;
           background-color: #444;
         }*/
-        .dark #lemmataLangBtn {
-          color:white;
-          background-color: #444;
-
-        }
-        /*.dark.greekOn #lemmataLangBtn {
+      .dark #lemmataLangBtn {
+        color: white;
+        background-color: #444;
+      }
+      /*.dark.greekOn #lemmataLangBtn {
           color:white;
           background-color: rgb(57, 113, 234);
         }*/
 
-        .contactAbout {
-          text-align:left;
-          margin:10px;
-        }
-        .iosAbout {
-          text-align:center;
-          font-size:16pt;
-          padding-top:60px;
-        }
-        .settingsDarkMode {
-          text-align:right;
-          float:right;
-          padding:0px;
-          border:none;
-        }
-        #settingsDarkMode {
-          height:70px;
-        }
-        .fulltextresultheading {
-          font-size:14pt;
-          margin-top:6px;
-          margin-bottom:4px;
-        }
-        #attrib {
-          text-align:center;
-        }
-        .wordLemma {
-          font-size:20pt;
-          margin-bottom:16px;
-        }
-        .wordPPS {
-          margin-bottom:24px;
-        }
-        #itembody {
-          padding:10px 18px;
-        }
-        .titlerow {
-          width:100%;
-          display:flex;
-        }
-        #mesg {
-          display:none;
-          background-color:blue;
-          position:absolute;
-          z-index:999;
-          padding:10px;
-          left:10px;
-          bottom:10px;
-        }
-        BODY {
-            font-family: NewAthenaUnicode, WebNewAthenaUnicode, helvetica, arial, san-serif;
-            background-color: #eee;
-            padding: 0px;
-            margin: 0px;
-            text-align: center;
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
-        }
-        .dark BODY {
-            background-color: black;
-        }
-        BUTTON.lexitem {
-          cursor: pointer;
-        }
-        BUTTON {
-            border-style: none;
-        }
-        #hamburgercontainer {
-          position:absolute;
-          padding:0px;
-          margin:0px;
-          right:1rem;
-          bottom:0px;
-        }
-        #hamburger {
-            z-index: 999;
-            position: relative;
-        }
-        .ftrow {
-            border: 1px solid black;
-            margin-bottom: 10px;
-            padding: 10px;
-            border-radius: 8px;
-            max-height: 200px;
-            overflow: auto;
-        }
-        .dark .ftrow {
-            border: 1px solid white;
-        }
-        .wordtree input {
-            font-family: helvetica, arial;
-            font-size: 11pt;
-            padding: 12px 6px;
-        }
-        :root {
-            --author-color: #b10b0b;
-            --bib-color: #0c640c;
-            --author-color-dark: #f45757;
-            --bib-color-dark: #3dd171;
-            --ref-color: #9407b0;
-            --ref-color-dark:darkorange;
-            --gloss-color: black;
-            --foreign-color: blue;
-            --quote-color: blue;
-            --foreign-color-dark: #03a5fc;
-            --quote-color-dark: #03a5fc;
-            --attr-color: blue;
-            --attr-color-dark: #03a5fc;
+      .contactAbout {
+        text-align: left;
+        margin: 10px;
+      }
+      .iosAbout {
+        text-align: center;
+        font-size: 16pt;
+        padding-top: 60px;
+      }
+      .settingsDarkMode {
+        text-align: right;
+        float: right;
+        padding: 0px;
+        border: none;
+      }
+      #settingsDarkMode {
+        height: 70px;
+      }
+      .fulltextresultheading {
+        font-size: 14pt;
+        margin-top: 6px;
+        margin-bottom: 4px;
+      }
+      #attrib {
+        text-align: center;
+      }
+      .wordLemma {
+        font-size: 20pt;
+        margin-bottom: 16px;
+      }
+      .wordPPS {
+        margin-bottom: 24px;
+      }
+      #itembody {
+        padding: 10px 18px;
+      }
+      .titlerow {
+        width: 100%;
+        display: flex;
+      }
+      #mesg {
+        display: none;
+        background-color: blue;
+        position: absolute;
+        z-index: 999;
+        padding: 10px;
+        left: 10px;
+        bottom: 10px;
+      }
+      BODY {
+        font-family: NewAthenaUnicode, WebNewAthenaUnicode, helvetica, arial,
+          san-serif;
+        background-color: #eee;
+        padding: 0px;
+        margin: 0px;
+        text-align: center;
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+      }
+      .dark BODY {
+        background-color: black;
+      }
+      BUTTON.lexitem {
+        cursor: pointer;
+      }
+      BUTTON {
+        border-style: none;
+      }
+      #hamburgercontainer {
+        position: absolute;
+        padding: 0px;
+        margin: 0px;
+        right: 1rem;
+        bottom: 0px;
+      }
+      #hamburger {
+        z-index: 999;
+        position: relative;
+      }
+      .ftrow {
+        border: 1px solid black;
+        margin-bottom: 10px;
+        padding: 10px;
+        border-radius: 8px;
+        max-height: 200px;
+        overflow: auto;
+      }
+      .dark .ftrow {
+        border: 1px solid white;
+      }
+      .wordtree input {
+        font-family: helvetica, arial;
+        font-size: 11pt;
+        padding: 12px 6px;
+      }
+      :root {
+        --author-color: #b10b0b;
+        --bib-color: #0c640c;
+        --author-color-dark: #f45757;
+        --bib-color-dark: #3dd171;
+        --ref-color: #9407b0;
+        --ref-color-dark: darkorange;
+        --gloss-color: black;
+        --foreign-color: blue;
+        --quote-color: blue;
+        --foreign-color-dark: #03a5fc;
+        --quote-color-dark: #03a5fc;
+        --attr-color: blue;
+        --attr-color-dark: #03a5fc;
 
-            --author-weight: normal;
-            --bib-weight: normal;
-            --ref-weight: normal;
-            --gloss-weight: bold;
-            --foreign-weight: normal;
-            --quote-weight: normal;
-        }
-        .ftrowheaderlink {
-            color: blue;
-            cursor: pointer;
-        }
-        .dark .ftrowheaderlink {
-            color: #03a5fc;
-        }
-        .ftrowhead {
-            padding: 0px;
-            margin: 5px 0px;
-        }
-        .dark .fo {
-            color: blue;
-            color: var(--foreign-color-dark, blue);
-        }
-        .dark .qu {
-            color: blue;
-            color: var(--quote-color-dark, blue);
-        }
-        .fo {
-            color: blue;
-            color: var(--foreign-color, blue);
-        }
-        .qu {
-            color: blue;
-            color: var(--quote-color, blue);
-        }
-        .tr {
-            font-weight: bold;
-        }
-        .au {
-            color: #ac1b1b;
-            color: var(--author-color, #ac1b1b);
-        }
-        .dark .au {
-            color: #f45757;
-            color: var(--author-color-dark, #f45757);
-        }
-        .bi {
-            color: #0c640c;
-            color: var(--bib-color, #0c640c);
-        }
-        .dark .bi {
-            color: #3dd171;
-            color: var(--bib-color-dark, #3dd171);
-        }
-        .ti {
-            color: #8b22a0;
-            color: var(--ref-color, #8b22a0);
-        }
-        .dark .ti {
-            color: darkorange;
-            color: var(--ref-color-dark, darkorange);
-        }
-        .biblLink {
-            color: #0c640c;
-            color: var(--bib-color, #0c640c);
-        }
-        .dark .biblLink {
-            color: #3dd171;
-            color: var(--bib-color-dark, #3dd171);
-        }
-        .attrlink {
-            color: blue;
-            color: var(--attr-color, blue);
-        }
-        .dark .attrlink {
-            color: #03a5fc;
-            color: var(--attr-color-dark, #03a5fc);
-        }
-        .storelink {
-            color: blue;
-        }
-        .dark .storelink {
-            color: #03a5fc;
-        }
-        .qu:before {
-            content: '\"';
-        }
-        .qu:after {
-            content: '\"';
-        }
-        .label {
-            font-weight: bold;
-            position: absolute;
-            left: -36px;
-        }
-        .label:after {
-            content: ' ';
-        }
-        .orth {
-            font-weight: bold;
-        }
-        #hamburger {
-            background-color: white;
-            border: 1px solid #666;
-            border-radius: 4px;
-            cursor: pointer;
-            height: 30px;
-            width: 30px;
-        }
-        #hamburger rect {
-            fill: black;
-        }
-        .historytitle {
-            text-align: center;
-            background-color: #444;
-            color: white;
-            height: 20px;
-            border-radius: 4px;
-            font-size: 9pt;
-            font-family: helvetica, arial, sans-serif;
-            flex-grow: 1;
-            flex-basis: auto;
-            margin: 0px 2px;
-            margin-bottom: 0px;
-            margin-bottom: 2px;
-            line-height: 1.6;
-        }
-        .dark .historytitle {
-          background-color: white;
-            color: black;
-        }
-        .lexitem {
-            text-align: center;
-            background-color: white;
-            color: black;
-            height:20px;
-            border-radius:4px;
-            font-size: 9pt;
-            font-family: helvetica, arial, sans-serif;
-            flex-grow:1;
-            flex-basis: auto;
-            margin: 0px 2px;
-            margin-bottom:2px;
-        }
-        .lexselected,
-        .searchselected {
-            background-color: #444;
-            color: white;
-        }
-        .dark .lexselected,
-        .dark .searchselected {
-            background-color: #444;
-            color: white;
-            border: 1px solid white;
-        }
-        .menulink:link {
-            color: black;
-            text-decoration: none;
-        }
-        .menulink:visited {
-            color: black;
-            text-decoration: none;
-        }
-        .menulink:hover {
-            color: black;
-            text-decoration: none;
-        }
-        .menulink:active {
-            color: black;
-            text-decoration: none;
-        }
-        .dark .menulink:link {
-            color: white;
-        }
-        .dark .menulink:visited {
-            color: white;
-        }
-        .dark .menulink:hover {
-            color: white;
-        }
-        .dark .menulink:active {
-            color: white;
-        }
-        #settingsdiv {
-          display:none;
-        }
-        #settingsdiv .settingsItem {
-            background-color: white;
-            color: black;
-            display: block;
-            padding: 6px 10px;
-            cursor: pointer;
-            border: 2px solid white;
-        }
-        #settingsdiv .settingsItem:hover {
-            border: 2px solid black;
-        }
-        #settingsdiv div:focus {
-            border: 2px solid black;
-            outline: 0px solid black;
-        }
-        .dark #settingsdiv .settingsItem {
-            background-color: black;
-            color: white;
-            display: block;
-            padding: 6px 10px;
-            cursor: pointer;
-            border: 2px solid black;
-        }
-        .dark #settingsdiv .settingsItem:hover {
-            border: 2px solid white;
-        }
-        .dark #settingsdiv div:focus {
-            border: 2px solid white;
-            outline: 0px solid white;
-        }
-        .settingsOn #settingsdiv {
-          display:block;
-        }
-        .settingsOn #backdrop {
-          display:block;
-        }
-        .menucell {
-            text-align: center;
-            width: 25%;
-            white-space: nowrap;
-        }
-        .biblLink:link {
-            text-decoration: none;
-        }
-        .biblLink:visited {
-            text-decoration: none;
-        }
-        .biblLink:hover {
-            text-decoration: underline;
-        }
-        .biblLink:active {
-            text-decoration: none;
-        }
-        .bi {
-            text-decoration: none;
-        }
-        HTML {
-            overflow: hidden;
-            width: 100%;
-            height: 100%;
-        }
-        body,html {
-            position: fixed;
-        }
-        .l1 {
-            margin-left: 36px;
-            position: relative;
-        }
-        .l2 {
-            margin-left: 72px;
-            position: relative;
-        }
-        .l3 {
-            margin-left: 108px;
-            position: relative;
-        }
-        .l4 {
-            margin-left: 144px;
-            position: relative;
-        }
-        .l5 {
-            margin-left: 180px;
-            position: relative;
-        }
-        .body {
-            line-height: 1.2;
-            margin: 8px 0px;
-        }
-        #logocontainer {
-          z-index: 999;
-          position:absolute;
-          top:0px;
-          right:0px;
-          height:52px;
-          width:243px;
-          margin:0px;
-          padding:0px;
-        }
-        #logo {
-            color: black;
-            margin:0px;
-            padding:0px;
-            position:absolute;
-            bottom:0px;
-            left:0px;
-            font-size:28pt;
-            font-family:helvetica,arial,sans-serif;
-        }
-        .nodestyle {
-            /*
+        --author-weight: normal;
+        --bib-weight: normal;
+        --ref-weight: normal;
+        --gloss-weight: bold;
+        --foreign-weight: normal;
+        --quote-weight: normal;
+      }
+      .ftrowheaderlink {
+        color: blue;
+        cursor: pointer;
+      }
+      .dark .ftrowheaderlink {
+        color: #03a5fc;
+      }
+      .ftrowhead {
+        padding: 0px;
+        margin: 5px 0px;
+      }
+      .dark .fo {
+        color: blue;
+        color: var(--foreign-color-dark, blue);
+      }
+      .dark .qu {
+        color: blue;
+        color: var(--quote-color-dark, blue);
+      }
+      .fo {
+        color: blue;
+        color: var(--foreign-color, blue);
+      }
+      .qu {
+        color: blue;
+        color: var(--quote-color, blue);
+      }
+      .tr {
+        font-weight: bold;
+      }
+      .au {
+        color: #ac1b1b;
+        color: var(--author-color, #ac1b1b);
+      }
+      .dark .au {
+        color: #f45757;
+        color: var(--author-color-dark, #f45757);
+      }
+      .bi {
+        color: #0c640c;
+        color: var(--bib-color, #0c640c);
+      }
+      .dark .bi {
+        color: #3dd171;
+        color: var(--bib-color-dark, #3dd171);
+      }
+      .ti {
+        color: #8b22a0;
+        color: var(--ref-color, #8b22a0);
+      }
+      .dark .ti {
+        color: darkorange;
+        color: var(--ref-color-dark, darkorange);
+      }
+      .biblLink {
+        color: #0c640c;
+        color: var(--bib-color, #0c640c);
+      }
+      .dark .biblLink {
+        color: #3dd171;
+        color: var(--bib-color-dark, #3dd171);
+      }
+      .attrlink {
+        color: blue;
+        color: var(--attr-color, blue);
+      }
+      .dark .attrlink {
+        color: #03a5fc;
+        color: var(--attr-color-dark, #03a5fc);
+      }
+      .storelink {
+        color: blue;
+      }
+      .dark .storelink {
+        color: #03a5fc;
+      }
+      .qu:before {
+        content: '"';
+      }
+      .qu:after {
+        content: '"';
+      }
+      .label {
+        font-weight: bold;
+        position: absolute;
+        left: -36px;
+      }
+      .label:after {
+        content: " ";
+      }
+      .orth {
+        font-weight: bold;
+      }
+      #hamburger {
+        background-color: white;
+        border: 1px solid #666;
+        border-radius: 4px;
+        cursor: pointer;
+        height: 30px;
+        width: 30px;
+      }
+      #hamburger rect {
+        fill: black;
+      }
+      .historytitle {
+        text-align: center;
+        background-color: #444;
+        color: white;
+        height: 20px;
+        border-radius: 4px;
+        font-size: 9pt;
+        font-family: helvetica, arial, sans-serif;
+        flex-grow: 1;
+        flex-basis: auto;
+        margin: 0px 2px;
+        margin-bottom: 0px;
+        margin-bottom: 2px;
+        line-height: 1.6;
+      }
+      .dark .historytitle {
+        background-color: white;
+        color: black;
+      }
+      .lexitem {
+        text-align: center;
+        background-color: white;
+        color: black;
+        height: 20px;
+        border-radius: 4px;
+        font-size: 9pt;
+        font-family: helvetica, arial, sans-serif;
+        flex-grow: 1;
+        flex-basis: auto;
+        margin: 0px 2px;
+        margin-bottom: 2px;
+      }
+      .lexselected,
+      .searchselected {
+        background-color: #444;
+        color: white;
+      }
+      .dark .lexselected,
+      .dark .searchselected {
+        background-color: #444;
+        color: white;
+        border: 1px solid white;
+      }
+      .menulink:link {
+        color: black;
+        text-decoration: none;
+      }
+      .menulink:visited {
+        color: black;
+        text-decoration: none;
+      }
+      .menulink:hover {
+        color: black;
+        text-decoration: none;
+      }
+      .menulink:active {
+        color: black;
+        text-decoration: none;
+      }
+      .dark .menulink:link {
+        color: white;
+      }
+      .dark .menulink:visited {
+        color: white;
+      }
+      .dark .menulink:hover {
+        color: white;
+      }
+      .dark .menulink:active {
+        color: white;
+      }
+      #settingsdiv {
+        display: none;
+      }
+      #settingsdiv .settingsItem {
+        background-color: white;
+        color: black;
+        display: block;
+        padding: 6px 10px;
+        cursor: pointer;
+        border: 2px solid white;
+      }
+      #settingsdiv .settingsItem:hover {
+        border: 2px solid black;
+      }
+      #settingsdiv div:focus {
+        border: 2px solid black;
+        outline: 0px solid black;
+      }
+      .dark #settingsdiv .settingsItem {
+        background-color: black;
+        color: white;
+        display: block;
+        padding: 6px 10px;
+        cursor: pointer;
+        border: 2px solid black;
+      }
+      .dark #settingsdiv .settingsItem:hover {
+        border: 2px solid white;
+      }
+      .dark #settingsdiv div:focus {
+        border: 2px solid white;
+        outline: 0px solid white;
+      }
+      .settingsOn #settingsdiv {
+        display: block;
+      }
+      .settingsOn #backdrop {
+        display: block;
+      }
+      .menucell {
+        text-align: center;
+        width: 25%;
+        white-space: nowrap;
+      }
+      .biblLink:link {
+        text-decoration: none;
+      }
+      .biblLink:visited {
+        text-decoration: none;
+      }
+      .biblLink:hover {
+        text-decoration: underline;
+      }
+      .biblLink:active {
+        text-decoration: none;
+      }
+      .bi {
+        text-decoration: none;
+      }
+      HTML {
+        overflow: hidden;
+        width: 100%;
+        height: 100%;
+      }
+      body,
+      html {
+        position: fixed;
+      }
+      .l1 {
+        margin-left: 36px;
+        position: relative;
+      }
+      .l2 {
+        margin-left: 72px;
+        position: relative;
+      }
+      .l3 {
+        margin-left: 108px;
+        position: relative;
+      }
+      .l4 {
+        margin-left: 144px;
+        position: relative;
+      }
+      .l5 {
+        margin-left: 180px;
+        position: relative;
+      }
+      .body {
+        line-height: 1.2;
+        margin: 8px 0px;
+      }
+      #logocontainer {
+        z-index: 999;
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        height: 52px;
+        width: 243px;
+        margin: 0px;
+        padding: 0px;
+      }
+      #logo {
+        color: black;
+        margin: 0px;
+        padding: 0px;
+        position: absolute;
+        bottom: 0px;
+        left: 0px;
+        font-size: 28pt;
+        font-family: helvetica, arial, sans-serif;
+      }
+      .nodestyle {
+        /*
             margin: 0px;
             position: relative;
             width: calc(100% - 10px);
             background-color: white;
             */
-            line-height: 32px;
-            height: 30px;
-            white-space: nowrap;
-            overflow: hidden;
-            padding-left:6px;
-        }
-        /* .nodestylecol {
+        line-height: 32px;
+        height: 30px;
+        white-space: nowrap;
+        overflow: hidden;
+        padding-left: 6px;
+      }
+      /* .nodestylecol {
 
         } */
-        .selectedRowClass {
-            background-color: #31408e;
-            color: white;
+      .selectedRowClass {
+        background-color: #31408e;
+        color: white;
+      }
+      .WordContainer {
+        position: relative;
+        left: 11px;
+        overflow: auto;
+        padding-top: 2px;
+        font-size: 12pt;
+        font-weight: normal;
+        -ms-overflow-style: none;
+        /* IE and Edge */
+        scrollbar-width: none;
+        /* Firefox */
+      }
+      /* Hide scrollbar for Chrome, Safari and Opera */
+      .WordContainer::-webkit-scrollbar {
+        display: none;
+      }
+      .wordtree {
+        margin: 0px;
+        background-color: white;
+        text-align: left;
+        position: relative;
+        border-radius: 14px;
+      }
+      .wordtree input {
+        position: absolute;
+        top: 40px;
+        left: 8px;
+        border-radius: 13px;
+        border: 2px solid black;
+        padding-left: 6px;
+        height: 22px;
+      }
+      .orangetext {
+        color: orange;
+      }
+      .greentext {
+        color: green;
+      }
+      .bluetext {
+        color: blue;
+      }
+      .redtext {
+        color: red;
+      }
+      .boldtext {
+        font-weight: bold;
+      }
+      .blacktext {
+        color: black;
+      }
+      .attrlink {
+        color: blue;
+      }
+      #openHistory {
+        color: black;
+        position: fixed;
+        top: 50%;
+        right: 0px;
+        writing-mode: vertical-lr;
+        background-color: white;
+        cursor: pointer;
+        padding: 10px 2px;
+        font-family: helvetica;
+        font-size: 10pt;
+        z-index: 900;
+        border-radius: 4px;
+        display: none;
+      }
+      .lds-spinner {
+        color: official;
+        display: inline-block;
+        position: relative;
+        width: 18px;
+        height: 18px;
+      }
+      .lds-spinner div {
+        transform-origin: 40px 40px;
+        animation: lds-spinner 1.2s linear infinite;
+      }
+      .lds-spinner div:after {
+        content: " ";
+        display: block;
+        position: absolute;
+        top: 28px;
+        left: 39.5px;
+        width: 2px;
+        height: 6px;
+        /*border-radius: 20%;*/
+        background: red;
+      }
+      .lds-spinner div:nth-child(1) {
+        transform: rotate(0deg);
+        animation-delay: -1.1s;
+      }
+      .lds-spinner div:nth-child(2) {
+        transform: rotate(30deg);
+        animation-delay: -1s;
+      }
+      .lds-spinner div:nth-child(3) {
+        transform: rotate(60deg);
+        animation-delay: -0.9s;
+      }
+      .lds-spinner div:nth-child(4) {
+        transform: rotate(90deg);
+        animation-delay: -0.8s;
+      }
+      .lds-spinner div:nth-child(5) {
+        transform: rotate(120deg);
+        animation-delay: -0.7s;
+      }
+      .lds-spinner div:nth-child(6) {
+        transform: rotate(150deg);
+        animation-delay: -0.6s;
+      }
+      .lds-spinner div:nth-child(7) {
+        transform: rotate(180deg);
+        animation-delay: -0.5s;
+      }
+      .lds-spinner div:nth-child(8) {
+        transform: rotate(210deg);
+        animation-delay: -0.4s;
+      }
+      .lds-spinner div:nth-child(9) {
+        transform: rotate(240deg);
+        animation-delay: -0.3s;
+      }
+      .lds-spinner div:nth-child(10) {
+        transform: rotate(270deg);
+        animation-delay: -0.2s;
+      }
+      .lds-spinner div:nth-child(11) {
+        transform: rotate(300deg);
+        animation-delay: -0.1s;
+      }
+      .lds-spinner div:nth-child(12) {
+        transform: rotate(330deg);
+        animation-delay: 0s;
+      }
+      @keyframes lds-spinner {
+        0% {
+          opacity: 1;
         }
-        .WordContainer {
-            position: relative;
-            left: 11px;
-            overflow: auto;
-            padding-top: 2px;
-            font-size: 12pt;
-            font-weight: normal;
-            -ms-overflow-style: none;
-            /* IE and Edge */
-            scrollbar-width: none;
-            /* Firefox */
+        100% {
+          opacity: 0;
         }
-        /* Hide scrollbar for Chrome, Safari and Opera */
-        .WordContainer::-webkit-scrollbar {
-            display: none;
-        }
-        .wordtree {
-            margin: 0px;
-            background-color: white;
-            text-align: left;
-            position: relative;
-            border-radius: 14px;
+      }
+      #settingsdiv ul {
+        list-style-type: none;
+        margin: 0px;
+        padding: 0px;
+        text-align: left;
+      }
+      .settings {
+        position: absolute;
+        top: 70px;
+        right: 11px;
+        height: 240px; /*height: 274px;//for sponsor button*/
+        width: 230px;
+        z-index: 999;
+        padding: 10px;
+      }
+      #settingsdiv {
+        background-color: white;
+        color: black;
+        border: 2px solid black;
+        border-radius: 10px;
+      }
+      .dark #settingsdiv {
+        background-color: black;
+        color: white;
+        border: 2px solid white;
+      }
+      .dark #settingsdiv li {
+        color: white;
+      }
+      .dark #hamburger {
+        background-color: black;
+      }
+      .dark #hamburger rect {
+        fill: white;
+      }
+      .dark .lds-spinner div:after {
+        background: #fff;
+      }
+      .dark #logo {
+        color: white;
+      }
+      .dark .wordtree {
+        background-color: #202124;
+      }
+      .dark .wordtree .nodestyle {
+        background-color: #202124;
+        color: white;
+        border: 1px solid #202124;
+      }
+      .dark .nodestyle.selectedRowClass {
+        background-color: #444;
+        border: 1px solid white;
+        color: white;
+      }
+      .dark .wordtree input {
+        background-color: #202124;
+        border: 2px solid white;
+        color: white;
+      }
+      #backdrop {
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        width: 100%;
+        height: 100%;
+        z-index: 900;
+        display: none;
+      }
+      #leftlist {
+        background-color: white;
+        position: absolute;
+        top: 0px;
+        left: 0px;
+        height: calc(100% - 2rem);
+        width: 279px;
+        margin: 1rem;
+        border-radius: 14px;
+      }
+      .dark #leftlist {
+        background-color: #202124;
+      }
+      #outerbody {
+        background-color: white;
+        border-radius: 14px;
+        position: relative;
+        z-index: 1;
+        top: 70px;
+        margin-left: 308px;
+        margin-right: 1rem;
+        overflow: hidden;
+        height: calc(100% - 84px);
+        text-align: left;
+      }
+      .dark #outerbody {
+        color: white;
+        background-color: #202124;
+      }
+      #innerbody {
+        position: relative;
+        z-index: 2;
+        margin: 0px;
+        padding: 10px;
+        overflow: auto;
+        height: calc(100% - 20px);
+      }
+      LABEL {
+        color: black;
+      }
+      .dark LABEL {
+        color: white;
+      }
+      * {
+        box-sizing: border-box;
+      }
 
-        }
-        .wordtree input {
-            position: absolute;
-            top: 40px;
-            left: 8px;
-            border-radius: 13px;
-            border: 2px solid black;
-            padding-left: 6px;
-            height: 22px;
-        }
-        .orangetext {
-            color: orange;
-        }
-        .greentext {
-            color: green;
-        }
-        .bluetext {
-            color: blue;
-        }
-        .redtext {
-            color: red;
-        }
-        .boldtext {
-            font-weight: bold;
-        }
-        .blacktext {
-            color: black;
-        }
-        .attrlink {
-            color: blue;
-        }
-        #openHistory {
-            color: black;
-            position: fixed;
-            top: 50%;
-            right: 0px;
-            writing-mode: vertical-lr;
-            background-color: white;
-            cursor: pointer;
-            padding: 10px 2px;
-            font-family: helvetica;
-            font-size: 10pt;
-            z-index: 900;
-            border-radius: 4px;
-            display: none;
-        }
-        .lds-spinner {
-            color: official;
-            display: inline-block;
-            position: relative;
-            width: 18px;
-            height: 18px;
-        }
-        .lds-spinner div {
-            transform-origin: 40px 40px;
-            animation: lds-spinner 1.2s linear infinite;
-        }
-        .lds-spinner div:after {
-            content: " ";
-            display: block;
-            position: absolute;
-            top: 28px;
-            left: 39.5px;
-            width: 2px;
-            height: 6px;
-            /*border-radius: 20%;*/
-            background: red;
-        }
-        .lds-spinner div:nth-child(1) {transform: rotate(0deg);animation-delay: -1.1s;}
-        .lds-spinner div:nth-child(2) {transform: rotate(30deg);animation-delay: -1s;}
-        .lds-spinner div:nth-child(3) {transform: rotate(60deg);animation-delay: -0.9s;}
-        .lds-spinner div:nth-child(4) {transform: rotate(90deg);animation-delay: -0.8s;}
-        .lds-spinner div:nth-child(5) {transform: rotate(120deg);animation-delay: -0.7s;}
-        .lds-spinner div:nth-child(6) {transform: rotate(150deg);animation-delay: -0.6s;}
-        .lds-spinner div:nth-child(7) {transform: rotate(180deg);animation-delay: -0.5s;}
-        .lds-spinner div:nth-child(8) {transform: rotate(210deg);animation-delay: -0.4s;}
-        .lds-spinner div:nth-child(9) {transform: rotate(240deg);animation-delay: -0.3s;}
-        .lds-spinner div:nth-child(10) {transform: rotate(270deg);animation-delay: -0.2s;}
-        .lds-spinner div:nth-child(11) {transform: rotate(300deg);animation-delay: -0.1s;}
-        .lds-spinner div:nth-child(12) {transform: rotate(330deg);animation-delay: 0s;}
-        @keyframes lds-spinner {
-            0% { opacity: 1; }
-            100% { opacity: 0; }
-        }
-        #settingsdiv ul {
-            list-style-type: none;
-            margin: 0px;
-            padding: 0px;
-            text-align: left;
-        }
-        .settings {
-            position: absolute;
-            top: 70px;
-            right: 11px;
-            height: 234px; /*height: 274px;//for sponsor button*/
-            width: 230px;
-            z-index: 999;
-            padding: 10px;
-        }
-        #settingsdiv {
-            background-color: white;
-            color: black;
-            border: 2px solid black;
-            border-radius: 10px;
-        }
-        .dark #settingsdiv {
-            background-color: black;
-            color: white;
-            border: 2px solid white;
-        }
-        .dark #settingsdiv li {
-            color: white;
-        }
-        .dark #hamburger {
-            background-color: black;
-        }
-        .dark #hamburger rect {
-            fill: white;
-        }
-        .dark .lds-spinner div:after {
-            background: #fff;
-        }
-        .dark #logo {
-            color: white;
-        }
-        .dark .wordtree {
-            background-color: #202124;
-        }
-        .dark .wordtree .nodestyle {
-            background-color: #202124;
-            color: white;
-            border:1px solid #202124;
-        }
-        .dark .nodestyle.selectedRowClass {
-            background-color: #444;
-            border: 1px solid white;
-            color: white;
-        }
-        .dark .wordtree input {
-            background-color: #202124;
-            border: 2px solid white;
-            color: white;
-        }
-        #backdrop {
-            position: absolute;
-            top: 0px;
-            left: 0px;
-            width: 100%;
-            height: 100%;
-            z-index: 900;
-            display:none;
-        }
-        #leftlist {
-            background-color: white;
-            position:absolute;
-            top:0px;
-            left:0px;
-            height:calc(100% - 2rem);
-            width:279px;
-            margin:1rem;
-            border-radius: 14px;
-        }
-        .dark #leftlist {
-            background-color: #202124;
-        }
-        #outerbody {
-          background-color: white;
-            border-radius: 14px;
-            position: relative;
-            z-index: 1;
-            top: 70px;
-            margin-left: 308px;
-            margin-right: 1rem;
-            overflow: hidden;
-            height: calc(100% - 84px);
-            text-align: left;
-        }
-        .dark #outerbody {
-            color: white;
-            background-color: #202124;
-        }
-        #innerbody {
-            position: relative;
-            z-index: 2;
-            margin: 0px;
-            padding: 10px;
-            overflow: auto;
-            height: calc(100% - 20px);
-        }
-        LABEL {
-            color: black;
-        }
-        .dark LABEL {
-            color: white;
-        }
-        * {
-            box-sizing: border-box;
-        }
-
-        #ftPrev, #ftNext {
-          color:blue;
-          cursor: pointer;
-        }
-        .dark #ftPrev, .dark #ftNext {
-          color: blue;
-          color: var(--foreign-color-dark, blue);
-        }
-        #rightlistHandleInner {
-          color:black;
-        }
-        .dark #rightlistHandleInner {
-          color:white;
-        }
-        #rightlistHandle {
-          height: 40px;
-          width: 1rem;
-          border-left: 1px solid #444;
-          border-top: 1px solid #444;
-          border-bottom: 1px solid #444;
-          border-radius: 6px;
-          cursor: pointer;
-          position: absolute;
-          top: 50%;
-          right: -3px;
-          z-index: 999;
-          display: flex;
-          align-items: center;
-        }
-        #rightlist {
-          position:absolute;
-          top:69px;
-          width:260px;
-          height:500px;
-          transition: .5s;
-          right:-260px;
-        }
-        .showHistory #rightlist {
-          transition: .5s;
-          right:20px;
-        }
-        #outerbody {
-          transition: .5s;
-          margin-right: 1rem;
-        }
-        .showHistory #outerbody {
-          transition: .5s;
-          margin-right: 282px;
-        }
-        #sponsorbutton {
-          box-sizing:content-box;
-          padding: 4px;
-          margin: 4px;
-          margin-top: 14px;
-          background-color: black;
-          border: 0px;
-        }
-        #sponsorbuttonli {
-          text-align: center;
-        }
+      #ftPrev,
+      #ftNext {
+        color: blue;
+        cursor: pointer;
+      }
+      .dark #ftPrev,
+      .dark #ftNext {
+        color: blue;
+        color: var(--foreign-color-dark, blue);
+      }
+      #rightlistHandleInner {
+        color: black;
+      }
+      .dark #rightlistHandleInner {
+        color: white;
+      }
+      #rightlistHandle {
+        height: 40px;
+        width: 1rem;
+        border-left: 1px solid #444;
+        border-top: 1px solid #444;
+        border-bottom: 1px solid #444;
+        border-radius: 6px;
+        cursor: pointer;
+        position: absolute;
+        top: 50%;
+        right: -3px;
+        z-index: 999;
+        display: flex;
+        align-items: center;
+      }
+      #rightlist {
+        position: absolute;
+        top: 69px;
+        width: 260px;
+        height: 500px;
+        transition: 0.5s;
+        right: -260px;
+      }
+      .showHistory #rightlist {
+        transition: 0.5s;
+        right: 20px;
+      }
+      #outerbody {
+        transition: 0.5s;
+        margin-right: 1rem;
+      }
+      .showHistory #outerbody {
+        transition: 0.5s;
+        margin-right: 282px;
+      }
+      #sponsorbutton {
+        box-sizing: content-box;
+        padding: 4px;
+        margin: 4px;
+        margin-top: 14px;
+        background-color: black;
+        border: 0px;
+      }
+      #sponsorbuttonli {
+        text-align: center;
+      }
     </style>
-</head>
-<body>
+  </head>
+  <body>
     <div id="leftlist"></div>
-    <div id="rightlistHandle" tabIndex="0">
+    <div id="rightlistHandle" tabindex="0">
       <div id="rightlistHandleInner">&lt;</div>
     </div>
     <div id="rightlist"></div>
     <div id="outerbody">
-        <div id="innerbody"></div>
+      <div id="innerbody"></div>
     </div>
     <div id="logocontainer">
-        <div id="logo">philolog.us</div>
-        <div id="hamburgercontainer">
-            <svg id="hamburger" viewBox="0 0 120 120">
-                <rect x="10" y="30" width="100" height="12"></rect>
-                <rect x="10" y="56" width="100" height="12"></rect>
-                <rect x="10" y="82" width="100" height="12"></rect>
-            </svg>
-        </div>
+      <div id="logo">philolog.us</div>
+      <div id="hamburgercontainer">
+        <svg id="hamburger" viewBox="0 0 120 120">
+          <rect x="10" y="30" width="100" height="12"></rect>
+          <rect x="10" y="56" width="100" height="12"></rect>
+          <rect x="10" y="82" width="100" height="12"></rect>
+        </svg>
+      </div>
     </div>
     <div id="settingsdiv" class="settings">
-      Settings<br>
+      Settings<br />
       <ul>
         <li>
-          <div id='aboutButton' tabindex='0' class='menulink settingsItem'>about</div>
+          <div id="aboutButton" tabindex="0" class="menulink settingsItem">
+            about
+          </div>
         </li>
         <li>
-          <div id='iOSButton' tabindex='0' class='menulink settingsItem'>iOS/Android app</div>
+          <div id="supportButton" tabindex="0" class="menulink settingsItem">
+            support
+          </div>
+        </li>
+        <li>
+          <div id="iOSButton" tabindex="0" class="menulink settingsItem">
+            iOS/Android app
+          </div>
         </li>
         <!--<li><div id='configureButton' tabindex='0' class='menulink settingsItem'>configure</div></li>-->
         <li>
-          <div id='toggleHistoryButton' tabindex='0' class='menulink settingsItem'>show/hide history</div>
+          <div
+            id="toggleHistoryButton"
+            tabindex="0"
+            class="menulink settingsItem"
+          >
+            show/hide history
+          </div>
         </li>
         <li>
-          <div id="settingsDarkMode" tabindex='0' class="settingsItem">dark mode:
-            <div class='settingsDarkMode'>
-              <label for='darkModeSystem'>system</label>
-              <input id='darkModeSystem' type='radio' name='darkmode' value='system'/><br>
-              <label for='darkModeDark'>dark</label>
-              <input id='darkModeDark' type='radio' name='darkmode' value='dark'/><br>
-              <label for='darkModeLight'>light</label><input id='darkModeLight' type='radio' name='darkmode' value='light'/>
+          <div id="settingsDarkMode" tabindex="0" class="settingsItem">
+            dark mode:
+            <div class="settingsDarkMode">
+              <label for="darkModeSystem">system</label>
+              <input
+                id="darkModeSystem"
+                type="radio"
+                name="darkmode"
+                value="system"
+              /><br />
+              <label for="darkModeDark">dark</label>
+              <input
+                id="darkModeDark"
+                type="radio"
+                name="darkmode"
+                value="dark"
+              /><br />
+              <label for="darkModeLight">light</label
+              ><input
+                id="darkModeLight"
+                type="radio"
+                name="darkmode"
+                value="light"
+              />
             </div>
           </div>
         </li>
@@ -825,38 +908,42 @@
     <div id="mesg"></div>
     <div id="backdrop"></div>
     <script nonce="2726c7f26c" type="text/javascript">
-      'use strict';
+      "use strict";
 
       const debug = false;
-      const globalLexica = ['lsj', 'slater', 'ls'];
-      const lemmaWT = 'lemmata';
-      const historyWTPrefix = 'test4';
+      const globalLexica = ["lsj", "slater", "ls"];
+      const lemmaWT = "lemmata";
+      const historyWTPrefix = "test4";
       let historyOpen = false;
       let historyWT;
       let fullText = false;
       const forceLowercase = true;
 
-      window.addEventListener('load', start, false);
-      window.addEventListener('popstate', function (e) {
-        // exclude from history, else we push it back on at same time as popping.
-        // see defjson.js: end of setWord.
-        if (e.state && e.state.length > 1) {
-          getDef(e.state[0], e.state[1], '', true, false);
-        }
-      }, false);
+      window.addEventListener("load", start, false);
+      window.addEventListener(
+        "popstate",
+        function (e) {
+          // exclude from history, else we push it back on at same time as popping.
+          // see defjson.js: end of setWord.
+          if (e.state && e.state.length > 1) {
+            getDef(e.state[0], e.state[1], "", true, false);
+          }
+        },
+        false,
+      );
 
       const setURLToWordId = true;
       // https://github.com/le717/microajax
-      function microAjax (options) {
-        'use strict';
+      function microAjax(options) {
+        "use strict";
 
         // Default to GET
         if (!options.method) {
-          options.method = 'GET';
+          options.method = "GET";
         }
 
         // Default empty functions for the callbacks
-        function noop () { }
+        function noop() {}
         if (!options.success) {
           options.success = noop;
         }
@@ -897,73 +984,76 @@
       //   document.getElementById(lemmaWT + 'Entry').focus();
       // }
 
-      function fullTextRequest (query, lexicon, page) {
+      function fullTextRequest(query, lexicon, page) {
         // limit fulltext query by lexicon
-        const ftLexicon = 'lexicon:' + lexNameToFTLex(lexicon);
-        const ftURL = 'ft/?p=' + page + '&q=' + ftLexicon + ' ' + query;
+        const ftLexicon = "lexicon:" + lexNameToFTLex(lexicon);
+        const ftURL = "ft/?p=" + page + "&q=" + ftLexicon + " " + query;
         microAjax({
           url: ftURL,
-          method: 'GET',
+          method: "GET",
           success: procFTResponse,
           warning: procFTResponseError,
-          error: null
+          error: null,
         });
       }
 
-      function nextFT (page) {
+      function nextFT(page) {
         const wt = lookupWT(lemmaWT);
         fullTextRequest(wt.entry.value, wt.params.lexicon, fullTextPage + 1);
       }
 
-      function prevFT (page) {
+      function prevFT(page) {
         const wt = lookupWT(lemmaWT);
         fullTextRequest(wt.entry.value, wt.params.lexicon, fullTextPage - 1);
       }
 
-      function lexNameToFTLex (lexName) {
-        let ftLexicon = '';
-        if (lexName === 'ls') {
-          ftLexicon = 'lewisshort';
-        } else if (lexName === 'slater') {
-          ftLexicon = 'slater';
-        } else if (lexName === 'lsj') {
-          ftLexicon = 'lsj';
+      function lexNameToFTLex(lexName) {
+        let ftLexicon = "";
+        if (lexName === "ls") {
+          ftLexicon = "lewisshort";
+        } else if (lexName === "slater") {
+          ftLexicon = "slater";
+        } else if (lexName === "lsj") {
+          ftLexicon = "lsj";
         }
         return ftLexicon;
       }
 
-      function ftLexToLexName (ftLex) {
-        let lex = '';
-        if (ftLex === 'lsj') {
-          lex = 'LSJ';
-        } else if (ftLex === 'lewisshort') {
-          lex = 'LS';
-        } else if (ftLex === 'slater') {
-          lex = 'Slater';
+      function ftLexToLexName(ftLex) {
+        let lex = "";
+        if (ftLex === "lsj") {
+          lex = "LSJ";
+        } else if (ftLex === "lewisshort") {
+          lex = "LS";
+        } else if (ftLex === "slater") {
+          lex = "Slater";
         }
         return lex;
       }
 
-      function lexNumToLexName (lexNum) {
-        let lex = '';
-        if (lexNum === '0') {
-          lex = 'lsj';
-        } else if (lexNum === '1') {
-          lex = 'slater';
-        } else if (lexNum === '2') {
-          lex = 'ls';
+      function lexNumToLexName(lexNum) {
+        let lex = "";
+        if (lexNum === "0") {
+          lex = "lsj";
+        } else if (lexNum === "1") {
+          lex = "slater";
+        } else if (lexNum === "2") {
+          lex = "ls";
         }
         return lex;
       }
 
       let fullTextPage = 0;
-      function procFTResponse (str, status) {
+      function procFTResponse(str, status) {
         const wt = lookupWT(lemmaWT);
-        wt.loading.style.display = 'none';
+        wt.loading.style.display = "none";
         let responseObj = null;
         try {
           responseObj = JSON.parse(str);
-        } catch (e) { if (debug) console.log(e.message + '\n' + str); return; };
+        } catch (e) {
+          if (debug) console.log(e.message + "\n" + str);
+          return;
+        }
 
         if (!responseObj) {
           return;
@@ -971,22 +1061,35 @@
 
         fullTextPage = responseObj.page;
 
-        let rows = '';
+        let rows = "";
         let i = 0;
         const totalCount = responseObj.count;
-        const firstResult = (1 + (responseObj.page * responseObj.limit));
-        const lastResult = Math.min(responseObj.limit + (responseObj.page * responseObj.limit), totalCount);
+        const firstResult = 1 + responseObj.page * responseObj.limit;
+        const lastResult = Math.min(
+          responseObj.limit + responseObj.page * responseObj.limit,
+          totalCount,
+        );
 
         for (; i < responseObj.ftresults.length; i++) {
           const lex = ftLexToLexName(responseObj.ftresults[i].lex);
 
-          rows += "<div class='ftrow'><p class='ftrowhead'>" + (i + firstResult) + ". <span id='" +
-            lex.toLowerCase() + responseObj.ftresults[i].id + "' class='ftrowheaderlink'>" +
-            lex + ': ' + responseObj.ftresults[i].lemma + '</span></p>' + responseObj.ftresults[i].def + '</div>';
+          rows +=
+            "<div class='ftrow'><p class='ftrowhead'>" +
+            (i + firstResult) +
+            ". <span id='" +
+            lex.toLowerCase() +
+            responseObj.ftresults[i].id +
+            "' class='ftrowheaderlink'>" +
+            lex +
+            ": " +
+            responseObj.ftresults[i].lemma +
+            "</span></p>" +
+            responseObj.ftresults[i].def +
+            "</div>";
         }
 
-        let prevLink = '';
-        let nextLink = '';
+        let prevLink = "";
+        let nextLink = "";
         if (fullTextPage > 0) {
           prevLink = '<span id="ftPrev">prev</span>';
         }
@@ -996,16 +1099,34 @@
 
         let resultCounts = 0;
         if (totalCount > 0) {
-          resultCounts = prevLink + ' ' + firstResult + '-' + lastResult + ' of ' + totalCount + ' ' + nextLink;
+          resultCounts =
+            prevLink +
+            " " +
+            firstResult +
+            "-" +
+            lastResult +
+            " of " +
+            totalCount +
+            " " +
+            nextLink;
         }
-        const con = document.getElementById('innerbody');
-        con.innerHTML = "<div id='itembody'><div class='fulltextresultheading'>Full-text search results: " + resultCounts + '</div>' + rows + '</div>'; // the firstChild is the CDATA node
+        const con = document.getElementById("innerbody");
+        con.innerHTML =
+          "<div id='itembody'><div class='fulltextresultheading'>Full-text search results: " +
+          resultCounts +
+          "</div>" +
+          rows +
+          "</div>"; // the firstChild is the CDATA node
 
         if (fullTextPage > 0) {
-          document.getElementById('ftPrev').addEventListener('click', prevFT, false);
+          document
+            .getElementById("ftPrev")
+            .addEventListener("click", prevFT, false);
         }
         if (lastResult < totalCount) {
-          document.getElementById('ftNext').addEventListener('click', nextFT, false);
+          document
+            .getElementById("ftNext")
+            .addEventListener("click", nextFT, false);
         }
 
         // add links
@@ -1013,54 +1134,59 @@
         for (; i < responseObj.ftresults.length; i++) {
           const lex = ftLexToLexName(responseObj.ftresults[i].lex);
           const wordId = responseObj.ftresults[i].id;
-          document.getElementById(lex.toLowerCase() + wordId)
-            .addEventListener('click', function () { getDef(wordId, lex.toLowerCase(), false, true); }, false);
+          document.getElementById(lex.toLowerCase() + wordId).addEventListener(
+            "click",
+            function () {
+              getDef(wordId, lex.toLowerCase(), false, true);
+            },
+            false,
+          );
         }
 
         con.scrollTo(0, 0);
       }
 
-      function procFTResponseError (str) {
+      function procFTResponseError(str) {
         const wt = lookupWT(lemmaWT);
-        wt.loading.style.display = 'none';
+        wt.loading.style.display = "none";
       }
 
-      function toggleHistoryChooser () {
+      function toggleHistoryChooser() {
         toggleSettingsOff();
         if (historyOpen) {
-          document.getElementById('rightlistHandleInner').innerText = '<';
-          document.getElementById(historyWTPrefix + 'Entry').tabIndex = -1;
+          document.getElementById("rightlistHandleInner").innerText = "<";
+          document.getElementById(historyWTPrefix + "Entry").tabIndex = -1;
           // closeHistoryChooser();
           historyOpen = false;
-          document.body.classList.remove('showHistory');
+          document.body.classList.remove("showHistory");
 
-          setLocalStorageKey('historylist', '0');
+          setLocalStorageKey("historylist", "0");
         } else {
           historyChooser();
-          document.getElementById('rightlistHandleInner').innerText = '>';
-          document.getElementById(historyWTPrefix + 'Entry').tabIndex = 0;
+          document.getElementById("rightlistHandleInner").innerText = ">";
+          document.getElementById(historyWTPrefix + "Entry").tabIndex = 0;
           historyOpen = true;
           if (supportsHTML5Storage()) {
-            const h = window.localStorage.getItem('history3');
+            const h = window.localStorage.getItem("history3");
             if (historyWT && h && h.length > 0) {
               historyWT.refreshWithRows(h);
             }
           } else {
-            document.getElementById('outerbody').style.marginRight = '1rem';
+            document.getElementById("outerbody").style.marginRight = "1rem";
           }
-          setLocalStorageKey('historylist', '1');
-          document.body.classList.add('showHistory');
+          setLocalStorageKey("historylist", "1");
+          document.body.classList.add("showHistory");
           onResize();
         }
       }
 
-      function historyChooserOnSelect (lexicon, cols) {
+      function historyChooserOnSelect(lexicon, cols) {
         // col0 is the id, col2 is the lexicon # from history
         const lex = lexNumToLexName(cols[2]);
-        getDef(cols[0], lex, '', true, true);
+        getDef(cols[0], lex, "", true, true);
       }
 
-      function historyChooser () {
+      function historyChooser() {
         if (document.getElementById(historyWTPrefix)) {
           return;
         }
@@ -1070,26 +1196,28 @@
 
         historyWT = new Wordtree(historyWTPrefix, 260, h - 20);
         historyWT.conTopOffset = 38;
-        historyWT.con.style.top = historyWT.conTopOffset + 'px';
+        historyWT.con.style.top = historyWT.conTopOffset + "px";
         historyWT.setHeight(historyWT.height);
         historyWT.div.style.zIndex = 800;
 
-        historyWT.div.style.margin = '10px';
-        historyWT.div.style.marginTop = '0px';
+        historyWT.div.style.margin = "10px";
+        historyWT.div.style.marginTop = "0px";
 
-        historyWT.title.innerHTML = '<div class="titlerow"><div class="historytitle">History</div></div>';
-        historyWT.url = '';
-        historyWT.entry.style.left = '-4000px';
+        historyWT.title.innerHTML =
+          '<div class="titlerow"><div class="historytitle">History</div></div>';
+        historyWT.url = "";
+        historyWT.entry.style.left = "-4000px";
         historyWT.onSelectionChanged = historyChooserOnSelect;
         historyWT.onClickActivate = historyChooserOnSelect;
 
-        historyWT.show(document.getElementById('rightlist'));
+        historyWT.show(document.getElementById("rightlist"));
       }
 
-      function globalKeyUp (ev) {
+      function globalKeyUp(ev) {
         const key = ev.keyCode;
         if (!ev.metaKey && !ev.ctrlKey && !ev.shiftKey && !ev.altKey) {
-          if (key === 27) { // esc
+          if (key === 27) {
+            // esc
             const wt = lookupWT(lemmaWT);
             wt.entry.focus();
             ev.returnValue = false;
@@ -1098,18 +1226,21 @@
         }
       }
 
-      function globalKeyDown (ev) {
+      function globalKeyDown(ev) {
         const key = ev.keyCode;
         if (!ev.metaKey && !ev.ctrlKey && !ev.shiftKey && !ev.altKey) {
-          if (key === 49) { // 1
+          if (key === 49) {
+            // 1
             switchLex(0);
             ev.returnValue = false;
             ev.preventDefault();
-          } else if (key === 50) { // 2
+          } else if (key === 50) {
+            // 2
             switchLex(1);
             ev.returnValue = false;
             ev.preventDefault();
-          } else if (key === 51) { // 3
+          } else if (key === 51) {
+            // 3
             switchLex(2);
             ev.returnValue = false;
             ev.preventDefault();
@@ -1118,11 +1249,11 @@
         return true;
       }
 
-      function onClickRow (lexicon, cols) {
-        getDef(cols[0], lexicon, '', false, true);
+      function onClickRow(lexicon, cols) {
+        getDef(cols[0], lexicon, "", false, true);
       }
 
-      function getLexAndWordFromURL (url) {
+      function getLexAndWordFromURL(url) {
         const matches = url.match(/\/(lsj|ls|slater)\/?([^/]*)\/?$/);
         if (matches && matches.length === 3) {
           const urlLex = matches[1];
@@ -1132,16 +1263,16 @@
         return null;
       }
 
-      function start () {
+      function start() {
         const winHeight = getViewportHeight(window);
-        if (!getLocalStorageKey('filter')) {
-          setLocalStorageKey('filter', 'red:bold:blue:blue:green:orange');
+        if (!getLocalStorageKey("filter")) {
+          setLocalStorageKey("filter", "red:bold:blue:blue:green:orange");
         }
 
         const wt = new Wordtree(lemmaWT, 280, winHeight - 36);
-        wt.show(document.getElementById('leftlist'));
-        const langBtn = document.createElement('div');
-        langBtn.id = wt.idPrefix + 'LangBtn';
+        wt.show(document.getElementById("leftlist"));
+        const langBtn = document.createElement("div");
+        langBtn.id = wt.idPrefix + "LangBtn";
         langBtn.onclick = onLangBtnClick;
         wt.div.appendChild(langBtn);
 
@@ -1151,11 +1282,13 @@
         wt.params.tag_id = 0;
         wt.params.root_id = 0;
         wt.conTopOffset = 98;
-        wt.con.style.top = wt.conTopOffset + 'px';
+        wt.con.style.top = wt.conTopOffset + "px";
         wt.entry.focus();
 
-        wt.title.innerHTML = '<div class="titlerow"><BUTTON id="lexlabel0" class="lexitem">LSJ</BUTTON><BUTTON id="lexlabel1" class="lexitem">Slater</BUTTON><BUTTON id="lexlabel2" class="lexitem">Lewis &amp; Short</BUTTON></div>';
-        wt.title.innerHTML += '<div class="titlerow"><BUTTON id="searchlabel0" class="lexitem">Lemma</BUTTON><BUTTON id="searchlabel1" class="lexitem">Full-text</BUTTON></div>';
+        wt.title.innerHTML =
+          '<div class="titlerow"><BUTTON id="lexlabel0" class="lexitem">LSJ</BUTTON><BUTTON id="lexlabel1" class="lexitem">Slater</BUTTON><BUTTON id="lexlabel2" class="lexitem">Lewis &amp; Short</BUTTON></div>';
+        wt.title.innerHTML +=
+          '<div class="titlerow"><BUTTON id="searchlabel0" class="lexitem">Lemma</BUTTON><BUTTON id="searchlabel1" class="lexitem">Full-text</BUTTON></div>';
 
         // https://stackoverflow.com/questions/16242980/making-radio-buttons-look-like-buttons-instead
         // let title = '<div style="margin-left:4px;width:' + (w.width - 18) + 'px;display:flex;">\
@@ -1172,13 +1305,14 @@
         if (setURLToWordId && urlLexDef !== null) {
           // maybe include list words in same xhr request so we don't have to query separately
           // for now list is loaded in switchSearch(0)
-          getDefFromWordid(urlLexDef.word, urlLexDef.lex, '', true, true);
-          const lexNum = urlLexDef.lex === 'ls' ? 2 : urlLexDef.lex === 'slater' ? 1 : 0;
+          getDefFromWordid(urlLexDef.word, urlLexDef.lex, "", true, true);
+          const lexNum =
+            urlLexDef.lex === "ls" ? 2 : urlLexDef.lex === "slater" ? 1 : 0;
           wt.params.lexicon = globalLexica[lexNum];
           highlightLex(lexNum);
           switchSearch(0);
         } else {
-          let oldlex = getLocalStorageKey('lex');
+          let oldlex = getLocalStorageKey("lex");
           oldlex = oldlex || globalLexica[0];
           if (urlLexDef) {
             oldlex = urlLexDef.lex;
@@ -1200,54 +1334,78 @@
 
         // add event listeners
 
-        document.getElementById('hamburger')
-          .addEventListener('click', toggleSettings, false);
+        document
+          .getElementById("hamburger")
+          .addEventListener("click", toggleSettings, false);
 
         // onclick listeners for lexitem buttons
-        const lexitems = document.querySelectorAll('.lexitem');
+        const lexitems = document.querySelectorAll(".lexitem");
         for (let i = 0; i < lexitems.length; i++) {
-          lexitems[i].addEventListener('click', function () {
-            const match = /([a-z]+)([0-9])/.exec(this.id);
-            if (match && match.length === 3) {
-              const intValue = parseInt(match[2]);
-              if (!isNaN(intValue)) {
-                if (match[1] === 'lexlabel') {
-                  switchLex(intValue);
-                } else if (match[1] === 'searchlabel') {
-                  switchSearch(intValue);
+          lexitems[i].addEventListener(
+            "click",
+            function () {
+              const match = /([a-z]+)([0-9])/.exec(this.id);
+              if (match && match.length === 3) {
+                const intValue = parseInt(match[2]);
+                if (!isNaN(intValue)) {
+                  if (match[1] === "lexlabel") {
+                    switchLex(intValue);
+                  } else if (match[1] === "searchlabel") {
+                    switchSearch(intValue);
+                  }
                 }
               }
-            }
-          }, false);
+            },
+            false,
+          );
         }
 
         document.onkeydown = globalKeyDown;
         document.onkeyup = globalKeyUp;
-        document.getElementById('innerbody').ontouchstart = onTouch;
+        document.getElementById("innerbody").ontouchstart = onTouch;
 
-        document.getElementById('aboutButton').addEventListener('click', contact, false);
-        document.getElementById('iOSButton').addEventListener('click', showiPhone, false);
+        document
+          .getElementById("aboutButton")
+          .addEventListener("click", contact, false);
+        document
+          .getElementById("supportButton")
+          .addEventListener("click", support, false);
+        document
+          .getElementById("iOSButton")
+          .addEventListener("click", showiPhone, false);
         // document.getElementById('configureButton').addEventListener('click', config, false);
-        document.getElementById('toggleHistoryButton').addEventListener('click', toggleHistoryChooser, false);
-        document.getElementById('darkModeSystem').addEventListener('click', darkModeClick, false);
-        document.getElementById('darkModeDark').addEventListener('click', darkModeClick, false);
-        document.getElementById('darkModeLight').addEventListener('click', darkModeClick, false);
-        document.getElementById('backdrop').addEventListener('click', toggleSettings, false);
-        document.getElementById('rightlistHandle').addEventListener('click', toggleHistoryChooser, false);
+        document
+          .getElementById("toggleHistoryButton")
+          .addEventListener("click", toggleHistoryChooser, false);
+        document
+          .getElementById("darkModeSystem")
+          .addEventListener("click", darkModeClick, false);
+        document
+          .getElementById("darkModeDark")
+          .addEventListener("click", darkModeClick, false);
+        document
+          .getElementById("darkModeLight")
+          .addEventListener("click", darkModeClick, false);
+        document
+          .getElementById("backdrop")
+          .addEventListener("click", toggleSettings, false);
+        document
+          .getElementById("rightlistHandle")
+          .addEventListener("click", toggleHistoryChooser, false);
 
         window.onresize = onResize;
         onResize();
       }
 
-      function onResize () {
+      function onResize() {
         const height = getViewportHeight(window);
 
         const wt = lookupWT(lemmaWT);
         wt.setHeight(height - 24);
 
-        const rl = document.getElementById('rightlist');
+        const rl = document.getElementById("rightlist");
         if (rl) {
-          rl.style.height = (height - 58) + 'px';
+          rl.style.height = height - 58 + "px";
         }
         const historyList = lookupWT(historyWTPrefix);
         if (historyList) {
@@ -1255,14 +1413,14 @@
         }
       }
 
-      function switchSearch (num) {
-        document.getElementById('innerbody').innerHTML = '';
+      function switchSearch(num) {
+        document.getElementById("innerbody").innerHTML = "";
         const wt = lookupWT(lemmaWT);
-        wt.entry.value = '';
+        wt.entry.value = "";
 
         if (num === 1) {
           setTransliterateGreek(false);
-        } else if (num === 0 && wt.params.lexicon === 'ls') {
+        } else if (num === 0 && wt.params.lexicon === "ls") {
           setTransliterateGreek(false);
         } else if (num === 0) {
           setTransliterateGreek(true);
@@ -1275,45 +1433,47 @@
         }
       }
 
-      function highlightSearch (num) {
+      function highlightSearch(num) {
         if (num === 0) {
           fullText = false;
         } else {
           fullText = true;
         }
-        const a = document.querySelector('.searchselected');
+        const a = document.querySelector(".searchselected");
         if (a) {
-          a.classList.remove('searchselected');
+          a.classList.remove("searchselected");
         }
-        const b = document.getElementById('searchlabel' + num);
+        const b = document.getElementById("searchlabel" + num);
         if (b) {
-          b.classList.add('searchselected');
+          b.classList.add("searchselected");
         }
       }
 
       let greekOn = false;
-      function onLangBtnClick () {
-        if (fullText) { // only change if in fullText mode
+      function onLangBtnClick() {
+        if (fullText) {
+          // only change if in fullText mode
           setTransliterateGreek(!greekOn);
         }
       }
 
-      function setTransliterateGreek (transliterate) {
+      function setTransliterateGreek(transliterate) {
         if (transliterate) {
-          document.querySelector('HTML').classList.add('greekOn');
+          document.querySelector("HTML").classList.add("greekOn");
           greekOn = true;
         } else {
-          document.querySelector('HTML').classList.remove('greekOn');
+          document.querySelector("HTML").classList.remove("greekOn");
           greekOn = false;
         }
       }
 
-      function switchLex (num) {
+      function switchLex(num) {
         const wt = lookupWT(lemmaWT);
         if (wt) {
-          wt.entry.value = '';
+          wt.entry.value = "";
           wt.params.lexicon = globalLexica[num];
-          if (!fullText) { // don't change transliterate when in fullText mode
+          if (!fullText) {
+            // don't change transliterate when in fullText mode
             if (num === 0 || num === 1) {
               setTransliterateGreek(true);
             } else {
@@ -1329,27 +1489,38 @@
         }
       }
 
-      function highlightLex (num) {
-        const a = document.querySelector('.lexselected');
+      function highlightLex(num) {
+        const a = document.querySelector(".lexselected");
         if (a) {
-          a.classList.remove('lexselected');
+          a.classList.remove("lexselected");
         }
-        const b = document.getElementById('lexlabel' + num);
+        const b = document.getElementById("lexlabel" + num);
         if (b) {
-          b.classList.add('lexselected');
+          b.classList.add("lexselected");
         }
-        setLocalStorageKey('lex', globalLexica[num] ? globalLexica[num] : globalLexica[0]);
+        setLocalStorageKey(
+          "lex",
+          globalLexica[num] ? globalLexica[num] : globalLexica[0],
+        );
       }
 
-      function contact () {
-        const about = "philolog.us first launched in June 2005 shortly after the Perseus Digital Library began offering access to its collections via web services. One of the primary aims has been to offer a streamlined, accessible, user-friendly interface to the lexica in the Perseus library.<br/><br/><br/>Thanks to the <a class='storelink' href='http://www.perseus.tufts.edu'>Perseus Digital Library</a> for digitizing these texts and making them available. Thanks also to <a class='storelink' href='https://logeion.uchicago.edu'>Logeion</a> for making many corrections and improvements to them. <br/><br/>Jeremy March<br/><a class='storelink' href='mailto:jmarch@gradcenter.cuny.edu'>jmarch@gradcenter.cuny.edu</a>";
-        document.getElementById('innerbody').innerHTML = "<div class='contactAbout'>" + about + '</div>';
+      function contact() {
+        const about =
+          "philolog.us first launched in June 2005 shortly after the Perseus Digital Library began offering access to its collections via web services. One of the primary aims has been to offer a streamlined, accessible, user-friendly interface to the lexica in the Perseus library.<br/><br/><br/>Thanks to the <a class='storelink' href='http://www.perseus.tufts.edu'>Perseus Digital Library</a> for digitizing these texts and making them available. Thanks also to <a class='storelink' href='https://logeion.uchicago.edu'>Logeion</a> for making many corrections and improvements to them. <br/><br/>Jeremy March<br/><a class='storelink' href='mailto:support@philolog.us'>support@philolog.us</a>";
+        document.getElementById("innerbody").innerHTML =
+          "<div class='contactAbout'>" + about + "</div>";
         toggleSettingsOff();
       }
 
-      function showiPhone () {
-        const news = "Available for iPhone/iPad app in the <a href='https://itunes.apple.com/us/app/philolog.us/id622324932?mt=8' class='storelink'>App store</a>.<br><br><br>Available for Android in the <a href='https://play.google.com/store/apps/details?id=com.philolog.philologus&hl=en' class='storelink'>Google Play store</a>.";
-        document.getElementById('innerbody').innerHTML = "<div class='iosAbout'>" + news + '</div>';
+      function support() {
+        location.href = "https://philolog.us/support.html";
+      }
+
+      function showiPhone() {
+        const news =
+          "Available for iPhone/iPad app in the <a href='https://itunes.apple.com/us/app/philolog.us/id622324932?mt=8' class='storelink'>App store</a>.<br><br><br>Available for Android in the <a href='https://play.google.com/store/apps/details?id=com.philolog.philologus&hl=en' class='storelink'>Google Play store</a>.";
+        document.getElementById("innerbody").innerHTML =
+          "<div class='iosAbout'>" + news + "</div>";
         toggleSettingsOff();
       }
 
@@ -1358,10 +1529,116 @@
       //   window.location = 'configure.html';
       // }
 
-      const la = ['a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p', 'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', 'A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I', 'J', 'K', 'L', 'M', 'N', 'O', 'P', 'Q', 'R', 'S', 'T', 'U', 'V', 'W', 'X', 'Y', 'Z'];
-      const gr = ['α', 'β', 'ψ', 'δ', 'ε', 'φ', 'γ', 'η', 'ι', 'ξ', 'κ', 'λ', 'μ', 'ν', 'ο', 'π', '', 'ρ', 'σ', 'τ', 'θ', 'ω', 'ς', 'χ', 'υ', 'ζ', 'Α', 'Β', 'Ψ', 'Δ', 'Ε', 'Φ', 'Γ', 'Η', 'Ι', 'Ξ', 'Κ', 'Λ', 'Μ', 'Ν', 'Ο', 'Π', '', 'Ρ', 'Σ', 'Τ', 'Θ', 'Ω', 'Σ', 'Χ', 'Υ', 'Ζ'];
-      function transliterate (char) {
-        const theChar = (forceLowercase) ? char.toLowerCase() : char;
+      const la = [
+        "a",
+        "b",
+        "c",
+        "d",
+        "e",
+        "f",
+        "g",
+        "h",
+        "i",
+        "j",
+        "k",
+        "l",
+        "m",
+        "n",
+        "o",
+        "p",
+        "q",
+        "r",
+        "s",
+        "t",
+        "u",
+        "v",
+        "w",
+        "x",
+        "y",
+        "z",
+        "A",
+        "B",
+        "C",
+        "D",
+        "E",
+        "F",
+        "G",
+        "H",
+        "I",
+        "J",
+        "K",
+        "L",
+        "M",
+        "N",
+        "O",
+        "P",
+        "Q",
+        "R",
+        "S",
+        "T",
+        "U",
+        "V",
+        "W",
+        "X",
+        "Y",
+        "Z",
+      ];
+      const gr = [
+        "α",
+        "β",
+        "ψ",
+        "δ",
+        "ε",
+        "φ",
+        "γ",
+        "η",
+        "ι",
+        "ξ",
+        "κ",
+        "λ",
+        "μ",
+        "ν",
+        "ο",
+        "π",
+        "",
+        "ρ",
+        "σ",
+        "τ",
+        "θ",
+        "ω",
+        "ς",
+        "χ",
+        "υ",
+        "ζ",
+        "Α",
+        "Β",
+        "Ψ",
+        "Δ",
+        "Ε",
+        "Φ",
+        "Γ",
+        "Η",
+        "Ι",
+        "Ξ",
+        "Κ",
+        "Λ",
+        "Μ",
+        "Ν",
+        "Ο",
+        "Π",
+        "",
+        "Ρ",
+        "Σ",
+        "Τ",
+        "Θ",
+        "Ω",
+        "Σ",
+        "Χ",
+        "Υ",
+        "Ζ",
+      ];
+      function transliterate(char) {
+        const theChar = forceLowercase ? char.toLowerCase() : char;
         const idx = la.indexOf(theChar);
         if (idx > -1) {
           return gr[idx];
@@ -1370,30 +1647,33 @@
         }
       }
 
-      function transliterateKey (ev) {
+      function transliterateKey(ev) {
         const source = ev.target || ev.srcElement;
         const val = source.value;
-        const charCode = typeof (ev.which) === 'number' ? ev.which : ev.keyCode;
+        const charCode = typeof ev.which === "number" ? ev.which : ev.keyCode;
 
-        if (charCode && charCode > 64 && charCode < 123) { // letter
+        if (charCode && charCode > 64 && charCode < 123) {
+          // letter
           const start = source.selectionStart;
           const end = source.selectionEnd;
           const key = String.fromCharCode(charCode);
 
           const mappedChar = transliterate(key);
           const charsToReplace = 0;
-          source.value = val.slice(0, start - charsToReplace) + mappedChar + val.slice(end);
+          source.value =
+            val.slice(0, start - charsToReplace) + mappedChar + val.slice(end);
           // Move the caret
-          source.selectionStart = source.selectionEnd = start + 1 - charsToReplace;
+          source.selectionStart = source.selectionEnd =
+            start + 1 - charsToReplace;
           return false;
         }
         return true;
       }
 
-      function getViewportHeight (w) {
-        if (typeof (w.innerHeight) !== 'undefined') {
+      function getViewportHeight(w) {
+        if (typeof w.innerHeight !== "undefined") {
           return w.innerHeight;
-        } else if (w.document.compatMode === 'CSS1Compat') {
+        } else if (w.document.compatMode === "CSS1Compat") {
           return w.document.documentElement.clientHeight;
         } else if (w.document.body) {
           return w.document.body.clientHeight;
@@ -1402,57 +1682,57 @@
         }
       }
 
-      function setLocalStorageKey (name, value) {
-        if (typeof (window.localStorage) !== 'undefined') {
+      function setLocalStorageKey(name, value) {
+        if (typeof window.localStorage !== "undefined") {
           window.localStorage.setItem(name, value);
         }
       }
 
-      function getLocalStorageKey (name) {
-        if (typeof (window.localStorage) !== 'undefined') {
+      function getLocalStorageKey(name) {
+        if (typeof window.localStorage !== "undefined") {
           const value = window.localStorage.getItem(name);
           return value;
         }
         return null;
       }
 
-      function toggleSettingsOn () {
-        document.body.classList.add('settingsOn');
+      function toggleSettingsOn() {
+        document.body.classList.add("settingsOn");
       }
-      function toggleSettingsOff () {
-        document.body.classList.remove('settingsOn');
+      function toggleSettingsOff() {
+        document.body.classList.remove("settingsOn");
       }
 
-      function toggleSettings () {
-        if (document.body.classList.contains('settingsOn')) {
+      function toggleSettings() {
+        if (document.body.classList.contains("settingsOn")) {
           toggleSettingsOff();
         } else {
-          const mode = window.localStorage.getItem('mode');
+          const mode = window.localStorage.getItem("mode");
           switch (mode) {
-            case 'dark':
-              document.querySelector('#darkModeDark').checked = true;
+            case "dark":
+              document.querySelector("#darkModeDark").checked = true;
               break;
-            case 'light':
-              document.querySelector('#darkModeLight').checked = true;
+            case "light":
+              document.querySelector("#darkModeLight").checked = true;
               break;
             default:
-              document.querySelector('#darkModeSystem').checked = true;
+              document.querySelector("#darkModeSystem").checked = true;
               break;
           }
           toggleSettingsOn();
         }
       }
 
-      function darkModeClick () {
+      function darkModeClick() {
         switch (this.id) {
-          case 'darkModeDark':
-            window.localStorage.setItem('mode', 'dark');
+          case "darkModeDark":
+            window.localStorage.setItem("mode", "dark");
             break;
-          case 'darkModeLight':
-            window.localStorage.setItem('mode', 'light');
+          case "darkModeLight":
+            window.localStorage.setItem("mode", "light");
             break;
           default:
-            window.localStorage.removeItem('mode');
+            window.localStorage.removeItem("mode");
             break;
         }
         // eslint-disable-next-line no-undef
@@ -1466,16 +1746,40 @@
       let vSaveHistory = true;
       let vAddToBackHistory = true;
 
-      function getDef (id, lexicon, word, excludeFromHistory, pushToBackHistory) {
+      function getDef(
+        id,
+        lexicon,
+        word,
+        excludeFromHistory,
+        pushToBackHistory,
+      ) {
         const skipCache = 0;
         const addWordLinks = 0;
 
-        if (excludeFromHistory) { vSaveHistory = false; } else { vSaveHistory = true; }
+        if (excludeFromHistory) {
+          vSaveHistory = false;
+        } else {
+          vSaveHistory = true;
+        }
 
-        if (pushToBackHistory) { vAddToBackHistory = true; } else { vAddToBackHistory = false; }
+        if (pushToBackHistory) {
+          vAddToBackHistory = true;
+        } else {
+          vAddToBackHistory = false;
+        }
 
         // the random number id needed for ie--it would ask for the same page twice
-        const url = 'item?id=' + id + '&lexicon=' + lexicon + '&skipcache=' + skipCache + '&addwordlinks=' + addWordLinks + '&x=' + Math.random();
+        const url =
+          "item?id=" +
+          id +
+          "&lexicon=" +
+          lexicon +
+          "&skipcache=" +
+          skipCache +
+          "&addwordlinks=" +
+          addWordLinks +
+          "&x=" +
+          Math.random();
         // console.log("get def: " + url);
 
         if (!useDefCache || !defCheckCache(lexicon, id)) {
@@ -1484,16 +1788,40 @@
         // document.getElementById("innerbody").innerHTML = "<center>Loading...</center>";
       }
 
-      function getDefFromWordid (wordid, lexicon, word, excludeFromHistory, pushToBackHistory) {
+      function getDefFromWordid(
+        wordid,
+        lexicon,
+        word,
+        excludeFromHistory,
+        pushToBackHistory,
+      ) {
         const skipCache = 0;
         const addWordLinks = 0;
 
-        if (excludeFromHistory) { vSaveHistory = false; } else { vSaveHistory = true; }
+        if (excludeFromHistory) {
+          vSaveHistory = false;
+        } else {
+          vSaveHistory = true;
+        }
 
-        if (pushToBackHistory) { vAddToBackHistory = true; } else { vAddToBackHistory = false; }
+        if (pushToBackHistory) {
+          vAddToBackHistory = true;
+        } else {
+          vAddToBackHistory = false;
+        }
 
         // the random number id needed for ie--it would ask for the same page twice
-        const url = 'item?wordid=' + wordid + '&lexicon=' + lexicon + '&skipcache=' + skipCache + '&addwordlinks=' + addWordLinks + '&x=' + Math.random();
+        const url =
+          "item?wordid=" +
+          wordid +
+          "&lexicon=" +
+          lexicon +
+          "&skipcache=" +
+          skipCache +
+          "&addwordlinks=" +
+          addWordLinks +
+          "&x=" +
+          Math.random();
 
         // if (!useDefCache || !defCheckCache(lexicon, id))
         loadXMLDoc(encodeURI(url));
@@ -1503,7 +1831,7 @@
 
       // for saving history to database
       let lastId = -1;
-      function setWord (json, status) {
+      function setWord(json, status) {
         let data = null;
         try {
           data = JSON.parse(json);
@@ -1516,45 +1844,60 @@
           return;
         }
 
-        const con = document.getElementById('innerbody');
+        const con = document.getElementById("innerbody");
 
         if (data.errorMesg) {
-          con.innerHTML = "<div id='itembody'>" + data.errorMesg + '</div>';
+          con.innerHTML = "<div id='itembody'>" + data.errorMesg + "</div>";
           return;
         }
 
         const def = data.def;
         const lexicon = data.lexicon;
         const id = data.word_id;
-        const word = data.word.replace(/[0-9]/g, ''); // strip number, if any, from end of string
+        const word = data.word.replace(/[0-9]/g, ""); // strip number, if any, from end of string
         const wordid = data.word;
         const lemma = data.lemma;
         let pps = data.principalParts;
 
         document.title = word;
 
-        pps = (pps && pps.length > 0) ? pps : '';
+        pps = pps && pps.length > 0 ? pps : "";
 
-        const perseusLink = "<a href='http://www.perseus.tufts.edu/hopper/text.jsp?doc=Perseus:text:";
+        const perseusLink =
+          "<a href='http://www.perseus.tufts.edu/hopper/text.jsp?doc=Perseus:text:";
 
         let attr = "<br/><br/><div id='attrib'>";
-        if (lexicon === 'lsj') {
-          attr += perseusLink + "1999.04.0057' class='attrlink'>Liddell, Scott, and Jones</a> ";
-          attr += perseusLink + '1999.04.0057%3Aentry%3D';
-        } else if (lexicon && lexicon === 'slater') {
-          attr += perseusLink + "1999.04.0072' class='attrlink'>Slater's <i>Lexicon to Pindar</i></a> ";
-          attr += perseusLink + '1999.04.0072%3Aentry%3D';
-        } else if (lexicon && lexicon === 'ls') {
-          attr += perseusLink + "1999.04.0059' class='attrlink'>Lewis and Short</a> ";
-          attr += perseusLink + '1999.04.0059%3Aentry%3D';
+        if (lexicon === "lsj") {
+          attr +=
+            perseusLink +
+            "1999.04.0057' class='attrlink'>Liddell, Scott, and Jones</a> ";
+          attr += perseusLink + "1999.04.0057%3Aentry%3D";
+        } else if (lexicon && lexicon === "slater") {
+          attr +=
+            perseusLink +
+            "1999.04.0072' class='attrlink'>Slater's <i>Lexicon to Pindar</i></a> ";
+          attr += perseusLink + "1999.04.0072%3Aentry%3D";
+        } else if (lexicon && lexicon === "ls") {
+          attr +=
+            perseusLink + "1999.04.0059' class='attrlink'>Lewis and Short</a> ";
+          attr += perseusLink + "1999.04.0059%3Aentry%3D";
         }
         attr += escape(lemma);
         attr += "' class='attrlink'>entry</a> courtesy of the<br/>";
-        attr += "<a href='http://www.perseus.tufts.edu' class='attrlink'>Perseus Digital Library</a>";
-        attr += '</div>';
+        attr +=
+          "<a href='http://www.perseus.tufts.edu' class='attrlink'>Perseus Digital Library</a>";
+        attr += "</div>";
         // attr += "</div>";
 
-        con.innerHTML = "<div id='itembody'><div class='wordLemma'>" + word + "</div><div class='wordPPS'>" + pps + '</div>' + def + attr + '</div>'; // the firstChild is the CDATA node
+        con.innerHTML =
+          "<div id='itembody'><div class='wordLemma'>" +
+          word +
+          "</div><div class='wordPPS'>" +
+          pps +
+          "</div>" +
+          def +
+          attr +
+          "</div>"; // the firstChild is the CDATA node
         con.scrollTo(0, 0);
 
         if (useDefCache) {
@@ -1569,67 +1912,83 @@
         }
 
         if (vAddToBackHistory) {
-          if (window.history && typeof (window.history.pushState) === 'function') {
+          if (
+            window.history &&
+            typeof window.history.pushState === "function"
+          ) {
             // add lexicon and word to url path and thus to history:
             // i.e. you can navigate back through history
             if (setURLToWordId) {
-              window.history.pushState([id, lexicon], wordid, getPathBeforeLexicon(window.location.pathname) + lexicon + '/' + wordid);
+              window.history.pushState(
+                [id, lexicon],
+                wordid,
+                getPathBeforeLexicon(window.location.pathname) +
+                  lexicon +
+                  "/" +
+                  wordid,
+              );
             }
           }
         }
       }
 
-      function getPathBeforeLexicon (loc) {
+      function getPathBeforeLexicon(loc) {
         // get path before any lsj/ls/slater; this makes it work on subdirectories
-        let phPath = '';
-        const a = loc.indexOf('/lsj');
+        let phPath = "";
+        const a = loc.indexOf("/lsj");
         if (a > -1) {
-          phPath = loc.substring(0, a) + '/';
+          phPath = loc.substring(0, a) + "/";
         } else {
-          const a = loc.indexOf('/ls');
+          const a = loc.indexOf("/ls");
           if (a > -1) {
-            phPath = loc.substring(0, a) + '/';
+            phPath = loc.substring(0, a) + "/";
           } else {
-            const a = loc.indexOf('/slater');
+            const a = loc.indexOf("/slater");
             if (a > -1) {
-              phPath = loc.substring(0, a) + '/';
+              phPath = loc.substring(0, a) + "/";
             }
           }
         }
         return phPath;
       }
 
-      function supportsHTML5Storage () {
+      function supportsHTML5Storage() {
         try {
-          return 'localStorage' in window && window.localStorage !== null;
+          return "localStorage" in window && window.localStorage !== null;
         } catch (e) {
           return false;
         }
       }
 
-      function saveHistory (lexicon, id, word) {
+      function saveHistory(lexicon, id, word) {
         if (id === lastId) {
           if (supportsHTML5Storage()) {
             let lexi = 0;
-            if (lexicon === globalLexica[0]) { lexi = 0; } else if (lexicon === globalLexica[1]) { lexi = 1; } else { lexi = 2; }
+            if (lexicon === globalLexica[0]) {
+              lexi = 0;
+            } else if (lexicon === globalLexica[1]) {
+              lexi = 1;
+            } else {
+              lexi = 2;
+            }
 
-            const hist = window.localStorage.getItem('history3');
+            const hist = window.localStorage.getItem("history3");
             let tree = null;
             if (hist && hist.length > 0) {
               tree = JSON.parse(hist);
             } else {
               tree = {
-                error: '',
+                error: "",
                 wtprefix: historyWTPrefix,
-                container: historyWTPrefix + 'Container',
-                requestTime: '1427555297518',
-                selectId: '-1',
-                page: '0',
-                lastPage: '1',
-                lastPageUp: '1',
-                scroll: '',
-                query: '',
-                arrOptions: []
+                container: historyWTPrefix + "Container",
+                requestTime: "1427555297518",
+                selectId: "-1",
+                page: "0",
+                lastPage: "1",
+                lastPageUp: "1",
+                scroll: "",
+                query: "",
+                arrOptions: [],
               };
             }
 
@@ -1640,12 +1999,15 @@
             const max = 500;
             if (tree.arrOptions.length > max) {
               const toRemove = tree.arrOptions.length - max;
-              tree.arrOptions.splice(tree.arrOptions.length - toRemove, toRemove);
+              tree.arrOptions.splice(
+                tree.arrOptions.length - toRemove,
+                toRemove,
+              );
             }
 
             const h = JSON.stringify(tree);
 
-            window.localStorage.setItem('history3', h);
+            window.localStorage.setItem("history3", h);
             if (historyWT) {
               historyWT.refreshWithRows(h);
             }
@@ -1653,17 +2015,17 @@
         }
       }
 
-      function loadXMLDoc (url) {
+      function loadXMLDoc(url) {
         microAjax({
           url,
-          method: 'GET',
+          method: "GET",
           success: setWord,
           warning: null,
-          error: null
+          error: null,
         });
       }
 
-      function defCheckCache (lexicon, queryKey) {
+      function defCheckCache(lexicon, queryKey) {
         queryKey = lexicon + queryKey;
         if (defCache && defCache[queryKey]) {
           setWord(defCache[queryKey].str);
@@ -1673,7 +2035,7 @@
         }
       }
 
-      function defAddResultToCache (lexicon, queryKey, str) {
+      function defAddResultToCache(lexicon, queryKey, str) {
         queryKey = lexicon + queryKey;
 
         // if this query isn't in the cache
@@ -1684,9 +2046,16 @@
             let prev = null;
             let x;
             for (x in defCache) {
-              if (typeof defCache.hasOwn === 'function' && !defCache.hasOwn(x)) { continue; }
+              if (
+                typeof defCache.hasOwn === "function" &&
+                !defCache.hasOwn(x)
+              ) {
+                continue;
+              }
 
-              if (prev == null || defCache[x].time < defCache[prev].time) { prev = x; }
+              if (prev == null || defCache[x].time < defCache[prev].time) {
+                prev = x;
+              }
             }
             if (prev) {
               defCacheLength--;
@@ -1714,36 +2083,52 @@
       const keyScrollAccel = 4;
 
       let platform;
-      if (window.navigator.userAgent.indexOf('iPhone') !== -1) { platform = 'iphone'; } else if (window.navigator.userAgent.indexOf('iPad') !== -1) { platform = 'ipad'; } else if (window.navigator.platform.toLowerCase().indexOf('mac') !== -1) { platform = 'mac'; } else if (window.navigator.platform.toLowerCase().indexOf('linux') !== -1) { platform = 'linux'; } else { platform = 'windows'; }
+      if (window.navigator.userAgent.indexOf("iPhone") !== -1) {
+        platform = "iphone";
+      } else if (window.navigator.userAgent.indexOf("iPad") !== -1) {
+        platform = "ipad";
+      } else if (
+        window.navigator.platform.toLowerCase().indexOf("mac") !== -1
+      ) {
+        platform = "mac";
+      } else if (
+        window.navigator.platform.toLowerCase().indexOf("linux") !== -1
+      ) {
+        platform = "linux";
+      } else {
+        platform = "windows";
+      }
 
-      function lookupWT (idPrefix) {
-        if (typeof globalWordTrees[idPrefix] !== 'undefined') {
+      function lookupWT(idPrefix) {
+        if (typeof globalWordTrees[idPrefix] !== "undefined") {
           return globalWordTrees[idPrefix];
         } else {
           return null;
         }
       }
 
-      function destroyWT () {
+      function destroyWT() {
         const p = this.div.parentNode;
         p.removeChild(this.div);
         delete globalWordTrees[this.idPrefix];
       }
 
-      function onTouch (e) {
+      function onTouch(e) {
         const wt = lookupWT(lemmaWT);
-        if (!wt) { return; }
+        if (!wt) {
+          return;
+        }
 
         if (!wt.autofocus) {
           wt.entry.blur();
         }
       }
 
-      function Wordtree (idPrefix, width, height) {
-        this.mode = 'context';
+      function Wordtree(idPrefix, width, height) {
+        this.mode = "context";
         this.asYouType = true;
         this.width = width;
-        this.bgcolor = '#ffffff';
+        this.bgcolor = "#ffffff";
         this.selectedRow = null;
         this.accelTimeout = null;
         this.lastRequestTime = null;
@@ -1767,10 +2152,18 @@
         this.step = 1;
 
         // whether to automatically focus the entry when wt "has focus", disable for iphones, ipads, etc.
-        if (platform === 'ipad' || platform === 'iphone' || (navigator.maxTouchPoints && navigator.maxTouchPoints > 1)) { this.autofocus = false; } else { this.autofocus = true; }
+        if (
+          platform === "ipad" ||
+          platform === "iphone" ||
+          (navigator.maxTouchPoints && navigator.maxTouchPoints > 1)
+        ) {
+          this.autofocus = false;
+        } else {
+          this.autofocus = true;
+        }
 
         this.maxWords = 100;
-        this.url = 'query';
+        this.url = "query";
         this.idPrefix = idPrefix;
 
         this.params = {};
@@ -1787,51 +2180,52 @@
         this.lastPageUp = false;
         this.blockScroll = false; // fixes a bug in webkit where next page was requested while loading 0 page
 
-        this.div = document.createElement('div');
+        this.div = document.createElement("div");
         this.div.id = idPrefix;
-        this.div.classList.add('wordtree');
+        this.div.classList.add("wordtree");
 
-        const ti = document.createElement('div');
-        ti.style.position = 'absolute';
-        ti.style.top = '17px';
-        ti.style.left = '10px';
-        ti.style.width = 'calc(100% - 20px)';
-        ti.innerHTML = 'Title';
+        const ti = document.createElement("div");
+        ti.style.position = "absolute";
+        ti.style.top = "17px";
+        ti.style.left = "10px";
+        ti.style.width = "calc(100% - 20px)";
+        ti.innerHTML = "Title";
         this.title = ti;
 
         this.div.appendChild(ti);
 
-        const input = document.createElement('input');
-        input.ariaLabel = 'Enter prefix for word';
-        input.style.width = this.width - 67 + 'px';
-        input.style.position = 'absolute';
-        input.style.top = '66px';
-        input.style.left = '12px';
-        input.setAttribute('autocomplete', 'off');
-        input.setAttribute('autocorrect', 'off');
-        input.setAttribute('autocapitalize', 'off');
-        input.setAttribute('spellcheck', 'false');
+        const input = document.createElement("input");
+        input.ariaLabel = "Enter prefix for word";
+        input.style.width = this.width - 67 + "px";
+        input.style.position = "absolute";
+        input.style.top = "66px";
+        input.style.left = "12px";
+        input.setAttribute("autocomplete", "off");
+        input.setAttribute("autocorrect", "off");
+        input.setAttribute("autocapitalize", "off");
+        input.setAttribute("spellcheck", "false");
         // input.setAttribute("lang", "gr");
-        input.id = idPrefix + 'Entry';
+        input.id = idPrefix + "Entry";
         input.tabIndex = 0;
         this.entry = input;
 
-        const loading = document.createElement('div');
-        loading.id = this.idPrefix + 'Loading';
+        const loading = document.createElement("div");
+        loading.id = this.idPrefix + "Loading";
         // loading.src = "images/loading2.gif";
-        loading.style.position = 'absolute';
-        loading.style.top = '39px';
-        loading.style.right = '44px';
-        loading.style.display = 'none';
-        loading.style.height = '18px';
-        loading.style.width = '18px';
+        loading.style.position = "absolute";
+        loading.style.top = "39px";
+        loading.style.right = "44px";
+        loading.style.display = "none";
+        loading.style.height = "18px";
+        loading.style.width = "18px";
         loading.style.zIndex = 999;
-        loading.innerHTML = '<div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>';
+        loading.innerHTML =
+          '<div class="lds-spinner"><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div><div></div></div>';
 
         this.loading = loading;
 
-        this.closedNodeImg = 'images/plus.gif';
-        this.openNodeImg = 'images/minus.gif';
+        this.closedNodeImg = "images/plus.gif";
+        this.openNodeImg = "images/minus.gif";
 
         input.onkeydown = wordtreeOnDown;
         input.onkeyup = wordtreeOnUp;
@@ -1839,12 +2233,12 @@
         this.div.appendChild(input);
         this.div.appendChild(loading);
 
-        const con = document.createElement('div');
-        con.classList.add('WordContainer');
-        con.id = idPrefix + 'Container';
+        const con = document.createElement("div");
+        con.classList.add("WordContainer");
+        con.id = idPrefix + "Container";
 
-        con.style.top = this.conTopOffset + 'px';
-        con.style.width = this.width - 20 + 'px';
+        con.style.top = this.conTopOffset + "px";
+        con.style.width = this.width - 20 + "px";
 
         /*
         if (typeof (con.addEventListener) === 'function') {
@@ -1854,12 +2248,17 @@
         */
 
         con.onscroll = conOnScroll;
-        if (platform === 'ipad' || platform === 'iphone' ||
-          (navigator.maxTouchPoints && navigator.maxTouchPoints > 1)) {
+        if (
+          platform === "ipad" ||
+          platform === "iphone" ||
+          (navigator.maxTouchPoints && navigator.maxTouchPoints > 1)
+        ) {
           con.ontouchstart = onTouch;
         }
         const wt = this; // allows value to be captured by closure in next line
-        this.div.onclick = function () { if (wt.entry && wt.autofocus) wt.entry.focus(); };
+        this.div.onclick = function () {
+          if (wt.entry && wt.autofocus) wt.entry.focus();
+        };
         this.div.appendChild(con);
 
         this.con = con;
@@ -1898,8 +2297,8 @@
         this.setWidth(width);
         this.makeQueryURL = makeQueryURL;
 
-        function clearWordTree () {
-          if (typeof (document.replaceChildren) === 'function') {
+        function clearWordTree() {
+          if (typeof document.replaceChildren === "function") {
             this.con.replaceChildren();
           } else {
             const con = this.con;
@@ -1911,25 +2310,27 @@
           this.rowCount = 0;
         }
 
-        function setHeight (height) {
+        function setHeight(height) {
           this.height = height;
-          this.div.style.height = (height - 7) + 'px';
-          this.con.style.height = (height - 32 - this.conTopOffset) + 'px';
+          this.div.style.height = height - 7 + "px";
+          this.con.style.height = height - 32 - this.conTopOffset + "px";
         }
 
-        function setWidth (width) {
+        function setWidth(width) {
           this.width = width;
-          this.con.style.width = (width - 20) + 'px';
-          if (this.entry) { this.entry.style.width = (width - 67) + 'px'; }
-          this.div.style.width = width - 1 + 'px';
+          this.con.style.width = width - 20 + "px";
+          if (this.entry) {
+            this.entry.style.width = width - 67 + "px";
+          }
+          this.div.style.width = width - 1 + "px";
         }
 
-        function refreshWithRows (rows) {
+        function refreshWithRows(rows) {
           this.lastRequestTime = 0; // defeat sequence check
-          procResponse(rows, 'success');
+          procResponse(rows, "success");
         }
 
-        function makeQueryURL (page, query) {
+        function makeQueryURL(page, query) {
           const requestTime = new Date().getTime();
           let requestPage = 0;
           if (page < 0) {
@@ -1938,28 +2339,42 @@
             requestPage = parseInt(this.page) + page;
           }
 
-          return this.url + '?n=' + (this.maxWords + 1) +
-            '&idprefix=' + this.idPrefix +
-            '&x=' + Math.random() +
-            '&requestTime=' + requestTime +
-            '&page=' + requestPage +
-            '&mode=' + this.mode +
-            '&query=' + query;
+          return (
+            this.url +
+            "?n=" +
+            (this.maxWords + 1) +
+            "&idprefix=" +
+            this.idPrefix +
+            "&x=" +
+            Math.random() +
+            "&requestTime=" +
+            requestTime +
+            "&page=" +
+            requestPage +
+            "&mode=" +
+            this.mode +
+            "&query=" +
+            query
+          );
         }
 
-        function refreshWordTree () {
+        function refreshWordTree() {
           if (fullText) {
-            this.loading.style.display = 'block';
-            if (this.entry.value.trim() === '') {
-              this.loading.style.display = 'none';
+            this.loading.style.display = "block";
+            if (this.entry.value.trim() === "") {
+              this.loading.style.display = "none";
               return;
             }
             const page = 0;
             fullTextRequest(this.entry.value, this.params.lexicon, page);
           } else {
-            this.loading.style.display = 'block';
-            if (checkCache(this)) { return; }
-            if (this.entry) { this.params.w = this.entry.value; }
+            this.loading.style.display = "block";
+            if (checkCache(this)) {
+              return;
+            }
+            if (this.entry) {
+              this.params.w = this.entry.value;
+            }
             let query = JSON.stringify(this.params);
             query = encodeURIComponent(query);
             this.page = 0;
@@ -1968,35 +2383,39 @@
           }
         }
 
-        function requestNextPage () {
-          if (this.url === '') {
+        function requestNextPage() {
+          if (this.url === "") {
             return;
           }
-          this.loading.style.display = 'block';
-          if (this.entry) { this.params.w = this.entry.value; }
+          this.loading.style.display = "block";
+          if (this.entry) {
+            this.params.w = this.entry.value;
+          }
           let query = JSON.stringify(this.params);
           query = encodeURIComponent(query);
           const url = this.makeQueryURL(1, query);
           requestRows(url);
         }
 
-        function requestPrevPage () {
-          if (this.url === '') {
+        function requestPrevPage() {
+          if (this.url === "") {
             return;
           }
-          this.loading.style.display = 'block';
-          if (this.entry) { this.params.w = this.entry.value; }
+          this.loading.style.display = "block";
+          if (this.entry) {
+            this.params.w = this.entry.value;
+          }
           let query = JSON.stringify(this.params);
           query = encodeURIComponent(query);
           const url = this.makeQueryURL(-1, query);
           requestRows(url);
         }
 
-        function wordtreeShow (parent) {
+        function wordtreeShow(parent) {
           parent.appendChild(this.div);
         }
 
-        function conOnScroll (e) {
+        function conOnScroll(e) {
           // increase this number to fetch next page earlier (for slower connections if there is a lag when you hit the end of the last page),
           // decrease if it's being fetched to soon
           const whenToGetNextPage = 400;
@@ -2014,24 +2433,40 @@
 
           // don't request another page if we're on the last page OR if another nextPageRequest is pending.
           // don't increase page until it is received and appropriate
-          if (wt.con.scrollTop > wt.con.scrollHeight - wt.con.offsetHeight - whenToGetNextPage && !wt.nextPageRequestPending && !wt.lastPage && !wt.blockScroll) {
+          if (
+            wt.con.scrollTop >
+              wt.con.scrollHeight - wt.con.offsetHeight - whenToGetNextPage &&
+            !wt.nextPageRequestPending &&
+            !wt.lastPage &&
+            !wt.blockScroll
+          ) {
             wt.nextPageRequestPending = true;
             wt.requestNextPage();
-          } else if (wt.mode === 'context' && wt.con.scrollTop < whenToGetNextPage && !wt.prevPageRequestPending && !wt.lastPageUp && !wt.blockScroll) {
+          } else if (
+            wt.mode === "context" &&
+            wt.con.scrollTop < whenToGetNextPage &&
+            !wt.prevPageRequestPending &&
+            !wt.lastPageUp &&
+            !wt.blockScroll
+          ) {
             wt.prevPageRequestPending = true;
             wt.requestPrevPage();
           }
         }
 
-        function wordtreeOnUp (ev) {
+        function wordtreeOnUp(ev) {
           const key = ev.keyCode;
 
           const match = /(.*)Entry/.exec(this.id);
-          if (!match) { return; }
+          if (!match) {
+            return;
+          }
           const idPrefix = match[1];
 
           const wt = lookupWT(idPrefix);
-          if (!wt) { return; }
+          if (!wt) {
+            return;
+          }
 
           clearTimeout(wt.accelTimeout);
           wt.accelTimeout = null;
@@ -2039,26 +2474,43 @@
           wt.downkey = false;
 
           if (wt.scrollTimer) {
-            if (wt.scrollTimerTimeout) { clearTimeout(wt.scrollTimerTimeout); }
+            if (wt.scrollTimerTimeout) {
+              clearTimeout(wt.scrollTimerTimeout);
+            }
             wt.scrollTimerTimeout = false;
             wt.scrollTimerKeyDown = false;
           }
 
           if (key === 40 || key === 38) {
-            if (typeof wt.onSelectionChanged === 'function' && wt.selectedRow) {
-              wt.onSelectionChanged(wt.params.lexicon, getColumnValues(wt.selectedRow));
+            if (typeof wt.onSelectionChanged === "function" && wt.selectedRow) {
+              wt.onSelectionChanged(
+                wt.params.lexicon,
+                getColumnValues(wt.selectedRow),
+              );
             }
-          } else if (!ev.ctrlKey && (((key >= 48 && key <= 90) || key === 8 || key === 46) || key === 13 || key === 0) && wt.asYouType) {
+          } else if (
+            !ev.ctrlKey &&
+            ((key >= 48 && key <= 90) ||
+              key === 8 ||
+              key === 46 ||
+              key === 13 ||
+              key === 0) &&
+            wt.asYouType
+          ) {
             // block fast typers from making requests for every keystroke
             wt.page = 0;
             wt.selectedRow = null;
 
-            if (wt.lastKeyTimeout) { clearTimeout(wt.lastKeyTimeout); }
-            wt.lastKeyTimeout = setTimeout(function () { lookupWT(wt.idPrefix).refresh(); }, keyDelay);
+            if (wt.lastKeyTimeout) {
+              clearTimeout(wt.lastKeyTimeout);
+            }
+            wt.lastKeyTimeout = setTimeout(function () {
+              lookupWT(wt.idPrefix).refresh();
+            }, keyDelay);
           }
         }
 
-        function wordtreeOnDown (ev) {
+        function wordtreeOnDown(ev) {
           const key = ev.keyCode;
 
           if (key === 17) {
@@ -2076,7 +2528,8 @@
             return;
           }
 
-          if (key === 39) { // right arrow: open row
+          if (key === 39) {
+            // right arrow: open row
             if (wt.selectedRow && wt.selectedRow.id) {
               // first open row
               if (!openNode(wt, wt.selectedRow.id)) {
@@ -2084,7 +2537,8 @@
                 wt.openAllNodes(wt.selectedRow.nextSibling);
               }
             }
-          } else if (key === 37) { // left arrow: close row
+          } else if (key === 37) {
+            // left arrow: close row
             if (wt.selectedRow && wt.selectedRow.id) {
               closeNode(wt, wt.selectedRow.id);
               wt.closeAllNodes(wt.selectedRow.nextSibling);
@@ -2098,7 +2552,12 @@
           } else if (key === 38) {
             if (wt.scrollTimer) {
               if (!wt.scrollTimerKeyDown) {
-                if (!wt.scrollTimerTimeout && wt.step > 1) { wt.scrollTimerTimeout = setTimeout(function () { wt.scrollTimerKeyDown = true; move(1, wt, wt.step); }, wt.scrollTimerDelay); }
+                if (!wt.scrollTimerTimeout && wt.step > 1) {
+                  wt.scrollTimerTimeout = setTimeout(function () {
+                    wt.scrollTimerKeyDown = true;
+                    move(1, wt, wt.step);
+                  }, wt.scrollTimerDelay);
+                }
 
                 move(1, wt, wt.step);
               }
@@ -2106,13 +2565,24 @@
               move(1, wt, wt.step);
               // accelerate
               if (!wt.downkey) {
-                wt.accelTimeout = setTimeout(function () { const a = lookupWT(wt.idPrefix); a.step = 2; a.accelTimeout = setTimeout(function () { lookupWT(lemmaWT).step = keyScrollAccel; }, 2000); }, 2000);
+                wt.accelTimeout = setTimeout(function () {
+                  const a = lookupWT(wt.idPrefix);
+                  a.step = 2;
+                  a.accelTimeout = setTimeout(function () {
+                    lookupWT(lemmaWT).step = keyScrollAccel;
+                  }, 2000);
+                }, 2000);
               }
             }
           } else if (key === 40) {
             if (wt.scrollTimer) {
               if (!wt.scrollTimerKeyDown) {
-                if (!wt.scrollTimerTimeout && wt.step > 1) { wt.scrollTimerTimeout = setTimeout(function () { wt.scrollTimerKeyDown = true; move(-1, wt, wt.step); }, wt.scrollTimerDelay); }
+                if (!wt.scrollTimerTimeout && wt.step > 1) {
+                  wt.scrollTimerTimeout = setTimeout(function () {
+                    wt.scrollTimerKeyDown = true;
+                    move(-1, wt, wt.step);
+                  }, wt.scrollTimerDelay);
+                }
 
                 move(-1, wt, wt.step);
               }
@@ -2120,7 +2590,13 @@
               move(-1, wt, wt.step);
               // accelerate
               if (!wt.downkey) {
-                wt.accelTimeout = setTimeout(function () { const a = lookupWT(wt.idPrefix); a.step = 2; a.accelTimeout = setTimeout(function () { lookupWT(lemmaWT).step = keyScrollAccel; }, 2000); }, 2000);
+                wt.accelTimeout = setTimeout(function () {
+                  const a = lookupWT(wt.idPrefix);
+                  a.step = 2;
+                  a.accelTimeout = setTimeout(function () {
+                    lookupWT(lemmaWT).step = keyScrollAccel;
+                  }, 2000);
+                }, 2000);
               }
             }
           }
@@ -2128,22 +2604,34 @@
           if (!wt.downkey) {
             // put non-repeating downkey stuff here
             if (ev.ctrlKey) {
-              if (key === 65) { // a
-                if (typeof wt.onAddWord === 'function' && wt.selectedRow) {
-                  wt.onAddWord(wt.params.lexicon, getColumnValues(wt.selectedRow));
+              if (key === 65) {
+                // a
+                if (typeof wt.onAddWord === "function" && wt.selectedRow) {
+                  wt.onAddWord(
+                    wt.params.lexicon,
+                    getColumnValues(wt.selectedRow),
+                  );
                   ev.returnValue = false;
                   ev.preventDefault();
                 }
               }
-              if (key === 68) { // d
-                if (typeof wt.onDeleteWord === 'function' && wt.selectedRow) {
-                  wt.onDeleteWord(getColumnValues(wt.selectedRow)[0], getColumnValues(wt.selectedRow)[1], wt.params.tag_id);
+              if (key === 68) {
+                // d
+                if (typeof wt.onDeleteWord === "function" && wt.selectedRow) {
+                  wt.onDeleteWord(
+                    getColumnValues(wt.selectedRow)[0],
+                    getColumnValues(wt.selectedRow)[1],
+                    wt.params.tag_id,
+                  );
                   ev.returnValue = false;
                   ev.preventDefault();
                 }
               }
-              if (key === 69) { // e
-                if (wt.selectedRow) { toggleNode(wt, wt.selectedRow.id); }
+              if (key === 69) {
+                // e
+                if (wt.selectedRow) {
+                  toggleNode(wt, wt.selectedRow.id);
+                }
 
                 // block default hot keys, like bookmark, etc
                 ev.returnValue = false;
@@ -2159,22 +2647,34 @@
               case 13: // enter
                 if (!wt.asYouType) {
                   wt.refresh();
-                } else if (typeof wt.onEnterActivate === 'function' && wt.selectedRow) {
-                  wt.onEnterActivate(wt.params.lexicon, getColumnValues(wt.selectedRow));
+                } else if (
+                  typeof wt.onEnterActivate === "function" &&
+                  wt.selectedRow
+                ) {
+                  wt.onEnterActivate(
+                    wt.params.lexicon,
+                    getColumnValues(wt.selectedRow),
+                  );
                 }
                 break;
               case 27: // esc
                 // clear tags if no text to clear
-                if (wt.entry.value === '') {
+                if (wt.entry.value === "") {
                   wt.params.tag_id = 0;
                 }
-                wt.entry.value = '';
+                wt.entry.value = "";
                 wt.page = 0;
                 wt.selectedRow = null;
 
                 // block fast typers from making requests for every keystroke
-                if (wt.lastKeyTimeout) { clearTimeout(wt.lastKeyTimeout); }
-                wt.lastKeyTimeout = setTimeout(function () { const a = lookupWT(wt.idPrefix); a.refresh(); if (a.entry && a.autofocus) a.entry.focus(); }, keyDelay);
+                if (wt.lastKeyTimeout) {
+                  clearTimeout(wt.lastKeyTimeout);
+                }
+                wt.lastKeyTimeout = setTimeout(function () {
+                  const a = lookupWT(wt.idPrefix);
+                  a.refresh();
+                  if (a.entry && a.autofocus) a.entry.focus();
+                }, keyDelay);
                 break;
               default:
                 break;
@@ -2189,14 +2689,15 @@
           }
         }
 
-        function move (upDown, wt, step) {
+        function move(upDown, wt, step) {
           const con = wt.con;
           let n;
           let lastGoodn = null;
 
           if (!wt.selectedRow) {
             n = con.firstChild;
-          } else if (upDown > 0) { // up
+          } else if (upDown > 0) {
+            // up
             if (wt.selectedRow !== con.firstChild) {
               n = wt.selectedRow;
               /*
@@ -2209,9 +2710,12 @@
                 n = stepUp(n);
               }
 
-              if (!n) { n = lastGoodn; }
+              if (!n) {
+                n = lastGoodn;
+              }
             }
-          } else { // down
+          } else {
+            // down
             if (wt.selectedRow !== con.lastChild) {
               n = wt.selectedRow;
               /*
@@ -2225,7 +2729,9 @@
                 n = stepDown(n);
               }
 
-              if (!n) { n = lastGoodn; }
+              if (!n) {
+                n = lastGoodn;
+              }
             }
           }
 
@@ -2234,23 +2740,24 @@
           }
 
           if (wt.selectedRow) {
-            if (wt.selectedRow.classList.contains('selectedRowClass')) {
-              wt.selectedRow.classList.remove('selectedRowClass');
+            if (wt.selectedRow.classList.contains("selectedRowClass")) {
+              wt.selectedRow.classList.remove("selectedRowClass");
             }
           }
 
-          n.classList.add('selectedRowClass');
+          n.classList.add("selectedRowClass");
 
           if (wt.dragSource) {
-            n.setAttribute('draggable', true);
-            n.addEventListener('dragstart', wt.dragStartFunc, false);
+            n.setAttribute("draggable", true);
+            n.addEventListener("dragstart", wt.dragStartFunc, false);
           }
 
           let childOffset = n.offsetTop;
           let temp = n.parentNode;
 
           // this is needed because n.offSetTop does not work if the node is buried in 2 deep -Children divs
-          while (temp.id.indexOf('Container') === -1) { // this means we can't use "Container" as a prefix name
+          while (temp.id.indexOf("Container") === -1) {
+            // this means we can't use "Container" as a prefix name
             // s += " + " + temp.id + " (" + temp.offsetTop + ") ";
             // t += " + " + temp.offsetTop;
             childOffset += temp.offsetTop;
@@ -2259,19 +2766,23 @@
           // document.getElementById("t").innerHTML = s + "<br><br>" + t + " = " + (childOffset);
 
           // scroll as you go up
-          if (childOffset < con.scrollTop + 30) { // was 15
+          if (childOffset < con.scrollTop + 30) {
+            // was 15
             con.scrollTop = childOffset - 30; // was 18
           }
 
           // scroll as you go down
-          if (childOffset > con.scrollTop + con.offsetHeight - 50) { // was 30
+          if (childOffset > con.scrollTop + con.offsetHeight - 50) {
+            // was 30
             con.scrollTop = childOffset - con.offsetHeight + 50; // was 40
           }
 
           wt.selectedRow = n;
 
-          function stepDown (n) {
-            if (!n) { return null; }
+          function stepDown(n) {
+            if (!n) {
+              return null;
+            }
 
             // now with hierarchies the upper node could the start of a Child container or we could be leaving a child container
             let p = n.parentNode;
@@ -2279,8 +2790,10 @@
             while (n) {
               n = n.nextSibling;
 
-              if (n && n.id.indexOf('Children') !== -1) {
-                if (n.style.display === 'none') { continue; }
+              if (n && n.id.indexOf("Children") !== -1) {
+                if (n.style.display === "none") {
+                  continue;
+                }
 
                 n = n.firstChild;
               }
@@ -2288,7 +2801,7 @@
             }
 
             if (!n) {
-              while (p && p.id.indexOf('Children') !== -1) {
+              while (p && p.id.indexOf("Children") !== -1) {
                 if (p.nextSibling) {
                   n = p.nextSibling;
                   break;
@@ -2299,12 +2812,14 @@
             return n;
           }
 
-          function stepUp (n1) {
-            if (!n1) { return null; }
+          function stepUp(n1) {
+            if (!n1) {
+              return null;
+            }
 
             let n = n1.previousSibling;
-            while (n && n.id.indexOf('Children') !== -1) {
-              if (n.style.display === 'none') {
+            while (n && n.id.indexOf("Children") !== -1) {
+              if (n.style.display === "none") {
                 n = n.previousSibling;
                 continue;
               }
@@ -2312,14 +2827,16 @@
               n = n.lastChild;
             }
 
-            if (!n && n1.parentNode.id.indexOf('Container') === -1) {
+            if (!n && n1.parentNode.id.indexOf("Container") === -1) {
               n = n1.parentNode.previousSibling;
             }
             return n;
           }
 
           if (wt.scrollTimer && wt.scrollTimerKeyDown) {
-            setTimeout(function () { move(upDown, wt, wt.scrollTimerStep); }, wt.scrollTimerRate);
+            setTimeout(function () {
+              move(upDown, wt, wt.scrollTimerStep);
+            }, wt.scrollTimerRate);
           }
         }
 
@@ -2335,12 +2852,15 @@
           eventually lexicon, query, and tag_id will be put into a single field for requests
           */
 
-        function procResponse (str, status) {
+        function procResponse(str, status) {
           let returnObj = null;
 
           try {
             returnObj = JSON.parse(str);
-          } catch (e) { if (debug) console.log(e.message + '\n' + str); return; };
+          } catch (e) {
+            if (debug) console.log(e.message + "\n" + str);
+            return;
+          }
 
           if (!returnObj) {
             return;
@@ -2353,24 +2873,27 @@
 
           // a toast style message
           if (returnObj.mesgCode) {
-            const z = document.getElementById('mesg');
+            const z = document.getElementById("mesg");
             if (z) {
               if (returnObj.mesgCode === 1) {
                 z.innerHTML = returnObj.mesg;
               } else {
                 z.innerHTML = returnObj.mesg;
               }
-              z.style.display = 'block';
-              setTimeout(function () { document.getElementById('mesg').style.display = 'none'; }, 2000);
+              z.style.display = "block";
+              setTimeout(function () {
+                document.getElementById("mesg").style.display = "none";
+              }, 2000);
             }
             return;
           }
 
-          wt.loading.style.display = 'none';
+          wt.loading.style.display = "none";
           wt.blockScroll = true;
 
           // if caching is activated, add result to cache
-          if (wt.cache && returnObj.nocache === 0) { // the only one we don't cache is if if it's looked up via wordid
+          if (wt.cache && returnObj.nocache === 0) {
+            // the only one we don't cache is if if it's looked up via wordid
             wtAddResultToCache(wt, returnObj.query, str);
           }
 
@@ -2436,7 +2959,7 @@
             if (returnObj.selectId) {
               const node = document.getElementById(returnObj.selectId);
               if (node) {
-                node.classList.add('selectedRowClass');
+                node.classList.add("selectedRowClass");
                 wt.selectedRow = node;
               }
             }
@@ -2447,11 +2970,19 @@
             wt.blockScroll = false;
           } else {
             // only set these if not a tree branch
-            if (returnObj.lastPage === 1) { wt.lastPage = true; }
-            if (returnObj.lastPage === 0) { wt.lastPage = false; }
+            if (returnObj.lastPage === 1) {
+              wt.lastPage = true;
+            }
+            if (returnObj.lastPage === 0) {
+              wt.lastPage = false;
+            }
 
-            if (returnObj.lastPageUp === 1) { wt.lastPageUp = true; }
-            if (returnObj.lastPageUp === 0) { wt.lastPageUp = false; }
+            if (returnObj.lastPageUp === 1) {
+              wt.lastPageUp = true;
+            }
+            if (returnObj.lastPageUp === 0) {
+              wt.lastPageUp = false;
+            }
 
             const fragment = document.createDocumentFragment();
             let insertBefore = false;
@@ -2460,12 +2991,24 @@
             }
             let i = 0;
             for (; i < len; i++) {
-              printTree(wt, fragment, arrOptions[i], 0, insertBefore, returnObj.roots, returnObj.selectId);
+              printTree(
+                wt,
+                fragment,
+                arrOptions[i],
+                0,
+                insertBefore,
+                returnObj.roots,
+                returnObj.selectId,
+              );
             }
             if (insertBefore) {
               con.prepend(fragment);
             } else {
-              if (returnedPage === 0 && !returnObj.parentid && typeof (document.replaceChildren) === 'function') {
+              if (
+                returnedPage === 0 &&
+                !returnObj.parentid &&
+                typeof document.replaceChildren === "function"
+              ) {
                 con.replaceChildren(fragment);
               } else {
                 if (returnedPage === 0 && !returnObj.parentid) {
@@ -2477,22 +3020,22 @@
             }
 
             if (wt && returnObj.selectId === 0) {
-              wt.con.scrollTop = '0'; // scrollTop does not use "px", just 0
+              wt.con.scrollTop = "0"; // scrollTop does not use "px", just 0
             } else if (wt && returnObj.selectId && returnedPage === 0) {
               // select middle word and scroll there
               const s = document.getElementById(wt.selectedRowId);
               if (s) {
                 if (wt.selectedRow) {
-                  if (wt.selectedRow.classList.contains('selectedRowClass')) {
-                    wt.selectedRow.classList.remove('selectedRowClass');
+                  if (wt.selectedRow.classList.contains("selectedRowClass")) {
+                    wt.selectedRow.classList.remove("selectedRowClass");
                   }
                 }
-                s.classList.add('selectedRowClass');
+                s.classList.add("selectedRowClass");
                 wt.selectedRow = s;
 
                 if (wt.dragSource) {
-                  s.setAttribute('draggable', true);
-                  s.addEventListener('dragstart', wt.dragStartFunc, false);
+                  s.setAttribute("draggable", true);
+                  s.addEventListener("dragstart", wt.dragStartFunc, false);
                 }
 
                 wt.centerSelectedRow();
@@ -2500,32 +3043,47 @@
             }
             if (returnedPage < 0) {
               // to keep scrollTop in same place as before when paging up.
-              wt.con.scrollTop += (wt.con.scrollHeight - saveHeight);
+              wt.con.scrollTop += wt.con.scrollHeight - saveHeight;
             }
             wt.blockScroll = false; // fixes bug in webkit where next page was requested in middle of this function
 
             // request def
-            if (wt.selectedRow && returnedPage === 0 && typeof wt.onSelectionChanged === 'function') {
-              wt.onSelectionChanged(wt.params.lexicon, getColumnValues(wt.selectedRow));
+            if (
+              wt.selectedRow &&
+              returnedPage === 0 &&
+              typeof wt.onSelectionChanged === "function"
+            ) {
+              wt.onSelectionChanged(
+                wt.params.lexicon,
+                getColumnValues(wt.selectedRow),
+              );
             }
           }
 
           // topLevelTreeRow tells us to indent rows with no children the width of the plus sign,
           // so they line up with the rows that do have children.
-          function printRow (wt, fragment, rowItem, level, insertAtTop, topLevelTreeRow, selectedId) {
-            const node = document.createElement('div');
-            node.classList.add('nodestyle');
-            node.setAttribute('rowid', rowItem[0]); // idx 0 is the id
-            node.id = wt.idPrefix + '-' + rowItem[0]; // ids must start with letter
+          function printRow(
+            wt,
+            fragment,
+            rowItem,
+            level,
+            insertAtTop,
+            topLevelTreeRow,
+            selectedId,
+          ) {
+            const node = document.createElement("div");
+            node.classList.add("nodestyle");
+            node.setAttribute("rowid", rowItem[0]); // idx 0 is the id
+            node.id = wt.idPrefix + "-" + rowItem[0]; // ids must start with letter
             wt.rowCount++;
 
             node.onclick = onSelect;
 
             if (wt.dragDest) {
-              node.addEventListener('dragover', wt.overFunc, false);
-              node.addEventListener('dragenter', wt.enterFunc, false); // to get IE to work
-              node.addEventListener('dragleave', wt.leaveFunc, false);
-              node.addEventListener('drop', wt.dropFunc, false);
+              node.addEventListener("dragover", wt.overFunc, false);
+              node.addEventListener("dragenter", wt.enterFunc, false); // to get IE to work
+              node.addEventListener("dragleave", wt.leaveFunc, false);
+              node.addEventListener("drop", wt.dropFunc, false);
             }
 
             // if length === 2, then just one column: put value directly in node
@@ -2535,21 +3093,27 @@
             } else {
               // for each column
               const rowLen = rowItem.length;
-              for (let c = 1; c < rowLen; c++) { // col 0 is the id, so start with col 1
-                const d2 = document.createElement('div');
-                d2.classList.add('nodestylecol');
+              for (let c = 1; c < rowLen; c++) {
+                // col 0 is the id, so start with col 1
+                const d2 = document.createElement("div");
+                d2.classList.add("nodestylecol");
 
                 // if (c !== 1 && wt.columnOffsets[c] === 0) { d2.style.display = 'none'; } else { d2.style.left = wt.columnOffsets[c] + 'px'; }
 
                 // if (level === 0) { d2.style.paddingLeft = 1 + (!rowItem.h && topLevelTreeRow ? 15 : 3) + 'px'; } else { d2.style.paddingLeft = (level * wt.indentWidth) + (rowItem.h ? 3 : 15) + 'px'; }
 
-                if (c === 1 && rowItem.h) { // only for column 1
-                  const img = document.createElement('img');
-                  if (!rowItem.o) { img.src = wt.closedNodeImg; } else { img.src = wt.openNodeImg; }
-                  img.style.display = 'inline';
-                  img.style.paddingRight = '4px';
-                  img.style.cursor = 'pointer';
-                  img.id = node.id + 'Img';
+                if (c === 1 && rowItem.h) {
+                  // only for column 1
+                  const img = document.createElement("img");
+                  if (!rowItem.o) {
+                    img.src = wt.closedNodeImg;
+                  } else {
+                    img.src = wt.openNodeImg;
+                  }
+                  img.style.display = "inline";
+                  img.style.paddingRight = "4px";
+                  img.style.cursor = "pointer";
+                  img.id = node.id + "Img";
                   img.onclick = openCloseCon;
                   d2.appendChild(img);
                 }
@@ -2565,16 +3129,22 @@
             }
 
             const before = fragment.firstChild;
-            if (insertAtTop && before) { fragment.insertBefore(node, before); } else { fragment.appendChild(node); }
+            if (insertAtTop && before) {
+              fragment.insertBefore(node, before);
+            } else {
+              fragment.appendChild(node);
+            }
           }
 
-          function openCloseCon (ev) {
+          function openCloseCon(ev) {
             ev.cancelBubble = true;
             if (ev.stopPropagation) ev.stopPropagation();
 
             // "this" is a reference to the img node
             const match = parseNodeImgId(this.id);
-            if (!match) { return; }
+            if (!match) {
+              return;
+            }
 
             const wtprefix = match.wtPrefix;
             const wordid = match.id;
@@ -2585,57 +3155,88 @@
             }
           }
 
-          function onSelect (ev) {
+          function onSelect(ev) {
             const res = parseNodeId(this.id);
-            if (!res) { return; }
+            if (!res) {
+              return;
+            }
 
             const idPrefix = res.wtPrefix;
             const wt = lookupWT(idPrefix);
 
-            const r = wt.con.querySelectorAll('.selectedRowClass');
+            const r = wt.con.querySelectorAll(".selectedRowClass");
             for (let i = 0; i < r.length; i++) {
-              r[i].classList.remove('selectedRowClass');
+              r[i].classList.remove("selectedRowClass");
             }
 
-            this.classList.add('selectedRowClass');
+            this.classList.add("selectedRowClass");
 
             if (wt.dragSource) {
-              this.setAttribute('draggable', true);
-              this.addEventListener('dragstart', wt.dragStartFunc, false);
+              this.setAttribute("draggable", true);
+              this.addEventListener("dragstart", wt.dragStartFunc, false);
             }
 
             wt.selectedRow = this;
 
-            if (typeof wt.onClickActivate === 'function') {
+            if (typeof wt.onClickActivate === "function") {
               wt.onClickActivate(wt.params.lexicon, getColumnValues(this));
               // console.log("select: " + wt.params.lexicon + ", " + getColumnValues(this));
             }
-            if (wt.entry && wt.autofocus) { wt.entry.focus(); }
+            if (wt.entry && wt.autofocus) {
+              wt.entry.focus();
+            }
           }
 
-          function printTree (wt, fragment, treeRow, level, insertBefore, roots, selectedId) {
-            printRow(wt, fragment, treeRow, level, insertBefore, roots, selectedId);
+          function printTree(
+            wt,
+            fragment,
+            treeRow,
+            level,
+            insertBefore,
+            roots,
+            selectedId,
+          ) {
+            printRow(
+              wt,
+              fragment,
+              treeRow,
+              level,
+              insertBefore,
+              roots,
+              selectedId,
+            );
 
             // if node has children create a container and recursively call printTree()
             if (treeRow.h && treeRow.c) {
-              let node = document.createElement('div');
-              node.style.position = 'relative';
-              if (!treeRow.o) { node.style.display = 'none'; }
+              let node = document.createElement("div");
+              node.style.position = "relative";
+              if (!treeRow.o) {
+                node.style.display = "none";
+              }
               node = fragment.appendChild(node);
-              node.id = node.previousSibling.id + 'Children';
+              node.id = node.previousSibling.id + "Children";
 
               const treeRowLen = treeRow.c.length;
               for (let i = 0; i < treeRowLen; i++) {
-                printTree(wt, node, treeRow.c[i], level + 1, insertBefore, roots, selectedId);
+                printTree(
+                  wt,
+                  node,
+                  treeRow.c[i],
+                  level + 1,
+                  insertBefore,
+                  roots,
+                  selectedId,
+                );
               }
             }
           }
         }
 
-        function toggleNode (wt, nodeid) {
-          const imgId = nodeid + 'Img';
+        function toggleNode(wt, nodeid) {
+          const imgId = nodeid + "Img";
           const imgNode = document.getElementById(imgId);
-          if (!imgNode) { // its ok for n to be null (lazy load)
+          if (!imgNode) {
+            // its ok for n to be null (lazy load)
             return;
           }
           if (imgNode.src.indexOf(wt.closedNodeImg) !== -1) {
@@ -2643,45 +3244,79 @@
           } else {
             closeNode(wt, nodeid);
           }
-          if (wt.entry && wt.autofocus) { wt.entry.focus(); }
+          if (wt.entry && wt.autofocus) {
+            wt.entry.focus();
+          }
         }
 
         /**
          * Return true if node was opened. False otherwise.
          * This lets us open all, on second keypress.
          */
-        function openNode (wt, nodeid) {
-          const childrenConId = nodeid + 'Children';
-          const imgId = nodeid + 'Img';
+        function openNode(wt, nodeid) {
+          const childrenConId = nodeid + "Children";
+          const imgId = nodeid + "Img";
           const n = document.getElementById(childrenConId);
           const imgNode = document.getElementById(imgId);
 
-          if (!imgNode) { // its ok for n to be null, but not imgNode
+          if (!imgNode) {
+            // its ok for n to be null, but not imgNode
             return true;
           }
 
-          if (imgNode.src.indexOf(wt.openNodeImg) !== -1) { return false; }
+          if (imgNode.src.indexOf(wt.openNodeImg) !== -1) {
+            return false;
+          }
 
           imgNode.src = wt.openNodeImg;
 
           if (n) {
-            n.style.display = 'block';
-          } else { // lazy load children...
+            n.style.display = "block";
+          } else {
+            // lazy load children...
             const requestTime = new Date().getTime();
-            const childrenCon = document.createElement('div');
-            childrenCon.style.position = 'relative';
+            const childrenCon = document.createElement("div");
+            childrenCon.style.position = "relative";
 
             childrenCon.id = childrenConId;
 
-            if (imgNode.parentNode.parentNode.nextSibling) { wt.con.insertBefore(childrenCon, imgNode.parentNode.parentNode.nextSibling); } else { wt.con.appendChild(childrenCon); }
+            if (imgNode.parentNode.parentNode.nextSibling) {
+              wt.con.insertBefore(
+                childrenCon,
+                imgNode.parentNode.parentNode.nextSibling,
+              );
+            } else {
+              wt.con.appendChild(childrenCon);
+            }
 
-            wt.params.root_id = parseInt(getColumnValues(document.getElementById(nodeid))[0]);
+            wt.params.root_id = parseInt(
+              getColumnValues(document.getElementById(nodeid))[0],
+            );
 
-            if (wt.selectedRow) { wt.params.selectedid = wt.selectedRow.id; } // maybe this should just be nodeid?
+            if (wt.selectedRow) {
+              wt.params.selectedid = wt.selectedRow.id;
+            } // maybe this should just be nodeid?
             let query = wt.makeQuery(wt.params);
             query = encodeURIComponent(query);
 
-            const url = wt.url + '?n=' + (wt.maxWords + 1) + '&idprefix=' + wt.idPrefix + '&x=' + Math.random() + '&requestTime=' + requestTime + '&page=' + wt.page + '&con=' + childrenConId + '&mode=' + wt.mode + '&query=' + query;
+            const url =
+              wt.url +
+              "?n=" +
+              (wt.maxWords + 1) +
+              "&idprefix=" +
+              wt.idPrefix +
+              "&x=" +
+              Math.random() +
+              "&requestTime=" +
+              requestTime +
+              "&page=" +
+              wt.page +
+              "&con=" +
+              childrenConId +
+              "&mode=" +
+              wt.mode +
+              "&query=" +
+              query;
 
             requestRows(url);
             wt.params.root_id = 0;
@@ -2694,9 +3329,9 @@
          * Return true if node was closed. False otherwise.
          * This lets us close all, on second keypress.
          */
-        function closeNode (wt, nodeid) {
-          const childrenConId = nodeid + 'Children';
-          const imgId = nodeid + 'Img';
+        function closeNode(wt, nodeid) {
+          const childrenConId = nodeid + "Children";
+          const imgId = nodeid + "Img";
           const n = document.getElementById(childrenConId);
           const imgNode = document.getElementById(imgId);
 
@@ -2708,81 +3343,98 @@
             return false;
           }
 
-          n.style.display = 'none';
+          n.style.display = "none";
           imgNode.src = wt.closedNodeImg;
 
           return true;
         }
 
-        function openAllNodes (node) {
+        function openAllNodes(node) {
           const children = node.childNodes;
-          const regex = new RegExp('^[0-9]+' + this.idPrefix + '$');
+          const regex = new RegExp("^[0-9]+" + this.idPrefix + "$");
           const childLen = children.length;
           for (let i = 0; i < childLen; i++) {
-            if (children[i].childNodes.length > 0) { this.openAllNodes(children[i]); }
+            if (children[i].childNodes.length > 0) {
+              this.openAllNodes(children[i]);
+            }
 
-            if (regex.exec(children[i].id)) { openNode(this, children[i].id); }
-          }
-        }
-
-        function closeAllNodes (node) {
-          if (node) {
-            const children = node.childNodes;
-            const regex = new RegExp('^[0-9]+' + this.idPrefix + '$');
-            const childLen = children.length;
-            for (let i = 0; i < childLen; i++) {
-              if (children[i].childNodes.length > 0) { this.closeAllNodes(children[i]); }
-
-              if (regex.exec(children[i].id)) { closeNode(this, children[i].id); }
+            if (regex.exec(children[i].id)) {
+              openNode(this, children[i].id);
             }
           }
         }
 
-        function requestRows (url) {
+        function closeAllNodes(node) {
+          if (node) {
+            const children = node.childNodes;
+            const regex = new RegExp("^[0-9]+" + this.idPrefix + "$");
+            const childLen = children.length;
+            for (let i = 0; i < childLen; i++) {
+              if (children[i].childNodes.length > 0) {
+                this.closeAllNodes(children[i]);
+              }
+
+              if (regex.exec(children[i].id)) {
+                closeNode(this, children[i].id);
+              }
+            }
+          }
+        }
+
+        function requestRows(url) {
           microAjax({
             url,
-            method: 'GET',
+            method: "GET",
             success: procResponse,
             warning: procResponseError,
-            error: null
+            error: null,
           });
         }
 
-        function procResponseError (str) {
+        function procResponseError(str) {
           let responseObj = null;
           try {
             responseObj = JSON.parse(str);
-          } catch (e) { if (debug) console.log(e.message + '\n' + str); return; };
+          } catch (e) {
+            if (debug) console.log(e.message + "\n" + str);
+            return;
+          }
 
           if (!responseObj) {
             return;
           }
-          if (typeof (responseObj.error) !== 'undefined') {
-            console.log('response error: ' + responseObj.error);
+          if (typeof responseObj.error !== "undefined") {
+            console.log("response error: " + responseObj.error);
             // wt.loading.style.display = "none";
           }
         }
 
-        function checkCache (wt) {
-          if (!wt.entry) { return false; }
+        function checkCache(wt) {
+          if (!wt.entry) {
+            return false;
+          }
 
-          let queryKey = '';
-          if (wt.entry.value === '') { queryKey = wt.params.lexicon + '' + wt.params.tag_id; } else { queryKey = wt.params.lexicon + wt.entry.value + wt.params.tag_id; }
+          let queryKey = "";
+          if (wt.entry.value === "") {
+            queryKey = wt.params.lexicon + "" + wt.params.tag_id;
+          } else {
+            queryKey = wt.params.lexicon + wt.entry.value + wt.params.tag_id;
+          }
 
           if (wt.cache && wt.cache[queryKey]) {
             wt.lastRequestTime = 0; // defeat sequence check
-            procResponse(wt.cache[queryKey].str, 'success');
+            procResponse(wt.cache[queryKey].str, "success");
             return true;
           } else {
             return false; // not cached, request it
           }
         }
 
-        function clearCache () {
+        function clearCache() {
           this.cache = [];
         }
 
-        function wtAddResultToCache (wt, queryKey, str) {
+        function wtAddResultToCache(wt, queryKey, str) {
           // the queryKey is the lexicon + the query word
           queryKey = wt.params.lexicon + queryKey + wt.params.tag_id;
           // if this query isn't in the cache
@@ -2793,9 +3445,16 @@
             if (cacheLimit && wt.cacheLength >= cacheLimit) {
               let prev = null;
               for (const x in wt.cache) {
-                if (typeof wt.cache.hasOwn === 'function' && !wt.cache.hasOwn(x)) { continue; }
+                if (
+                  typeof wt.cache.hasOwn === "function" &&
+                  !wt.cache.hasOwn(x)
+                ) {
+                  continue;
+                }
 
-                if (prev == null || wt.cache[x].time < wt.cache[prev].time) { prev = x; }
+                if (prev == null || wt.cache[x].time < wt.cache[prev].time) {
+                  prev = x;
+                }
               }
               if (prev) {
                 wt.cacheLength--;
@@ -2805,20 +3464,31 @@
             wt.cacheLength++;
             wt.cache[queryKey] = [];
             wt.cache[queryKey].str = str;
-            if (queryKey === wt.params.lexicon + 'a' || queryKey === wt.params.lexicon + 'α') { // put empty queries into the future, so they are never removed from cache
+            if (
+              queryKey === wt.params.lexicon + "a" ||
+              queryKey === wt.params.lexicon + "α"
+            ) {
+              // put empty queries into the future, so they are never removed from cache
               const d = new Date();
               d.setDate(d.getDate() + 5);
               wt.cache[queryKey].time = d.getTime();
-            } else { wt.cache[queryKey].time = new Date().getTime(); }
-          } else if (queryKey !== wt.params.lexicon + 'a' || queryKey === wt.params.lexicon + 'α') { // don't reset timestamp for empty query
+            } else {
+              wt.cache[queryKey].time = new Date().getTime();
+            }
+          } else if (
+            queryKey !== wt.params.lexicon + "a" ||
+            queryKey === wt.params.lexicon + "α"
+          ) {
+            // don't reset timestamp for empty query
             // if it is in the cache, update the timestamp
             wt.cache[queryKey].time = new Date().getTime();
           }
         }
 
-        function centerSelectedRow () {
+        function centerSelectedRow() {
           if (this.selectedRow) {
-            this.con.scrollTop = this.selectedRow.offsetTop - (this.con.offsetHeight / 2) + 30;
+            this.con.scrollTop =
+              this.selectedRow.offsetTop - this.con.offsetHeight / 2 + 30;
           }
         }
       }
@@ -2829,7 +3499,7 @@
       imageid = word/root_id + wtprefix + "Img"
       rowchidren = word/rootid + wtprefix + "Children"
       */
-      function parseNodeId (id) {
+      function parseNodeId(id) {
         let r = null;
         const match = /(.*)-([0-9]+)/.exec(id);
         if (match) {
@@ -2840,7 +3510,7 @@
         return r;
       }
 
-      function parseNodeImgId (id) {
+      function parseNodeImgId(id) {
         let r = null;
         const match = /([0-9]+)(.+)Img/.exec(id);
         if (match) {
@@ -2853,9 +3523,9 @@
 
       // returns an array of row values: idx 0 is the id (rowid attribute),
       // the rest come from the columns
-      function getColumnValues (row) {
+      function getColumnValues(row) {
         const values = [];
-        const id = row.getAttribute('rowid');
+        const id = row.getAttribute("rowid");
         values.push(id);
         let col = row.firstChild;
 
@@ -2878,5 +3548,5 @@
       }
       /* end wordtree.js */
     </script>
-</body>
+  </body>
 </html>

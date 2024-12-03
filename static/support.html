@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+    <meta http-equiv="Content-Type" content="text/html;charset=utf-8" />
+    <meta name="format-detection" content="telephone=no" />
+    <meta name="viewport" content="width=device-width" />
+    <title>philolog.us</title>
+    <meta
+      name="description"
+      content="Philologus is a fast, streamlined interface to the online Greek and Latin lexica hosted by the Perseus Project."
+    />
+    <meta
+      name="keywords"
+      content="Liddell Scott and Jones, Lewis and Short, Slater's Lexicon to Pindar, Perseus Project, Greek, Classical Greek, Ancient Greek, Latin, lexica, lexicon, dictionary, dendrea.org"
+    />
+    <style nonce="2726c7f26c">
+      /* try to use local NewAthenaUnicode before downloading from server;
+        does not work in Safari https://stackoverflow.com/questions/59986432/safari-user-installed-fonts-dont-render */
+      @font-face {
+        font-family: "WebNewAthenaUnicode";
+        src:
+          local("NewAthenaUnicode"),
+          url("/newathu5_8.woff") format("woff"),
+          url("/newathu5_8.ttf") format("ttf");
+      }
+      BODY {
+        font-family: NewAthenaUnicode, WebNewAthenaUnicode, helvetica, arial,
+          san-serif;
+        background-color: #eee;
+        padding: 0px;
+        margin: 0px;
+        text-align: center;
+        overflow: hidden;
+        width: 100vw;
+        height: 100vh;
+      }
+      .dark BODY {
+        background-color: black;
+      }
+      #outerbody {
+        background-color: white;
+        border-radius: 14px;
+        position: relative;
+        z-index: 1;
+        top: 70px;
+        margin-left: 1rem;
+        margin-right: 1rem;
+        overflow: hidden;
+        height: calc(100% - 84px);
+        text-align: left;
+      }
+      .dark #outerbody {
+        color: white;
+        background-color: #202124;
+      }
+      #innerbody {
+        position: relative;
+        z-index: 2;
+        margin: 0px;
+        padding: 10px;
+        overflow: auto;
+        height: calc(100% - 20px);
+      }
+      .body {
+        line-height: 1.2;
+        margin: 8px 0px;
+      }
+      #logocontainer {
+        z-index: 999;
+        position: absolute;
+        top: 0px;
+        right: 0px;
+        height: 52px;
+        width: 243px;
+        margin: 0px;
+        padding: 0px;
+      }
+      #logo {
+        color: black;
+        margin: 0px;
+        padding: 0px;
+        position: absolute;
+        bottom: 0px;
+        left: 0px;
+        font-size: 28pt;
+        font-family: helvetica, arial, sans-serif;
+      }
+      #support {
+        font-family: helvetica, arial, sans-serif;
+        font-size: 2rem;
+        margin: 150px auto;
+        width: 100%;
+        align-content: center;
+        display: inline-block;
+        text-align: center;
+        height: 33%;
+      }
+      a {
+        text-decoration: none;
+      }
+      .text {
+        color: black;
+      }
+      .dark .text {
+        color: white;
+      }
+    </style>
+    <script nonce="2726c7f26c" type="text/javascript">
+      "use strict";
+      function setTheme() {
+        const mode = window.localStorage.getItem("mode"); // use mode to override system dark mode
+        if (
+          (window.matchMedia("(prefers-color-scheme: dark)").matches ||
+            mode === "dark") &&
+          mode !== "light"
+        ) {
+          document.querySelector("HTML").classList.add("dark");
+        } else {
+          document.querySelector("HTML").classList.remove("dark");
+        }
+      }
+      setTheme();
+    </script>
+  </head>
+  <body>
+    <div id="outerbody">
+      <div id="innerbody">
+        <div id="support">
+          <a class="text" href="mailto:support@philolog.us"
+            >support@philolog.us</a
+          >
+        </div>
+      </div>
+    </div>
+    <div id="logocontainer">
+      <div id="logo">
+        <a class="text" href="https://philolog.us">philolog.us</a>
+      </div>
+    </div>
+  </body>
+</html>

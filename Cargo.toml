@@ -1,6 +1,6 @@
 [package]
 name = "philologus-actix-web"
-version = "2.0.24"
+version = "2.0.26"
 authors = ["Jeremy March <jmarch@gradcenter.cuny.edu>"]
 edition = "2021"
 

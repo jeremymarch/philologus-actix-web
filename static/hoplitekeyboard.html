@@ -22,7 +22,7 @@ h2 {margin-bottom: 2px; }
 .gkinput, .gkinputnontyping {
     font-family: NewAthenaUnicode,WebNewAthenaUnicode, helvetica,arial;
 }
-.rotate { 
+.rotate {
     transform: rotate(-42deg);
     width: 10%;
     height: 62px;
@@ -30,7 +30,7 @@ h2 {margin-bottom: 2px; }
     white-space: nowrap;
     position: relative;
 }
-.dnum { 
+.dnum {
     border-collapse: collapse;
     text-align:center;
     border:1px solid white;
@@ -53,9 +53,9 @@ h2 {margin-bottom: 2px; }
     outline:2px solid #6677dd;
 }
 #hop-image {
-  border: 4px solid black; 
-  margin: 0px; 
-  width: 150px; 
+  border: 4px solid black;
+  margin: 0px;
+  width: 150px;
   height: 150px;
   position:relative;
   left:-30px;
@@ -111,8 +111,8 @@ h2 {margin-bottom: 2px; }
 <h1>Hoplite Polytonic Greek Keyboard</h1>
     <img alt="" src="hopicon7-400.gif" id="hop-image" />
 <p>
-<br> 
-The Hoplite Polytonic Greek Keyboard facilitates the typing of polytonic Greek diacritics.  
+<br>
+The Hoplite Polytonic Greek Keyboard facilitates the typing of polytonic Greek diacritics.
 <ul id="hop-list"><li>On iOS and Android, the Hoplite Keyboard can be installed as an alternate keyboard system-wide and used in any application.</li>
     <li>On Mac, Windows, and Linux the Hoplite Keyboard can be used as a LibreOffice extension: type base letters with the Greek keyboard provided by your operating system and toggle on/off diacritics with the Hoplite Keyboard's hot keys.</li>
 </ul>
@@ -120,14 +120,14 @@ The Hoplite Polytonic Greek Keyboard facilitates the typing of polytonic Greek d
 <br>
 <h2>Demonstration:</h2>
 <ul>
-<li>Type a Greek vowel</li>  
+<li>Type a Greek vowel</li>
 <li>Then toggle diacritics on and off with the number keys</li>
 <li>Contrasting diacritics will replace each other</li>
 </ul>
 <div class="tophelp">
     <table cellspacing="0" cellpadding="0">
         <tbody><tr><td class="rotate" id="legend-rough">rough</td><td class="rotate" id="legend-smooth">smooth</td><td class="rotate" id="legend-acute">acute</td><td class="rotate" id="legend-grave">grave</td><td class="rotate" id="legend-circumflex">circumflex</td><td class="rotate" id="legend-macron">macron</td><td class="rotate" id="legend-breve">breve</td><td class="rotate" id="legend-subscript">iota subscript</td><td class="rotate" id="legend-diaeresis">diaeresis</td><td class="rotate" id="legend-underdot">underdot</td></tr>
-    </tbody></table>	
+    </tbody></table>
     <table cellpadding=0 cellspacing=0>
         <tr><td class="dnum">1</td><td class="dnum">2</td><td class="dnum">3</td><td class="dnum">4</td><td class="dnum">5</td><td class="dnum">6</td><td class="dnum">7</td><td class="dnum">8</td><td class="dnum">9</td><td class="dnum">0</td></tr>
     </table>
@@ -142,8 +142,21 @@ The Hoplite Polytonic Greek Keyboard facilitates the typing of polytonic Greek d
     <li><a href="https://play.google.com/store/apps/details?id=com.philolog.hoplitekeyboard">Android</a></li>
     <!--<li><a href="https://extensions.libreoffice.org/extensions/hoplite-polytonic-greek-keyboard">LibreOffice Extension</a> for Mac, Windows, and Linux</li>-->
     <!--<li><a href="https://github.com/jeremymarch/hopliteKB-LibreOffice/releases/latest/download/hoplitekb.oxt">LibreOffice Extension (latest)</a> for Mac, Windows, and Linux</li>-->
-    <li><a href="https://github.com/jeremymarch/hopliteKB-LibreOffice/releases/download/v2.2/hoplitekb.oxt">LibreOffice Extension v2.2</a> for Mac, Windows, and Linux</li>
-    <li><a href="https://github.com/jeremymarch/hopliteKB-LibreOffice/releases/download/v1.0.1/hoplitekb.oxt">LibreOffice Extension v1.0.1</a> for Mac, Windows, and Linux</li>
+    <!--<li><a href="https://github.com/jeremymarch/hopliteKB-LibreOffice/releases/download/v2.2/hoplitekb.oxt">LibreOffice Extension v2.2</a> for Mac, Windows, and Linux</li>-->
+    <li><a href="https://github.com/jeremymarch/hopliteKB-LibreOffice/releases/latest/download/hoplitekb.oxt">LibreOffice Extension</a> for Mac, Windows, and Linux
+    <ul>
+        <li>Installation:</li>
+        <li>Download and install a recent version of LibreOffice.</li>
+        <li>Download the hoplitekb.oxt extension file from the link above.</li>
+        <li>Double click hoplitekb.oxt to install the extension.</li>
+        <li>Once the extension is installed, LibreOffice will prompt you to restart LibreOffice.</li>
+        <li>After restarting, open a LibreOffice Writer document and you will see the HOPLITE button in the top left corner;
+            this button turns the HOPLITE keyboard on and off.</li>
+        <li>Hoplite Keyboard settings can be found by going to Tools -> Extensions, select Hoplite Keyboard
+            and click the Options button.</li>
+    </ul>
+    </li>
+    <!--<li><a href="https://github.com/jeremymarch/hopliteKB-LibreOffice/releases/download/v1.0.1/hoplitekb.oxt">LibreOffice Extension v1.0.1</a> for Mac, Windows, and Linux</li>-->
 </ul>
 <h2>Features:</h2>
 <ul>
@@ -216,7 +229,7 @@ The Hoplite Polytonic Greek Keyboard facilitates the typing of polytonic Greek d
       }
       return a.trim();
     }
-    
+
     function start () {
       const supported = (() => {
         try {
@@ -229,7 +242,7 @@ The Hoplite Polytonic Greek Keyboard facilitates the typing of polytonic Greek d
         return false;
       })();
       console.log(supported ? 'WebAssembly is supported' : 'WebAssembly is not supported');
-    
+
       document.getElementById('hop-textarea').addEventListener('keypress', handleKey, false);
       // document.getElementById('inp').focus();
     }

@@ -3,7 +3,7 @@
 # https://dev.to/sergeyzenchenko/actix-web-in-docker-how-to-build-small-and-secure-images-2mjd
 # https://learn.arm.com/learning-paths/servers-and-cloud-computing/from-iot-to-the-cloud-part1/how-to-8/
 
-FROM rust:1.81.0 AS build
+FROM rust:1.93.0 AS build
 # ENV PKG_CONFIG_ALLOW_CROSS=1
 
 WORKDIR /usr/src/philologus-actix-web

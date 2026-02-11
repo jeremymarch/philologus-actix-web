@@ -25,10 +25,10 @@ use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqlitePool};
 
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub enum PhilologusWords {
-    GreekDefs { seq: u32, def: String },
-}
+// #[derive(Debug, Serialize, Deserialize, Clone)]
+// pub enum PhilologusWords {
+//     GreekDefs { seq: u32, def: String },
+// }
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct DefRow {
@@ -71,7 +71,7 @@ pub async fn greek_insert_synopsis(
     ip: &str,
     agent: &str,
 ) -> Result<u32, sqlx::Error> {
-    let query = format!("INSERT INTO greeksynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')", 
+    let query = format!("INSERT INTO greeksynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')",
         accessed, info.sname, info.advisor, info.unit, info.verb, info.pp,
         info.number, info.person, info.ptcgender.unwrap_or(999), info.ptcnumber.unwrap_or(999), info.ptccase.unwrap_or(999), ip, agent, 1,
         info.r.join("', '"));
@@ -119,7 +119,7 @@ pub async fn latin_insert_synopsis(
     ip: &str,
     agent: &str,
 ) -> Result<u32, sqlx::Error> {
-    let query = format!("INSERT INTO latinsynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')", 
+    let query = format!("INSERT INTO latinsynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')",
         accessed, info.sname, info.advisor, info.unit, info.verb, info.pp,
         info.number, info.person, info.ptcgender.unwrap_or(999), info.ptcnumber.unwrap_or(999), info.ptccase.unwrap_or(999), ip, agent, 1,
         info.r.join("', '"));

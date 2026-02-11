@@ -47,6 +47,6 @@ CMD ["philologus-actix-web"]
 
 # https://stackoverflow.com/questions/78897082/difference-between-docker-buildx-build-and-docker-build-for-multi-arch-images
 # docker buildx create --name multi-platform-builder --driver docker-container --use
-# docker build --load --builder multi-platform-builder --platform=linux/amd64 -t philologus-actix-web .
+# docker build --load --builder multi-platform-builder --platform=linux/amd64 -t philologus-actix-web:2.0.0 .
 
 # or multiple targets: docker build --load --builder multi-platform-builder --platform=linux/amd64,linux/arm64 -t philologus-actix-web .

@@ -331,14 +331,14 @@ async fn query_words(
     limit: u32,
     page: i32,
 ) -> Result<QueryResult, AWError> {
-    let seq = if word_id.is_none() {
-        let query = sanitize_query(query);
-        get_seq_by_prefix(db, table, &query).await.unwrap()
-    } else {
-        let decoded_word = percent_decode_str(word_id.as_ref().unwrap())
+    let seq = if let Some(wid) = &word_id {
+        let decoded_word = percent_decode_str(wid)
             .decode_utf8()
             .map_err(map_utf8_error)?;
         get_seq_by_word(db, table, &decoded_word).await.unwrap()
+    } else {
+        let query = sanitize_query(query);
+        get_seq_by_prefix(db, table, &query).await.unwrap()
     };
 
     let mut before_rows = vec![];
@@ -455,17 +455,15 @@ async fn philologus_defs(
 
     let table = get_long_lex(info.lexicon.as_str());
 
-    let def_row = if info.wordid.is_some() {
-        let decoded_word = percent_decode_str(info.wordid.as_ref().unwrap())
+    let def_row = if let Some(wid) = &info.wordid {
+        let decoded_word = percent_decode_str(wid)
             .decode_utf8()
             .map_err(map_utf8_error)?;
         get_def_by_word(db, table, &decoded_word)
             .await
             .map_err(map_sqlx_error)?
-    } else if info.id.is_some() {
-        get_def_by_seq(db, info.id.unwrap())
-            .await
-            .map_err(map_sqlx_error)?
+    } else if let Some(id) = info.id {
+        get_def_by_seq(db, id).await.map_err(map_sqlx_error)?
     } else {
         return Err(PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,

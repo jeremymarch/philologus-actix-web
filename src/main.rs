@@ -554,7 +554,9 @@ async fn hc(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
-    std::env::set_var("RUST_LOG", "trace");
+    unsafe {
+        std::env::set_var("RUST_LOG", "trace");
+    }
     // env_logger::init();
 
     //e.g. export PHILOLOGUS_DB_PATH=sqlite://db.sqlite?mode=ro
@@ -644,13 +646,13 @@ async fn main() -> io::Result<()> {
             .app_data(db_pool.clone())
             .app_data(db_log_pool.clone())
             //.wrap(middleware::Logger::default())
-            .wrap(middleware::DefaultHeaders::new()
-                .add((CONTENT_SECURITY_POLICY,
-                    HeaderValue::from_static("style-src 'nonce-2726c7f26c';\
-                        script-src 'nonce-2726c7f26c' 'wasm-unsafe-eval' 'unsafe-inline'; object-src 'none'; base-uri 'none'")))
-                .add((STRICT_TRANSPORT_SECURITY,
-                    HeaderValue::from_static("max-age=31536000" /* 1 year */ )))
-            )
+            // .wrap(middleware::DefaultHeaders::new()
+            //     .add((CONTENT_SECURITY_POLICY,
+            //         HeaderValue::from_static("style-src 'nonce-2726c7f26c';\
+            //             script-src 'nonce-2726c7f26c' 'wasm-unsafe-eval' 'unsafe-inline'; object-src 'none'; base-uri 'none'")))
+            //     .add((STRICT_TRANSPORT_SECURITY,
+            //         HeaderValue::from_static("max-age=31536000" /* 1 year */ )))
+            // )
             .wrap(TracingLogger::default())
             .wrap(middleware::Compress::default())
             // .app_data(
@@ -660,20 +662,32 @@ async fn main() -> io::Result<()> {
             // )
             .app_data(web::PayloadConfig::default().limit(262_144))
             //.wrap(error_handlers)
-            .service(web::resource("/{lex}/query").route(web::get().to(philologus_words)))
-            .service(web::resource("/{lex}/item").route(web::get().to(philologus_defs)))
-            .service(web::resource("/{lex}/ft/").route(web::get().to(full_text_query)))
-            .service(web::resource("/{lex}/{word}").route(web::get().to(index))) // requesting page from a word link, order of services matters
+            // .service(web::resource("/{lex}/query").route(web::get().to(philologus_words)))
+            // .service(web::resource("/{lex}/item").route(web::get().to(philologus_defs)))
+            // .service(web::resource("/{lex}/ft/").route(web::get().to(full_text_query)))
+            // .service(web::resource("/{lex}/{word}").route(web::get().to(index))) // requesting page from a word link, order of services matters
             .service(web::resource("/ft/").route(web::get().to(full_text_query)))
             .service(web::resource("/item").route(web::get().to(philologus_defs)))
             .service(web::resource("/query").route(web::get().to(philologus_words)))
             .service(web::resource("/healthzzz").route(web::get().to(health_check)))
-            .service(web::resource("/greek-synopsis-result").route(web::get().to(greek_synopsis_result)))
-            .service(web::resource("/greek-synopsis-list").route(web::get().to(greek_synopsis_list)))
-            .service(web::resource("/greek-synopsis-saver").route(web::post().to(greek_synopsis_saver)))
-            .service(web::resource("/latin-synopsis-result").route(web::get().to(latin_synopsis_result)))
-            .service(web::resource("/latin-synopsis-list").route(web::get().to(latin_synopsis_list)))
-            .service(web::resource("/latin-synopsis-saver").route(web::post().to(latin_synopsis_saver)))
+            .service(
+                web::resource("/greek-synopsis-result").route(web::get().to(greek_synopsis_result)),
+            )
+            .service(
+                web::resource("/greek-synopsis-list").route(web::get().to(greek_synopsis_list)),
+            )
+            .service(
+                web::resource("/greek-synopsis-saver").route(web::post().to(greek_synopsis_saver)),
+            )
+            .service(
+                web::resource("/latin-synopsis-result").route(web::get().to(latin_synopsis_result)),
+            )
+            .service(
+                web::resource("/latin-synopsis-list").route(web::get().to(latin_synopsis_list)),
+            )
+            .service(
+                web::resource("/latin-synopsis-saver").route(web::post().to(latin_synopsis_saver)),
+            )
             .service(web::resource("/latin-synopsis").route(web::get().to(latin_synopsis)))
             .service(web::resource("/synopsis-json").route(web::post().to(synopsis_json)))
             .service(web::resource("/cetest").route(web::get().to(cetest)))

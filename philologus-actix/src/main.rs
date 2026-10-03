@@ -23,10 +23,10 @@ use tracing_actix_web::TracingLogger;
 
 use actix_files as fs;
 use actix_files::NamedFile;
-use actix_web::http::header::{HeaderValue, CONTENT_SECURITY_POLICY, STRICT_TRANSPORT_SECURITY};
+use actix_web::http::header::{CONTENT_SECURITY_POLICY, HeaderValue, STRICT_TRANSPORT_SECURITY};
 use actix_web::{
-    http::StatusCode, middleware, web, App, Error as AWError, HttpRequest, HttpResponse,
-    HttpServer, ResponseError, Result,
+    App, Error as AWError, HttpRequest, HttpResponse, HttpServer, ResponseError, Result,
+    http::StatusCode, middleware, web,
 };
 
 use chrono::prelude::*;
@@ -38,8 +38,7 @@ use std::path::PathBuf;
 use thiserror::Error;
 use unicode_normalization::UnicodeNormalization;
 
-mod db;
-use crate::db::*;
+use libphilologus::*;
 mod synopsis;
 use crate::synopsis::*;
 use serde::{Deserialize, Serialize};
@@ -171,21 +170,6 @@ pub struct DefRequest {
     pub skipcache: u32,
     pub addwordlinks: u32,
     pub lex: Option<String>,
-}
-
-#[derive(Debug, Serialize, Deserialize, Clone)]
-pub struct SynopsisSaverRequest {
-    pub advisor: String,
-    pub unit: usize,
-    pub sname: String,
-    pub number: usize,
-    pub person: usize,
-    pub pp: String,
-    pub ptccase: Option<usize>,
-    pub ptcgender: Option<usize>,
-    pub ptcnumber: Option<usize>,
-    pub r: Vec<String>,
-    pub verb: usize,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -554,7 +538,7 @@ async fn hc(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 
 #[actix_web::main]
 async fn main() -> io::Result<()> {
-    std::env::set_var("RUST_LOG", "trace");
+    //std::env::set_var("RUST_LOG", "trace");
     // env_logger::init();
 
     //e.g. export PHILOLOGUS_DB_PATH=sqlite://db.sqlite?mode=ro
@@ -679,7 +663,7 @@ async fn main() -> io::Result<()> {
             .service(web::resource("/cetest").route(web::get().to(cetest)))
             .service(web::resource("/hc.php").route(web::get().to(hc)))
             .service(
-                fs::Files::new("/", "./static")
+                fs::Files::new("/", "philologus-actix/static")
                     .prefer_utf8(true)
                     .index_file("index.html"),
             )
@@ -833,7 +817,7 @@ fn map_utf8_error(_e: std::str::Utf8Error) -> PhilologusError {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use actix_web::{test, web, App};
+    use actix_web::{App, test, web};
     use urlencoding::encode;
 
     //use serde::{Serialize, Deserialize};

@@ -16,19 +16,166 @@ GNU General Public License for more details.
 You should have received a copy of the GNU General Public License
 along with this program.  If not, see <https://www.gnu.org/licenses/>.
 */
-use tracing::info;
-
-use crate::GreekSynopsisResult;
-use crate::LatinSynopsisResult;
-use crate::SynopsisSaverRequest;
 use serde::{Deserialize, Serialize};
 use sqlx::sqlite::SqliteRow;
 use sqlx::{FromRow, Row, SqlitePool};
+use tracing::info;
 
 // #[derive(Debug, Serialize, Deserialize, Clone)]
 // pub enum PhilologusWords {
 //     GreekDefs { seq: u32, def: String },
 // }
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
+pub struct LatinSynopsisResult {
+    pub id: i64,
+    pub updated: i64,
+    pub sname: String,
+    pub advisor: String,
+    pub sgiday: i64,
+    pub selectedverb: String,
+    pub pp: String,
+    pub verbnumber: String,
+    pub verbperson: String,
+    pub verbptcgender: String,
+    pub verbptcnumber: String,
+    pub verbptccase: String,
+    pub ip: String,
+    pub ua: String,
+    pub status: i64,
+    pub f0: String,
+    pub f1: String,
+    pub f2: String,
+    pub f3: String,
+    pub f4: String,
+    pub f5: String,
+    pub f6: String,
+    pub f7: String,
+    pub f8: String,
+    pub f9: String,
+    pub f10: String,
+    pub f11: String,
+    pub f12: String,
+    pub f13: String,
+    pub f14: String,
+    pub f15: String,
+    pub f16: String,
+    pub f17: String,
+    pub f18: String,
+    pub f19: String,
+    pub f20: String,
+    pub f21: String,
+    pub f22: String,
+    pub f23: String,
+    pub f24: String,
+    pub f25: String,
+    pub f26: String,
+    pub f27: String,
+    pub f28: String,
+    pub f29: String,
+    pub f30: String,
+    pub f31: String,
+    pub f32: String,
+    pub f33: String,
+    pub f34: String,
+    pub f35: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
+pub struct GreekSynopsisResult {
+    pub id: i64,
+    pub updated: i64,
+    pub sname: String,
+    pub advisor: String,
+    pub sgiday: i64,
+    pub selectedverb: String,
+    pub pp: String,
+    pub verbnumber: String,
+    pub verbperson: String,
+    pub verbptcgender: String,
+    pub verbptcnumber: String,
+    pub verbptccase: String,
+    pub ip: String,
+    pub ua: String,
+    pub status: i64,
+    pub f0: String,
+    pub f1: String,
+    pub f2: String,
+    pub f3: String,
+    pub f4: String,
+    pub f5: String,
+    pub f6: String,
+    pub f7: String,
+    pub f8: String,
+    pub f9: String,
+    pub f10: String,
+    pub f11: String,
+    pub f12: String,
+    pub f13: String,
+    pub f14: String,
+    pub f15: String,
+    pub f16: String,
+    pub f17: String,
+    pub f18: String,
+    pub f19: String,
+    pub f20: String,
+    pub f21: String,
+    pub f22: String,
+    pub f23: String,
+    pub f24: String,
+    pub f25: String,
+    pub f26: String,
+    pub f27: String,
+    pub f28: String,
+    pub f29: String,
+    pub f30: String,
+    pub f31: String,
+    pub f32: String,
+    pub f33: String,
+    pub f34: String,
+    pub f35: String,
+    pub f36: String,
+    pub f37: String,
+    pub f38: String,
+    pub f39: String,
+    pub f40: String,
+    pub f41: String,
+    pub f42: String,
+    pub f43: String,
+    pub f44: String,
+    pub f45: String,
+    pub f46: String,
+    pub f47: String,
+    pub f48: String,
+    pub f49: String,
+    pub f50: String,
+    pub f51: String,
+    pub f52: String,
+    pub f53: String,
+    pub f54: String,
+    pub f55: String,
+    pub f56: String,
+    pub f57: String,
+    pub f58: String,
+    pub f59: String,
+    pub f60: String,
+    pub f61: String,
+    pub f62: String,
+}
+
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct SynopsisSaverRequest {
+    pub advisor: String,
+    pub unit: usize,
+    pub sname: String,
+    pub number: usize,
+    pub person: usize,
+    pub pp: String,
+    pub ptccase: Option<usize>,
+    pub ptcgender: Option<usize>,
+    pub ptcnumber: Option<usize>,
+    pub r: Vec<String>,
+    pub verb: usize,
+}
 
 #[derive(Debug, Serialize, Deserialize, Clone, FromRow)]
 pub struct DefRow {
@@ -41,8 +188,7 @@ pub struct DefRow {
 pub async fn greek_get_synopsis_list(
     pool: &SqlitePool,
 ) -> Result<Vec<(i64, i64, String, String, String)>, sqlx::Error> {
-    let query =
-        "SELECT id, updated, sname, advisor, selectedverb FROM greeksynopsisresults ORDER BY updated DESC;";
+    let query = "SELECT id, updated, sname, advisor, selectedverb FROM greeksynopsisresults ORDER BY updated DESC;";
     let res: Vec<(i64, i64, String, String, String)> =
         sqlx::query_as(query).fetch_all(pool).await?;
 
@@ -71,10 +217,24 @@ pub async fn greek_insert_synopsis(
     ip: &str,
     agent: &str,
 ) -> Result<u32, sqlx::Error> {
-    let query = format!("INSERT INTO greeksynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')",
-        accessed, info.sname, info.advisor, info.unit, info.verb, info.pp,
-        info.number, info.person, info.ptcgender.unwrap_or(999), info.ptcnumber.unwrap_or(999), info.ptccase.unwrap_or(999), ip, agent, 1,
-        info.r.join("', '"));
+    let query = format!(
+        "INSERT INTO greeksynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')",
+        accessed,
+        info.sname,
+        info.advisor,
+        info.unit,
+        info.verb,
+        info.pp,
+        info.number,
+        info.person,
+        info.ptcgender.unwrap_or(999),
+        info.ptcnumber.unwrap_or(999),
+        info.ptccase.unwrap_or(999),
+        ip,
+        agent,
+        1,
+        info.r.join("', '")
+    );
     sqlx::query(&query).execute(pool).await?;
 
     Ok(1)
@@ -83,8 +243,7 @@ pub async fn greek_insert_synopsis(
 pub async fn latin_get_synopsis_list(
     pool: &SqlitePool,
 ) -> Result<Vec<(i64, i64, String, String, String)>, sqlx::Error> {
-    let query =
-        "SELECT id, updated, sname, advisor, selectedverb FROM latinsynopsisresults ORDER BY updated DESC;";
+    let query = "SELECT id, updated, sname, advisor, selectedverb FROM latinsynopsisresults ORDER BY updated DESC;";
     let res: Vec<(i64, i64, String, String, String)> =
         sqlx::query_as(query).fetch_all(pool).await?;
 
@@ -119,10 +278,24 @@ pub async fn latin_insert_synopsis(
     ip: &str,
     agent: &str,
 ) -> Result<u32, sqlx::Error> {
-    let query = format!("INSERT INTO latinsynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')",
-        accessed, info.sname, info.advisor, info.unit, info.verb, info.pp,
-        info.number, info.person, info.ptcgender.unwrap_or(999), info.ptcnumber.unwrap_or(999), info.ptccase.unwrap_or(999), ip, agent, 1,
-        info.r.join("', '"));
+    let query = format!(
+        "INSERT INTO latinsynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')",
+        accessed,
+        info.sname,
+        info.advisor,
+        info.unit,
+        info.verb,
+        info.pp,
+        info.number,
+        info.person,
+        info.ptcgender.unwrap_or(999),
+        info.ptcnumber.unwrap_or(999),
+        info.ptccase.unwrap_or(999),
+        ip,
+        agent,
+        1,
+        info.r.join("', '")
+    );
     sqlx::query(&query).execute(pool).await?;
 
     Ok(1)

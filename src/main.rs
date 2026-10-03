@@ -25,8 +25,8 @@ use actix_files as fs;
 use actix_files::NamedFile;
 use actix_web::http::header::{HeaderValue, CONTENT_SECURITY_POLICY, STRICT_TRANSPORT_SECURITY};
 use actix_web::{
-    http::StatusCode, middleware, web, App, Error as AWError, HttpRequest, HttpResponse,
-    HttpServer, ResponseError, Result,
+    http::header, http::StatusCode, middleware, web, App, Error as AWError, HttpRequest,
+    HttpResponse, HttpServer, ResponseError, Result,
 };
 
 use chrono::prelude::*;
@@ -53,7 +53,7 @@ use tantivy::schema::*;
 use tantivy::{Index, ReloadPolicy};
 
 use hoplite_verbs_rs::hgk_strip_diacritics;
-
+const CACHE_MAX_AGE: u32 = 3600;
 /*
 {"error":"","wtprefix":"test1","nocache":"1","container":"test1Container","requestTime":"1635643672625","selectId":"32","page":"0","lastPage":"0","lastPageUp":"1","scroll":"32","query":"","arrOptions":[{"i":1,"r":["Α α",1,0]},{"i":2,"r":["ἀ-",2,0]},{"i":3,"r":["ἀ-",3,0]},{"i":4,"r":["ἆ",4,0]}...
 */
@@ -149,6 +149,15 @@ pub struct QueryRequest {
     pub mode: String,
     pub query: String, //WordQuery,
     pub lex: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct QueryRequestRange {
+    pub start: u32,
+    pub end: u32,
+    pub lexicon: String,
+    #[serde(rename(deserialize = "requestTime"))]
+    pub request_time: u64,
 }
 
 #[derive(Deserialize)]
@@ -274,7 +283,8 @@ async fn full_text_query(
                                 continue;
                             }
 
-                            let d = get_def_by_seq(db, word_id_value)
+                            let table = get_long_lex(&lexicon_value);
+                            let d = get_def_by_seq(db, word_id_value, table)
                                 .await
                                 .map_err(map_sqlx_error)?;
 
@@ -305,7 +315,12 @@ async fn full_text_query(
             res.error = format!("Error parsing full-text query: {:?}", e);
         }
     }
-    Ok(HttpResponse::Ok().json(res))
+    Ok(HttpResponse::Ok()
+        .insert_header(header::CacheControl(vec![
+            header::CacheDirective::Public,
+            header::CacheDirective::MaxAge(CACHE_MAX_AGE),
+        ]))
+        .json(res))
 }
 
 //remove any diacritics and make lowercase
@@ -429,7 +444,45 @@ async fn philologus_words(
         arr_options: query_result.rows,
     };
 
-    Ok(HttpResponse::Ok().json(res))
+    Ok(HttpResponse::Ok()
+        .insert_header(header::CacheControl(vec![
+            header::CacheDirective::Public,
+            header::CacheDirective::MaxAge(CACHE_MAX_AGE),
+        ]))
+        .json(res))
+}
+
+async fn philologus_words_range(
+    (info, req): (web::Query<QueryRequestRange>, HttpRequest),
+) -> Result<HttpResponse, AWError> {
+    let db = req.app_data::<SqlitePool>().unwrap();
+
+    let table = get_long_lex(&info.lexicon);
+
+    let query_result = get_words_range(db, table, info.start, info.end)
+        .await
+        .unwrap();
+
+    let res = QueryResponse {
+        select_id: 0,
+        error: "".to_owned(),
+        wtprefix: "".to_owned(),
+        nocache: 0, //prevents caching when queried by wordid in url
+        container: format!("{}Container", "".to_owned()),
+        request_time: info.request_time,
+        page: 0,
+        last_page: 0,
+        lastpage_up: 0,
+        query: "".to_owned(),
+        arr_options: query_result,
+    };
+
+    Ok(HttpResponse::Ok()
+        .insert_header(header::CacheControl(vec![
+            header::CacheDirective::Public,
+            header::CacheDirective::MaxAge(CACHE_MAX_AGE),
+        ]))
+        .json(res))
 }
 
 fn get_user_agent(req: &HttpRequest) -> Option<&str> {
@@ -463,7 +516,9 @@ async fn philologus_defs(
             .await
             .map_err(map_sqlx_error)?
     } else if let Some(id) = info.id {
-        get_def_by_seq(db, id).await.map_err(map_sqlx_error)?
+        get_def_by_seq(db, id, table)
+            .await
+            .map_err(map_sqlx_error)?
     } else {
         return Err(PhilologusError {
             code: StatusCode::INTERNAL_SERVER_ERROR,
@@ -512,7 +567,7 @@ async fn philologus_defs(
         def,
         def_name: None,
         word: def_row.word,
-        unaccented_word: def_row.sortword,
+        unaccented_word: def_row.sortkey,
         lemma: None,
         request_time: 0,
         status: "0".to_string(),
@@ -521,7 +576,12 @@ async fn philologus_defs(
         method: "setWord".to_string(),
     };
 
-    Ok(HttpResponse::Ok().json(res))
+    Ok(HttpResponse::Ok()
+        .insert_header(header::CacheControl(vec![
+            header::CacheDirective::Public,
+            header::CacheDirective::MaxAge(CACHE_MAX_AGE),
+        ]))
+        .json(res))
 }
 
 fn add_bibl_links(def: &str) -> String {
@@ -669,6 +729,7 @@ async fn main() -> io::Result<()> {
             .service(web::resource("/ft/").route(web::get().to(full_text_query)))
             .service(web::resource("/item").route(web::get().to(philologus_defs)))
             .service(web::resource("/query").route(web::get().to(philologus_words)))
+            .service(web::resource("/range").route(web::get().to(philologus_words_range)))
             .service(web::resource("/healthzzz").route(web::get().to(health_check)))
             .service(
                 web::resource("/greek-synopsis-result").route(web::get().to(greek_synopsis_result)),

@@ -226,12 +226,12 @@ pub async fn synopsis_json(
     Ok(Json(res).into_response())
 }
 
-pub async fn greek_synopsis_list(State(state): State<AppState>) -> Result<Response, PhilologusError> {
+pub async fn greek_synopsis_list(
+    State(state): State<AppState>,
+) -> Result<Response, PhilologusError> {
     let db2 = get_update_db(&state)?;
 
-    let list = greek_get_synopsis_list(db2)
-        .await
-        .map_err(map_sqlx_error)?;
+    let list = greek_get_synopsis_list(db2).await.map_err(map_sqlx_error)?;
 
     let mut res = String::from(
         r#"<!DOCTYPE html>
@@ -464,12 +464,12 @@ pub async fn cetest() -> Html<&'static str> {
     Html(include_str!("../../philologus-actix/src/cetest.html"))
 }
 
-pub async fn latin_synopsis_list(State(state): State<AppState>) -> Result<Response, PhilologusError> {
+pub async fn latin_synopsis_list(
+    State(state): State<AppState>,
+) -> Result<Response, PhilologusError> {
     let db2 = get_update_db(&state)?;
 
-    let list = latin_get_synopsis_list(db2)
-        .await
-        .map_err(map_sqlx_error)?;
+    let list = latin_get_synopsis_list(db2).await.map_err(map_sqlx_error)?;
 
     let mut res = String::from(
         r#"<!DOCTYPE html>

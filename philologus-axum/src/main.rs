@@ -525,7 +525,10 @@ async fn hc() -> StatusCode {
 
 // match actix-files' prefer_utf8: static text files are served with charset=utf-8
 async fn add_utf8_charset(mut res: Response) -> Response {
-    if let Some(ct) = res.headers().get(CONTENT_TYPE).and_then(|v| v.to_str().ok())
+    if let Some(ct) = res
+        .headers()
+        .get(CONTENT_TYPE)
+        .and_then(|v| v.to_str().ok())
         && (ct.starts_with("text/") || ct == "application/javascript")
         && !ct.contains("charset")
         && let Ok(v) = HeaderValue::from_str(&format!("{}; charset=utf-8", ct))

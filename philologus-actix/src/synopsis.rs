@@ -228,9 +228,7 @@ pub async fn synopsis_json(
 pub async fn greek_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
     let db2 = get_update_db(&req)?;
 
-    let list = greek_get_synopsis_list(db2)
-        .await
-        .map_err(map_sqlx_error)?;
+    let list = greek_get_synopsis_list(db2).await.map_err(map_sqlx_error)?;
 
     let mut res = String::from(
         r#"<!DOCTYPE html>
@@ -477,9 +475,7 @@ pub async fn cetest(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 pub async fn latin_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
     let db2 = get_update_db(&req)?;
 
-    let list = latin_get_synopsis_list(db2)
-        .await
-        .map_err(map_sqlx_error)?;
+    let list = latin_get_synopsis_list(db2).await.map_err(map_sqlx_error)?;
 
     let mut res = String::from(
         r#"<!DOCTYPE html>

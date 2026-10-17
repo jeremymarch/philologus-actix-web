@@ -7,7 +7,7 @@
 # docker build --build-arg SERVER=actix -t philologus-actix-web .
 ARG SERVER=axum
 
-FROM rust:1.93.0 AS build
+FROM rust:1.99.1 AS build
 # ENV PKG_CONFIG_ALLOW_CROSS=1
 ARG SERVER
 

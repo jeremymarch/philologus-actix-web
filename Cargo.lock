@@ -1685,7 +1685,7 @@ checksum = "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a"
 
 [[package]]
 name = "libphilologus"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "chrono",
  "hoplite_verbs_rs",
@@ -1981,7 +1981,7 @@ checksum = "9b4f627cb1b25917193a259e49bdad08f671f8d9708acfd5fe0a8c1455d87220"
 
 [[package]]
 name = "philologus-actix"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "actix-files",
  "actix-rt",
@@ -2007,7 +2007,7 @@ dependencies = [
 
 [[package]]
 name = "philologus-axum"
-version = "3.0.0"
+version = "3.0.1"
 dependencies = [
  "axum",
  "chrono",

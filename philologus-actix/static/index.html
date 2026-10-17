@@ -95,6 +95,9 @@
       #settingsDarkMode {
         height: 70px;
       }
+      .settingsGreekKeysCheckbox {
+        float: right;
+      }
       .fulltextresultheading {
         font-size: 14pt;
         margin-top: 6px;
@@ -658,7 +661,7 @@
         position: absolute;
         top: 70px;
         right: 11px;
-        height: 240px; /*height: 274px;//for sponsor button*/
+        height: 276px; /*height: 310px;//for sponsor button*/
         width: 230px;
         z-index: 999;
         padding: 10px;
@@ -900,6 +903,16 @@
                 value="light"
               />
             </div>
+          </div>
+        </li>
+        <li>
+          <div id="settingsGreekKeys" class="settingsItem">
+            <label for="greekKeysCheckbox">GreekKeys</label>
+            <input
+              id="greekKeysCheckbox"
+              class="settingsGreekKeysCheckbox"
+              type="checkbox"
+            />
           </div>
         </li>
         <!-- <li id="sponsorbuttonli"><iframe id="sponsorbutton" src="https://github.com/sponsors/jeremymarch/button" title="Sponsor jeremy march" height="32" width="114" style="border: 0; border-radius: 6px;"></iframe></li> -->
@@ -1387,6 +1400,9 @@
           .getElementById("darkModeLight")
           .addEventListener("click", darkModeClick, false);
         document
+          .getElementById("greekKeysCheckbox")
+          .addEventListener("change", greekKeysChange, false);
+        document
           .getElementById("backdrop")
           .addEventListener("click", toggleSettings, false);
         document
@@ -1637,14 +1653,26 @@
         "Υ",
         "Ζ",
       ];
+      // with the GreekKeys setting, u and y are swapped: u is upsilon and y is theta
+      const greekKeysOverrides = { u: "υ", y: "θ", U: "Υ", Y: "Θ" };
+      let greekKeys = getLocalStorageKey("greekkeys") === "1";
+
       function transliterate(char) {
         const theChar = forceLowercase ? char.toLowerCase() : char;
+        if (greekKeys && theChar in greekKeysOverrides) {
+          return greekKeysOverrides[theChar];
+        }
         const idx = la.indexOf(theChar);
         if (idx > -1) {
           return gr[idx];
         } else {
           return char;
         }
+      }
+
+      function greekKeysChange() {
+        greekKeys = this.checked;
+        setLocalStorageKey("greekkeys", greekKeys ? "1" : "0");
       }
 
       function transliterateKey(ev) {
@@ -1719,6 +1747,7 @@
               document.querySelector("#darkModeSystem").checked = true;
               break;
           }
+          document.querySelector("#greekKeysCheckbox").checked = greekKeys;
           toggleSettingsOn();
         }
       }
@@ -2229,6 +2258,11 @@
 
         input.onkeydown = wordtreeOnDown;
         input.onkeyup = wordtreeOnUp;
+        // if focus leaves while a key is down, its keyup never reaches the
+        // input, so reset downkey here or the next esc/enter etc. is ignored
+        input.onblur = () => {
+          this.downkey = false;
+        };
 
         this.div.appendChild(input);
         this.div.appendChild(loading);

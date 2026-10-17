@@ -633,7 +633,35 @@ async fn main() -> io::Result<()> {
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
+    .with_graceful_shutdown(shutdown_signal())
     .await
+}
+
+// actix-web shuts down on these signals by default; axum must be told to.
+// this matters in docker, where the server is PID 1 and gets no default signal handling
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        tokio::signal::ctrl_c()
+            .await
+            .expect("failed to install Ctrl+C handler");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        tokio::signal::unix::signal(tokio::signal::unix::SignalKind::terminate())
+            .expect("failed to install SIGTERM handler")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {},
+        _ = terminate => {},
+    }
+    tracing::info!("shutting down");
 }
 
 #[derive(Error, Debug)]

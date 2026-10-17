@@ -6,6 +6,7 @@
 !rust-toolchain.toml
 !libphilologus/
 !philologus-actix/
+!philologus-axum/
 !dbv1.sqlite
 !tantivy-data/
 

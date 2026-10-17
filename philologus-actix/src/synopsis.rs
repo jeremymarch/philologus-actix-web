@@ -5,6 +5,19 @@ use hoplite_verbs_rs::*;
 use sqlx::FromRow;
 use std::sync::Arc;
 
+// the synopsis list/result/saver routes require the log db (env PHILOLOGUS_LOG_DB_PATH)
+// it is registered as app_data Option<SqliteUpdatePool>
+fn get_update_db(req: &HttpRequest) -> Result<&SqlitePool, PhilologusError> {
+    req.app_data::<Option<SqliteUpdatePool>>()
+        .and_then(|db| db.as_ref())
+        .map(|db| &db.0)
+        .ok_or_else(|| PhilologusError {
+            code: StatusCode::INTERNAL_SERVER_ERROR,
+            name: "update db error".to_string(),
+            error: "PHILOLOGUS_LOG_DB_PATH is not set".to_string(),
+        })
+}
+
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SaverResults {
     pub given: String,
@@ -24,6 +37,19 @@ pub struct SynopsisJsonResult {
     pub name: String,
     pub advisor: String,
     pub f: Vec<SaverResults>,
+}
+
+// verb ids come from the client, so reject any that are out of range
+fn check_verb_id(verbs: &[Arc<HcGreekVerb>], verb_id: usize) -> Result<(), PhilologusError> {
+    if verb_id < verbs.len() {
+        Ok(())
+    } else {
+        Err(PhilologusError {
+            code: StatusCode::BAD_REQUEST,
+            name: "synopsis error".to_string(),
+            error: format!("invalid verb id: {}", verb_id),
+        })
+    }
 }
 
 pub fn get_forms(
@@ -158,6 +184,7 @@ pub async fn synopsis_json(
     // let pp = "λω, λσω, ἔλῡσα, λέλυκα, λέλυμαι, ἐλύθην";
     // let verb = Arc::new(HcGreekVerb::from_string(1, pp, REGULAR, 0).unwrap());
     let verb_id: usize = params.verb;
+    check_verb_id(verbs, verb_id)?;
 
     let forms = get_forms(
         verbs,
@@ -199,9 +226,9 @@ pub async fn synopsis_json(
 }
 
 pub async fn greek_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
-    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+    let db2 = get_update_db(&req)?;
 
-    let list = greek_get_synopsis_list(&db2.0)
+    let list = greek_get_synopsis_list(db2)
         .await
         .map_err(map_sqlx_error)?;
 
@@ -242,9 +269,9 @@ pub async fn greek_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWErr
 pub async fn greek_synopsis_result(
     (info, req): (web::Query<SynopsisResultRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
-    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+    let db2 = get_update_db(&req)?;
 
-    let list = greek_get_synopsis_result(&db2.0, info.id)
+    let list = greek_get_synopsis_result(db2, info.id)
         .await
         .map_err(map_sqlx_error)?;
 
@@ -365,7 +392,7 @@ pub async fn greek_synopsis_result(
 pub async fn greek_synopsis_saver(
     (info, req): (web::Json<SynopsisSaverRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
-    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+    let db2 = get_update_db(&req)?;
     let verbs = req.app_data::<Vec<Arc<HcGreekVerb>>>().unwrap();
 
     let time_stamp = SystemTime::now().duration_since(UNIX_EPOCH);
@@ -383,6 +410,7 @@ pub async fn greek_synopsis_saver(
     };
 
     let verb_id = info.verb;
+    check_verb_id(verbs, verb_id)?;
     let correct_answers = get_forms(
         verbs,
         verb_id,
@@ -391,22 +419,19 @@ pub async fn greek_synopsis_saver(
         info.ptccase,
         info.ptcgender,
     );
-    let mut is_correct = Vec::new();
-    // let is_correct = hgk_compare_multiple_forms(&correct_answer, &info.answer.replace("---", "—"));
-    for (i, f) in info.r.iter().enumerate() {
-        if let Some(a) = &correct_answers[i] {
-            is_correct.push(hgk_compare_multiple_forms(a, &f.replace("---", "—"), true));
-        } else {
-            is_correct.push(true);
-        }
-    }
 
+    // missing answers are treated as ""; extra answers are ignored
     let mut res_forms = Vec::<SaverResults>::new();
-    for (n, i) in correct_answers.into_iter().enumerate() {
+    for (n, correct) in correct_answers.into_iter().enumerate() {
+        let given = info.r.get(n).cloned().unwrap_or_default();
+        let is_correct = match &correct {
+            Some(a) => hgk_compare_multiple_forms(a, &given.replace("---", "—"), true),
+            None => true,
+        };
         res_forms.push(SaverResults {
-            given: info.r[n].clone(),
-            correct: i,
-            is_correct: is_correct[n],
+            given,
+            correct,
+            is_correct,
         });
     }
 
@@ -430,7 +455,7 @@ pub async fn greek_synopsis_saver(
     };
 
     let _ = greek_insert_synopsis(
-        &db2.0,
+        db2,
         &info.into_inner(),
         time_stamp_ms,
         ip.as_str(),
@@ -450,9 +475,9 @@ pub async fn cetest(_req: HttpRequest) -> Result<HttpResponse, AWError> {
 }
 
 pub async fn latin_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWError> {
-    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+    let db2 = get_update_db(&req)?;
 
-    let list = latin_get_synopsis_list(&db2.0)
+    let list = latin_get_synopsis_list(db2)
         .await
         .map_err(map_sqlx_error)?;
 
@@ -494,9 +519,9 @@ pub async fn latin_synopsis_list(req: HttpRequest) -> Result<HttpResponse, AWErr
 pub async fn latin_synopsis_result(
     (info, req): (web::Query<SynopsisResultRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
-    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+    let db2 = get_update_db(&req)?;
 
-    let list = latin_get_synopsis_result(&db2.0, info.id)
+    let list = latin_get_synopsis_result(db2, info.id)
         .await
         .map_err(map_sqlx_error)?;
 
@@ -608,7 +633,7 @@ pub async fn latin_synopsis_result(
 pub async fn latin_synopsis_saver(
     (info, req): (web::Json<SynopsisSaverRequest>, HttpRequest),
 ) -> Result<HttpResponse, AWError> {
-    let db2 = req.app_data::<SqliteUpdatePool>().unwrap();
+    let db2 = get_update_db(&req)?;
 
     let time_stamp = SystemTime::now().duration_since(UNIX_EPOCH);
     let time_stamp_ms = if let Ok(time_stamp) = time_stamp {
@@ -625,7 +650,7 @@ pub async fn latin_synopsis_saver(
     };
 
     let _ = latin_insert_synopsis(
-        &db2.0,
+        db2,
         &info.into_inner(),
         time_stamp_ms,
         ip.as_str(),

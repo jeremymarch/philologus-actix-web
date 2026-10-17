@@ -1,6 +1,6 @@
 [workspace]
 resolver = "2"
-members = ["philologus-actix", "libphilologus"]
+members = ["philologus-actix", "philologus-axum", "libphilologus"]
 default-members = [
     "philologus-actix",
 ] # i.e. which to run by default, else "cargo run -phc-axum --bin hc-axum"

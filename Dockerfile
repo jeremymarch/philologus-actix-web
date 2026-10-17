@@ -3,17 +3,23 @@
 # https://dev.to/sergeyzenchenko/actix-web-in-docker-how-to-build-small-and-secure-images-2mjd
 # https://learn.arm.com/learning-paths/servers-and-cloud-computing/from-iot-to-the-cloud-part1/how-to-8/
 
+# which web server to build: actix or axum
+# docker build --build-arg SERVER=axum -t philologus-actix-web .
+ARG SERVER=actix
+
 FROM rust:1.93.0 AS build
 # ENV PKG_CONFIG_ALLOW_CROSS=1
+ARG SERVER
 
 WORKDIR /usr/src/philologus-actix-web
 COPY . .
 
-RUN cargo build --release --locked -p philologus-actix
+RUN cargo build --release --locked -p philologus-${SERVER}
 
 FROM gcr.io/distroless/cc-debian12
+ARG SERVER
 
-COPY --from=build /usr/src/philologus-actix-web/target/release/philologus-actix /usr/local/bin/philologus-actix-web
+COPY --from=build /usr/src/philologus-actix-web/target/release/philologus-${SERVER} /usr/local/bin/philologus
 COPY --from=build /usr/src/philologus-actix-web/dbv1.sqlite /usr/local/bin/dbv1.sqlite
 COPY --from=build /usr/src/philologus-actix-web/philologus-actix/static/ /usr/local/bin/philologus-actix/static/
 COPY --from=build /usr/src/philologus-actix-web/tantivy-data/ /usr/local/bin/tantivy-data/
@@ -30,10 +36,12 @@ EXPOSE 8088
 # set here or set working directory with: docker run -w/usr/local/bin
 WORKDIR /usr/local/bin
 
-CMD ["philologus-actix-web"]
+CMD ["philologus"]
 
 
-# docker build -t philologus-actix-web .
+# docker build -t philologus-actix-web .                          (actix, the default)
+# docker build --build-arg SERVER=axum -t philologus-actix-web .  (axum)
+# or from an environment variable: SERVER=axum docker build --build-arg SERVER -t philologus-actix-web .
 
 # to save hd space
 # docker builder prune -a

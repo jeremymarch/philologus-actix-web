@@ -208,15 +208,24 @@ pub async fn greek_get_synopsis_result(
     Ok(res)
 }
 
-pub async fn greek_insert_synopsis(
+const GREEK_SYNOPSIS_NUM_FORMS: usize = 63; // columns f0..f62
+const LATIN_SYNOPSIS_NUM_FORMS: usize = 36; // columns f0..f35
+
+// table must be a trusted, hard-coded name: it is formatted into the query
+async fn insert_synopsis(
     pool: &SqlitePool,
+    table: &str,
+    num_forms: usize,
     info: &SynopsisSaverRequest,
     accessed: u128,
     ip: &str,
     agent: &str,
 ) -> Result<u32, sqlx::Error> {
-    let query = "INSERT INTO greeksynopsisresults VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    sqlx::query(query)
+    // 14 fixed columns after id, then one column per form
+    let placeholders = vec!["?"; 14 + num_forms].join(", ");
+    let query = format!("INSERT INTO {} VALUES (NULL, {})", table, placeholders);
+    // safe: only the hard-coded table name and "?" placeholders are formatted in
+    let mut q = sqlx::query(sqlx::AssertSqlSafe(query))
         .bind(accessed.to_string())
         .bind(&info.sname)
         .bind(&info.advisor)
@@ -230,12 +239,33 @@ pub async fn greek_insert_synopsis(
         .bind(info.ptccase.unwrap_or(999).to_string())
         .bind(ip)
         .bind(agent)
-        .bind(1)
-        .bind(info.r.join("', '"))
-        .execute(pool)
-        .await?;
+        .bind(1);
+    // pad missing forms with "" (columns are NOT NULL); ignore any extras
+    for i in 0..num_forms {
+        q = q.bind(info.r.get(i).cloned().unwrap_or_default());
+    }
+    q.execute(pool).await?;
 
     Ok(1)
+}
+
+pub async fn greek_insert_synopsis(
+    pool: &SqlitePool,
+    info: &SynopsisSaverRequest,
+    accessed: u128,
+    ip: &str,
+    agent: &str,
+) -> Result<u32, sqlx::Error> {
+    insert_synopsis(
+        pool,
+        "greeksynopsisresults",
+        GREEK_SYNOPSIS_NUM_FORMS,
+        info,
+        accessed,
+        ip,
+        agent,
+    )
+    .await
 }
 
 pub async fn latin_get_synopsis_list(
@@ -252,7 +282,7 @@ pub async fn latin_get_synopsis_result(
     pool: &SqlitePool,
     id: u32,
 ) -> Result<Vec<LatinSynopsisResult>, sqlx::Error> {
-    let query = "SELECT * FROM latinsynopsisresults WHERE id={} ORDER BY updated DESC;";
+    let query = "SELECT * FROM latinsynopsisresults WHERE id= ? ORDER BY updated DESC;";
     let res: Vec<LatinSynopsisResult> = sqlx::query_as::<_, LatinSynopsisResult>(query)
         .bind(id)
         .fetch_all(pool)
@@ -274,27 +304,16 @@ pub async fn latin_insert_synopsis(
     ip: &str,
     agent: &str,
 ) -> Result<u32, sqlx::Error> {
-    let query = "INSERT INTO latinsynopsisresults VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-    sqlx::query(query)
-        .bind(accessed.to_string())
-        .bind(&info.sname)
-        .bind(&info.advisor)
-        .bind(info.unit.to_string())
-        .bind(info.verb.to_string())
-        .bind(&info.pp)
-        .bind(info.number.to_string())
-        .bind(info.person.to_string())
-        .bind(info.ptcgender.unwrap_or(999).to_string())
-        .bind(info.ptcnumber.unwrap_or(999).to_string())
-        .bind(info.ptccase.unwrap_or(999).to_string())
-        .bind(ip)
-        .bind(agent)
-        .bind(1)
-        .bind(info.r.join("', '"))
-        .execute(pool)
-        .await?;
-
-    Ok(1)
+    insert_synopsis(
+        pool,
+        "latinsynopsisresults",
+        LATIN_SYNOPSIS_NUM_FORMS,
+        info,
+        accessed,
+        ip,
+        agent,
+    )
+    .await
 }
 
 pub async fn insert_log(

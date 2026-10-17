@@ -2,11 +2,11 @@
 resolver = "2"
 members = ["philologus-actix", "philologus-axum", "libphilologus"]
 default-members = [
-    "philologus-actix",
+    "philologus-axum",
 ] # i.e. which to run by default, else "cargo run -phc-axum --bin hc-axum"
 
 [workspace.package]
-version = "2.0.28"
+version = "3.0.0"
 edition = "2024"
 authors = ["Jeremy March <jmarch@gradcenter.cuny.edu>"]
 

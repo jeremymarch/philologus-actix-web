@@ -227,7 +227,12 @@ async fn full_text_query(
         0xFFFFFFFF,
     );
 
-    let my_collector = (Count, TopDocs::with_limit(limit).and_offset(offset));
+    let my_collector = (
+        Count,
+        TopDocs::with_limit(limit)
+            .and_offset(offset)
+            .order_by_score(),
+    );
     match query_parser.parse_query(&ft_query) {
         Ok(query) => match searcher.search(&query, &my_collector) {
             Ok((count, top_docs)) => {

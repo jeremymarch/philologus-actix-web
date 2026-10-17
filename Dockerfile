@@ -4,8 +4,8 @@
 # https://learn.arm.com/learning-paths/servers-and-cloud-computing/from-iot-to-the-cloud-part1/how-to-8/
 
 # which web server to build: actix or axum
-# docker build --build-arg SERVER=axum -t philologus-actix-web .
-ARG SERVER=actix
+# docker build --build-arg SERVER=actix -t philologus-actix-web .
+ARG SERVER=axum
 
 FROM rust:1.93.0 AS build
 # ENV PKG_CONFIG_ALLOW_CROSS=1
@@ -16,7 +16,7 @@ COPY . .
 
 RUN cargo build --release --locked -p philologus-${SERVER}
 
-FROM gcr.io/distroless/cc-debian12
+FROM gcr.io/distroless/cc-debian13
 ARG SERVER
 
 COPY --from=build /usr/src/philologus-actix-web/target/release/philologus-${SERVER} /usr/local/bin/philologus
@@ -39,9 +39,9 @@ WORKDIR /usr/local/bin
 CMD ["philologus"]
 
 
-# docker build -t philologus-actix-web .                          (actix, the default)
-# docker build --build-arg SERVER=axum -t philologus-actix-web .  (axum)
-# or from an environment variable: SERVER=axum docker build --build-arg SERVER -t philologus-actix-web .
+# docker build -t philologus-actix-web .                           (axum, the default)
+# docker build --build-arg SERVER=actix -t philologus-actix-web .  (actix)
+# or from an environment variable: SERVER=actix docker build --build-arg SERVER -t philologus-actix-web .
 
 # to save hd space
 # docker builder prune -a

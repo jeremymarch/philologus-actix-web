@@ -23,7 +23,12 @@ use tracing_actix_web::TracingLogger;
 
 use actix_files as fs;
 use actix_files::NamedFile;
-use actix_web::http::header::{CONTENT_SECURITY_POLICY, HeaderValue, STRICT_TRANSPORT_SECURITY};
+use actix_web::body::MessageBody;
+use actix_web::dev::{ServiceRequest, ServiceResponse};
+use actix_web::http::header::{
+    CONTENT_SECURITY_POLICY, CONTENT_TYPE, HeaderValue, STRICT_TRANSPORT_SECURITY,
+};
+use actix_web::middleware::Next;
 use actix_web::{
     App, Error as AWError, HttpRequest, HttpResponse, HttpServer, ResponseError, Result,
     http::StatusCode, middleware, web,
@@ -225,7 +230,12 @@ async fn full_text_query(
         0xFFFFFFFF,
     );
 
-    let my_collector = (Count, TopDocs::with_limit(limit).and_offset(offset));
+    let my_collector = (
+        Count,
+        TopDocs::with_limit(limit)
+            .and_offset(offset)
+            .order_by_score(),
+    );
     match query_parser.parse_query(&ft_query) {
         //"carry AND (lexicon:slater OR lexicon:lewisshort)") {
         Ok(query) => match searcher.search(&query, &my_collector) {
@@ -508,6 +518,26 @@ async fn philologus_defs(
     Ok(HttpResponse::Ok().json(res))
 }
 
+// mime_guess >= 2.0.5 serves .js as text/javascript, which actix-files' prefer_utf8
+// doesn't add a charset to, so add it here (the js files contain Greek)
+async fn add_js_charset(
+    req: ServiceRequest,
+    next: Next<impl MessageBody>,
+) -> Result<ServiceResponse<impl MessageBody>, AWError> {
+    let mut res = next.call(req).await?;
+    if res
+        .headers()
+        .get(CONTENT_TYPE)
+        .is_some_and(|ct| ct == "text/javascript")
+    {
+        res.headers_mut().insert(
+            CONTENT_TYPE,
+            HeaderValue::from_static("text/javascript; charset=utf-8"),
+        );
+    }
+    Ok(res)
+}
+
 fn add_bibl_links(def: &str) -> String {
     let re = Regex::new(r#"biblink="(?P<l>[^"]*)""#).unwrap();
     let def_with_links = re.replace_all(def, r#"href="http://www.perseus.tufts.edu/hopper/text.jsp?doc=$l&amp;lang=original" target="_blank""#);
@@ -628,6 +658,7 @@ async fn main() -> io::Result<()> {
             .app_data(db_pool.clone())
             .app_data(db_log_pool.clone())
             //.wrap(middleware::Logger::default())
+            .wrap(middleware::from_fn(add_js_charset))
             .wrap(middleware::DefaultHeaders::new()
                 .add((CONTENT_SECURITY_POLICY,
                     HeaderValue::from_static("style-src 'nonce-2726c7f26c';\

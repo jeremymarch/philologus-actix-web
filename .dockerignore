@@ -1,0 +1,14 @@
+# Allowlist: ignore everything, then include only what the Dockerfile needs
+*
+
+!Cargo.toml
+!Cargo.lock
+!rust-toolchain.toml
+!libphilologus/
+!philologus-actix/
+!dbv1.sqlite
+!tantivy-data/
+
+# exclude build artifacts and OS cruft that may live inside included dirs
+**/target/
+**/.DS_Store

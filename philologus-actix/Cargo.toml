@@ -15,9 +15,10 @@ actix-files = "0.6.10"
 unicode-normalization = { version = "0.1.25", default-features = false }
 env_logger = "0.11.8"
 chrono = "0.4.43"
-sqlx = { version = "0.8.6", features = [
+sqlx = { version = "0.9.0", features = [
+    "runtime-tokio",
     "sqlite",
-    "runtime-tokio-rustls",
+    "tls-rustls",
     "any",
     "macros",
 ] }
@@ -39,7 +40,3 @@ hoplite_verbs_rs = { git = "https://github.com/jeremymarch/hoplite_verbs_rs", ve
 [dev-dependencies]
 actix-rt = "2.11.0"
 urlencoding = "2.1.3"
-
-[profile.release]
-opt-level = 3
-lto = true

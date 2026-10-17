@@ -9,16 +9,16 @@ FROM rust:1.93.0 AS build
 WORKDIR /usr/src/philologus-actix-web
 COPY . .
 
-RUN cargo install --path .
+RUN cargo build --release --locked -p philologus-actix
 
 FROM gcr.io/distroless/cc-debian12
 
-COPY --from=build /usr/local/cargo/bin/philologus-actix-web /usr/local/bin/philologus-actix-web
-COPY --from=build /usr/src/philologus-actix-web/db.sqlite /usr/local/bin/db.sqlite
-COPY --from=build /usr/src/philologus-actix-web/static/ /usr/local/bin/static/
+COPY --from=build /usr/src/philologus-actix-web/target/release/philologus-actix /usr/local/bin/philologus-actix-web
+COPY --from=build /usr/src/philologus-actix-web/dbv1.sqlite /usr/local/bin/dbv1.sqlite
+COPY --from=build /usr/src/philologus-actix-web/philologus-actix/static/ /usr/local/bin/philologus-actix/static/
 COPY --from=build /usr/src/philologus-actix-web/tantivy-data/ /usr/local/bin/tantivy-data/
 
-ENV PHILOLOGUS_DB_PATH=sqlite:///usr/local/bin/db.sqlite?mode=ro
+ENV PHILOLOGUS_DB_PATH=sqlite:///usr/local/bin/dbv1.sqlite?mode=ro
 # ENV PHILOLOGUS_LOG_DB_PATH=sqlite://log.sqlite?mode=rwc
 ENV TANTIVY_INDEX_PATH=/usr/local/bin/tantivy-data
 

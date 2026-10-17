@@ -13,9 +13,10 @@ doctest = false
 
 unicode-normalization = { version = "0.1.25", default-features = false }
 chrono = "0.4.43"
-sqlx = { version = "0.8.6", features = [
+sqlx = { version = "0.9.0", features = [
+    "runtime-tokio",
     "sqlite",
-    "runtime-tokio-rustls",
+    "tls-rustls",
     "any",
     "macros",
 ] }

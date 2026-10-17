@@ -199,11 +199,9 @@ pub async fn greek_get_synopsis_result(
     pool: &SqlitePool,
     id: u32,
 ) -> Result<Vec<GreekSynopsisResult>, sqlx::Error> {
-    let query = format!(
-        "SELECT * FROM greeksynopsisresults WHERE id={} ORDER BY updated DESC;",
-        id
-    );
-    let res: Vec<GreekSynopsisResult> = sqlx::query_as::<_, GreekSynopsisResult>(&query)
+    let query = "SELECT * FROM greeksynopsisresults WHERE id= ? ORDER BY updated DESC;";
+    let res: Vec<GreekSynopsisResult> = sqlx::query_as::<_, GreekSynopsisResult>(query)
+        .bind(id)
         .fetch_all(pool)
         .await?;
 
@@ -217,25 +215,25 @@ pub async fn greek_insert_synopsis(
     ip: &str,
     agent: &str,
 ) -> Result<u32, sqlx::Error> {
-    let query = format!(
-        "INSERT INTO greeksynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')",
-        accessed,
-        info.sname,
-        info.advisor,
-        info.unit,
-        info.verb,
-        info.pp,
-        info.number,
-        info.person,
-        info.ptcgender.unwrap_or(999),
-        info.ptcnumber.unwrap_or(999),
-        info.ptccase.unwrap_or(999),
-        ip,
-        agent,
-        1,
-        info.r.join("', '")
-    );
-    sqlx::query(&query).execute(pool).await?;
+    let query = "INSERT INTO greeksynopsisresults VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    sqlx::query(query)
+        .bind(accessed.to_string())
+        .bind(&info.sname)
+        .bind(&info.advisor)
+        .bind(info.unit.to_string())
+        .bind(info.verb.to_string())
+        .bind(&info.pp)
+        .bind(info.number.to_string())
+        .bind(info.person.to_string())
+        .bind(info.ptcgender.unwrap_or(999).to_string())
+        .bind(info.ptcnumber.unwrap_or(999).to_string())
+        .bind(info.ptccase.unwrap_or(999).to_string())
+        .bind(ip)
+        .bind(agent)
+        .bind(1)
+        .bind(info.r.join("', '"))
+        .execute(pool)
+        .await?;
 
     Ok(1)
 }
@@ -254,11 +252,9 @@ pub async fn latin_get_synopsis_result(
     pool: &SqlitePool,
     id: u32,
 ) -> Result<Vec<LatinSynopsisResult>, sqlx::Error> {
-    let query = format!(
-        "SELECT * FROM latinsynopsisresults WHERE id={} ORDER BY updated DESC;",
-        id
-    );
-    let res: Vec<LatinSynopsisResult> = sqlx::query_as::<_, LatinSynopsisResult>(&query)
+    let query = "SELECT * FROM latinsynopsisresults WHERE id={} ORDER BY updated DESC;";
+    let res: Vec<LatinSynopsisResult> = sqlx::query_as::<_, LatinSynopsisResult>(query)
+        .bind(id)
         .fetch_all(pool)
         .await?;
 
@@ -278,25 +274,25 @@ pub async fn latin_insert_synopsis(
     ip: &str,
     agent: &str,
 ) -> Result<u32, sqlx::Error> {
-    let query = format!(
-        "INSERT INTO latinsynopsisresults VALUES (NULL, {}, '{}', '{}', {}, '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', '{}', {}, '{}')",
-        accessed,
-        info.sname,
-        info.advisor,
-        info.unit,
-        info.verb,
-        info.pp,
-        info.number,
-        info.person,
-        info.ptcgender.unwrap_or(999),
-        info.ptcnumber.unwrap_or(999),
-        info.ptccase.unwrap_or(999),
-        ip,
-        agent,
-        1,
-        info.r.join("', '")
-    );
-    sqlx::query(&query).execute(pool).await?;
+    let query = "INSERT INTO latinsynopsisresults VALUES (NULL, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+    sqlx::query(query)
+        .bind(accessed.to_string())
+        .bind(&info.sname)
+        .bind(&info.advisor)
+        .bind(info.unit.to_string())
+        .bind(info.verb.to_string())
+        .bind(&info.pp)
+        .bind(info.number.to_string())
+        .bind(info.person.to_string())
+        .bind(info.ptcgender.unwrap_or(999).to_string())
+        .bind(info.ptcnumber.unwrap_or(999).to_string())
+        .bind(info.ptccase.unwrap_or(999).to_string())
+        .bind(ip)
+        .bind(agent)
+        .bind(1)
+        .bind(info.r.join("', '"))
+        .execute(pool)
+        .await?;
 
     Ok(1)
 }
@@ -309,11 +305,15 @@ pub async fn insert_log(
     ip: &str,
     agent: &str,
 ) -> Result<u32, sqlx::Error> {
-    let query = format!(
-        "INSERT INTO log VALUES (NULL, {}, {}, {}, '{}', '{}');",
-        accessed, lex, wordid, ip, agent
-    );
-    sqlx::query(&query).execute(pool).await?;
+    let query = "INSERT INTO log VALUES (NULL, ?, ?, ?, ?, ?);";
+    sqlx::query(query)
+        .bind(accessed.to_string())
+        .bind(lex)
+        .bind(wordid)
+        .bind(ip)
+        .bind(agent)
+        .execute(pool)
+        .await?;
 
     Ok(1)
 }

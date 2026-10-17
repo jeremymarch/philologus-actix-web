@@ -517,7 +517,7 @@ fn add_bibl_links(def: &str) -> String {
 
 // this is for a route to specific word: /{lex}/{word}
 async fn index(_req: HttpRequest) -> Result<NamedFile> {
-    let path: PathBuf = "static/index.html".parse().unwrap();
+    let path: PathBuf = "philologus-actix/static/index.html".parse().unwrap();
     Ok(NamedFile::open(path)?)
 }
 
